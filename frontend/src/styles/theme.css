@@ -1,0 +1,164 @@
+:root {
+  /* Editorial Theme (Modern Poster) */
+  --bg-color: #E0F2F1;
+  --bg-gradient: linear-gradient(180deg, #E0F2F1 0%, #B2DFDB 100%);
+  /* Soft Mint */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --text-primary: #263238;
+  /* Deep Ink Blue */
+  --text-secondary: #546E7A;
+  /* Blue Grey */
+
+  --accent-color: #FF7043;
+  /* Warm Coral - Primary Action */
+  --accent-secondary: #26A69A;
+  /* Teal - Secondary */
+
+  --card-bg: transparent;
+  /* Removing traditional card backgrounds */
+  --card-shadow: none;
+  /* Removing shadows for flat poster look */
+  --glass-border: none;
+
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Outfit', sans-serif;
+
+  /* Transitions */
+  --transition-speed: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* Slower, smoother */
+}
+
+/* Morning Variation (Cream/Orange) */
+[data-theme="morning"] {
+  --bg-gradient: linear-gradient(180deg, #FAFAFA 0%, #FFF3E0 100%);
+  --text-primary: #3E2723;
+  --text-secondary: #8D6E63;
+  --accent-color: #FF7043;
+}
+
+/* Evening Variation (Deep Teal) */
+[data-theme="evening"] {
+  --bg-gradient: linear-gradient(180deg, #004D40 0%, #00695C 100%);
+  --text-primary: #E0F2F1;
+  --text-secondary: #80CBC4;
+  --accent-color: #FFAB91;
+  /* Soft Coral */
+}
+
+/* Night Variation (Midnight Ink) */
+[data-theme="night"] {
+  --bg-gradient: linear-gradient(180deg, #102027 0%, #263238 100%);
+  --text-primary: #ECEFF1;
+  --text-secondary: #B0BEC5;
+  --accent-color: #FF7043;
+}
+
+/* Global Styles for Editorial Look */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  transition: background 1.5s ease, color 1s ease;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#root {
+  width: 100%;
+  max-width: 600px;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
+  border: var(--glass-border);
+  box-shadow: var(--card-shadow);
+  padding: 40px;
+  text-align: center;
+  transition: all var(--transition-speed);
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+@media print {
+
+  .app-container,
+  .no-print,
+  .navbar-dock {
+    display: none !important;
+  }
+
+  .scrapbook-container {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Navbar Dock (Desktop / Default) */
+.navbar-dock {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  padding: 15px 30px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  z-index: 1000;
+  width: max-content;
+}
+
+@media (max-width: 480px) {
+  .navbar-dock {
+    bottom: 20px !important;
+    left: 20px !important;
+    right: 20px !important;
+    width: auto !important;
+    /* Stretch to fill space between left/right */
+    transform: none !important;
+    /* Disable the center translation */
+    padding: 10px 15px !important;
+    gap: 10px !important;
+    justify-content: space-around;
+  }
+}
