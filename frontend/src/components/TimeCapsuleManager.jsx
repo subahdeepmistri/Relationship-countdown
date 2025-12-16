@@ -95,7 +95,7 @@ const TimeCapsuleManager = ({ onClose }) => {
                                 <div
                                     key={cap.id}
                                     onClick={() => openCapsule(cap)}
-                                    className="glass-card"
+                                    className="pop-card"
                                     style={{
                                         padding: '20px',
                                         cursor: unlocked ? 'pointer' : 'default',

@@ -27,58 +27,62 @@ const Counter = () => {
     return (
         <div style={{ textAlign: 'center', position: 'relative' }}>
 
+            <div style={{
+                color: 'var(--accent-primary)',
+                fontWeight: '700',
+                fontSize: '0.9rem',
+                letterSpacing: '3px',
+                textTransform: 'uppercase',
+                marginBottom: '5px'
+            }}>
+                Together For
+            </div>
+
             {/* Hero Days */}
             <div style={{
-                fontSize: 'clamp(3rem, 12vw, 6rem)', // Reduced max size for cleaner look
-                fontFamily: 'var(--font-serif)',
+                fontSize: 'clamp(5rem, 20vw, 8rem)', // Bold and massive
+                fontFamily: 'var(--font-heading)',
                 fontWeight: '800',
                 lineHeight: 1,
+                color: 'var(--text-primary)',
                 marginBottom: '10px',
-                background: 'linear-gradient(to bottom, #fff, #cbd5e1)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 30px rgba(168, 85, 247, 0.3))' // Premium glow
+                letterSpacing: '-2px'
             }}>
                 {stats.days}
             </div>
 
             <div style={{
-                fontSize: '1.2rem',
-                textTransform: 'uppercase',
-                letterSpacing: '4px',
-                color: 'var(--accent-color)',
-                fontWeight: 'bold',
+                fontSize: '1rem',
+                color: 'var(--text-secondary)',
+                fontWeight: '500',
                 marginBottom: '40px'
             }}>
-                Days Together
+                Days of Love
             </div>
 
-            {/* Sub Counters */}
+            {/* Sub Counters - Pills */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'center',
-                gap: 'clamp(20px, 5vw, 40px)', // Responsive gap
-                marginTop: '20px'
+                gap: '12px',
+                marginTop: '10px',
+                flexWrap: 'wrap'
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.hours}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Hours</span>
-                </div>
-                {/* Divider */}
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.minutes}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Mins</span>
-                </div>
-
-                {/* Divider */}
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.seconds}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Secs</span>
-                </div>
+                {[
+                    { label: 'Hours', val: stats.hours },
+                    { label: 'Mins', val: stats.minutes },
+                    { label: 'Secs', val: stats.seconds }
+                ].map((item, idx) => (
+                    <div key={idx} style={{
+                        background: '#F1F5F9',
+                        padding: '12px 20px',
+                        borderRadius: '16px',
+                        minWidth: '80px'
+                    }}>
+                        <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)' }}>{item.val}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: '600', letterSpacing: '1px' }}>{item.label}</div>
+                    </div>
+                ))}
             </div>
         </div>
     );

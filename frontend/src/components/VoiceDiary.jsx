@@ -176,7 +176,7 @@ const VoiceDiary = ({ onClose }) => {
                 {/* List */}
                 <div style={{ textAlign: 'left' }}>
                     {entries.map(entry => (
-                        <div key={entry.id} className="glass-card" style={{
+                        <div key={entry.id} className="pop-card" style={{
                             marginBottom: '15px', padding: '20px',
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             background: '#FFFFFF'

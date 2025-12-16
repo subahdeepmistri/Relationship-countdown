@@ -293,7 +293,7 @@ const VaultContent = ({ pin, onClose }) => {
                     <button onClick={onClose} style={{ color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '5px 15px', borderRadius: '20px' }}>Lock</button>
                 </div>
 
-                <div className="glass-card" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'left', marginBottom: '30px' }}>
+                <div className="pop-card" style={{ background: 'rgba(255,255,255,0.1)', color: 'white', textAlign: 'left', marginBottom: '30px' }}>
                     <p style={{ opacity: 0.8, fontStyle: 'italic' }}>
                         "This space is encrypted with your PIN. Only you have the key."
                     </p>

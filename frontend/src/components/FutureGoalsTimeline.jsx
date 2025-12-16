@@ -76,7 +76,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                                 boxShadow: '0 0 0 2px rgba(0,0,0,0.1)'
                             }} />
 
-                            <div className="glass-card" style={{
+                            <div className="pop-card" style={{
                                 padding: '20px',
                                 background: goal.status === 'achieved' ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)',
                                 border: '1px solid rgba(255,255,255,0.6)',
@@ -118,7 +118,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                             position: 'absolute', left: '-37px', top: '20px',
                             width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(0,0,0,0.1)'
                         }} />
-                        <div className="glass-card" style={{ padding: '25px', background: '#FFFFFF', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
+                        <div className="pop-card" style={{ padding: '25px', background: '#FFFFFF', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
                             <h4 style={{ margin: '0 0 15px 0' }}>Add New Dream</h4>
                             <input
                                 type="text"

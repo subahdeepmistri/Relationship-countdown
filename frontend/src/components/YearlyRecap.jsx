@@ -64,7 +64,7 @@ const YearlyRecap = ({ onClose }) => {
                 <StatCard value={stats.capsulesCount} label="Time Capsules Sealed" delay="0.4s" />
                 <StatCard value={`${stats.completedGoals} / ${stats.goalsCount}`} label="Dreams Achieved" delay="0.6s" />
 
-                <div className="glass-card" style={{
+                <div className="pop-card" style={{
                     marginTop: '50px',
                     padding: '30px',
                     background: 'rgba(255,255,255,0.1)',

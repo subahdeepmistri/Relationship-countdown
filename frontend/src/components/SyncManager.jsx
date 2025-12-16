@@ -155,7 +155,7 @@ const SyncManager = ({ onClose }) => {
                 </p>
 
                 {/* Glass Card Container */}
-                <div className="glass-card" style={{ padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
+                <div className="pop-card" style={{ padding: '0', overflow: 'hidden', background: '#FFFFFF' }}>
 
                     {/* Tabs */}
                     <div style={{ display: 'flex', borderBottom: '1px solid #eee' }}>

@@ -29,7 +29,7 @@ const AnniversaryOverlay = () => {
             zIndex: 50,
             backdropFilter: 'blur(3px)'
         }}>
-            <div className="glass-card" style={{
+            <div className="pop-card" style={{
                 animation: 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 background: 'rgba(255, 255, 255, 0.95)',
                 color: '#e74c3c',

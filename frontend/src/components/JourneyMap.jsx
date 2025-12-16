@@ -77,7 +77,7 @@ const JourneyMap = ({ onClose }) => {
                                 boxShadow: `0 0 15px ${m.id % 2 ? 'var(--accent-color)' : 'var(--text-accent)'}`
                             }} />
 
-                            <div className="glass-card" style={{
+                            <div className="pop-card" style={{
                                 width: '45%',
                                 padding: '25px',
                                 textAlign: i % 2 === 0 ? 'right' : 'left',
@@ -102,7 +102,7 @@ const JourneyMap = ({ onClose }) => {
                     ))}
                 </div>
 
-                <div className="glass-card" style={{ marginTop: '60px', padding: '40px', textAlign: 'center' }}>
+                <div className="pop-card" style={{ marginTop: '60px', padding: '40px', textAlign: 'center' }}>
                     <h4 style={{ marginBottom: '25px', fontSize: '1.5rem' }}>Add a New Chapter ✍️</h4>
                     <div style={{ display: 'grid', gap: '15px' }}>
                         <input

@@ -36,7 +36,7 @@ const DistanceClock = ({ partnerOffset, meetingDate }) => {
     }, [partnerOffset, meetingDate]);
 
     return (
-        <div className="glass-card" style={{ marginTop: '20px', padding: '20px' }}>
+        <div className="pop-card" style={{ marginTop: '20px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: '15px' }}>
                 <div>
                     <div style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>My Time</div>

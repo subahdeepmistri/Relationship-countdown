@@ -242,158 +242,164 @@ function App() {
   };
 
   return (
-    <ThemeBackground>
-      <>
-        {showScrapbook && <ScrapbookView onClose={() => setShowScrapbook(false)} />}
-        {showCapsules && <TimeCapsuleManager onClose={() => setShowCapsules(false)} />}
-        {showGoals && <FutureGoalsTimeline onClose={() => setShowGoals(false)} />}
-        {showRecap && <YearlyRecap onClose={() => setShowRecap(false)} />}
-        {showSync && <SyncManager onClose={() => setShowSync(false)} />}
-        {showVoice && <VoiceDiary onClose={() => setShowVoice(false)} />}
-        {showJourney && <JourneyMap onClose={() => setShowJourney(false)} />}
-        {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
+    <>
+      {showScrapbook && <ScrapbookView onClose={() => setShowScrapbook(false)} />}
+      {showCapsules && <TimeCapsuleManager onClose={() => setShowCapsules(false)} />}
+      {showGoals && <FutureGoalsTimeline onClose={() => setShowGoals(false)} />}
+      <div className="blob-bg">
+        <div className="blob" style={{ top: '-10%', left: '-10%', width: '500px', height: '500px', background: '#FDE68A' }}></div>
+        <div className="blob" style={{ bottom: '10%', right: '-10%', width: '400px', height: '400px', background: '#FECACA' }}></div>
+      </div>
 
-        <div className="app-container" style={{ paddingBottom: '120px' }}>
+      {showRecap && <YearlyRecap onClose={() => setShowRecap(false)} />}
+      {showSync && <SyncManager onClose={() => setShowSync(false)} />}
+      {showVoice && <VoiceDiary onClose={() => setShowVoice(false)} />}
+      {showJourney && <JourneyMap onClose={() => setShowJourney(false)} />}
+      {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
 
-          {/* 1. Header Section */}
-          <header style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '30px'
-          }}>
-            {/* Sync Button (Left) */}
-            <button
-              onClick={() => setShowSync(true)}
-              style={{
-                width: '45px', height: '45px',
-                borderRadius: '50%',
-                background: 'var(--glass-bg)',
-                border: 'var(--glass-border)',
-                fontSize: '1.2rem',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-primary)'
-              }}
-            >
-              🔄
-            </button>
+      <div className="app-container">
 
-            <div style={{
-              textAlign: 'center',
+        {/* 1. Header Section - Minimal */}
+        <header style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '40px'
+        }}>
+          {/* Sync Button (Left) */}
+          <button
+            onClick={() => setShowSync(true)}
+            style={{
+              width: '48px', height: '48px',
+              borderRadius: '50%',
+              background: '#FFFFFF',
+              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+              fontSize: '1.2rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--text-primary)'
+            }}
+          >
+            🔄
+          </button>
+
+          <div style={{ textAlign: 'center' }}>
+            <span style={{
+              display: 'inline-block',
+              padding: '8px 16px',
+              background: '#FFFFFF',
+              borderRadius: '999px',
+              fontSize: '0.9rem',
+              fontWeight: '600',
+              color: 'var(--accent-primary)',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+              marginBottom: '8px'
             }}>
-              <h1 style={{
-                margin: 0,
-                fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
-                background: 'linear-gradient(to right, #fff, #cbd5e1)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: '0 2px 10px rgba(255,255,255,0.1)'
-              }}>
-                {getTitle()}
-              </h1>
-            </div>
-
-            {/* Settings Button (Right) */}
-            <button
-              onClick={() => setShowSettings(true)}
-              style={{
-                width: '45px', height: '45px',
-                borderRadius: '50%',
-                background: 'var(--glass-bg)',
-                border: 'var(--glass-border)',
-                fontSize: '1.2rem',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--text-primary)'
-              }}
-            >
-              ⚙️
-            </button>
-          </header>
-
-          {/* 2. Bento Grid Dashboard */}
-          <div className="bento-grid">
-
-            {/* Main Counter - Full Width */}
-            <div className="glass-card bento-item-full" style={{ padding: '30px 20px' }}>
-              <Counter />
-            </div>
-
-            {/* Mood Pulse - Full Width or Half */}
-            <div className="glass-card bento-item-full" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                ❤️ Daily Vibe
-              </h3>
-              <MoodPulse />
-            </div>
-
-            {/* Daily Message */}
-            <div className="glass-card bento-item-full">
-              <MessageCard />
-            </div>
-
-            {/* Long Distance Clock (Conditional) */}
-            {longDistance && (
-              <div className="glass-card bento-item-full">
-                <DistanceClock
-                  partnerOffset={longDistance.offset}
-                  meetingDate={longDistance.meet}
-                />
-              </div>
-            )}
-
+              EST. 2024
+            </span>
+            <h1 style={{
+              margin: 0,
+              fontSize: '1.8rem',
+              color: 'var(--text-primary)',
+              letterSpacing: '-1px'
+            }}>
+              {getTitle()}
+            </h1>
           </div>
-        </div>
 
-        <MemoryCarousel />
+          {/* Settings Button (Right) */}
+          <button
+            onClick={() => setShowSettings(true)}
+            style={{
+              width: '48px', height: '48px',
 
-        <DailyQuestion />
+              borderRadius: '50%',
+              background: 'var(--glass-bg)',
+              border: 'var(--glass-border)',
+              fontSize: '1.2rem',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--text-primary)'
+            }}
+          >
+            ⚙️
+          </button>
+        </header>
 
-        {/* Old buttons removed in favor of Navbar */}
+        <div className="bento-grid">
+          {/* Main Counter - Floating Geometric Card */}
+          <div className="pop-card" style={{ padding: '40px 20px', textAlign: 'center', background: '#FFFFFF', border: 'none', boxShadow: '0 20px 40px -10px rgba(249, 115, 22, 0.15)' }}>
+            <Counter />
+          </div>
 
-        <div style={{ marginTop: '30px', paddingBottom: '120px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
-          <button onClick={() => setShowRecap(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Year in Review</button>
-          <button onClick={() => setShowLegacy(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Legacy Check</button>
-        </div>
+          {/* Mood Pulse - Pill Container */}
+          <div className="pop-card" style={{ padding: '24px', background: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              ❤️ Daily Vibe
+            </h3>
+            <MoodPulse />
+          </div>
 
-        <Navbar onNavigate={handleNavigate} />
-
-        <AnniversaryOverlay />
-
-        <PrivateSection />
-
-        {isNightOwl && (
-          <div style={{ marginTop: '20px', opacity: 0.5, fontSize: '0.8rem' }}>
-            <span title="Secret Night Mode Active">🌙</span>
-            <p>The night is ours.</p>
+          {/* Message Card */}
+          <MessageCard />
+        </div>   {/* Long Distance Clock (Conditional) */}
+        {longDistance && (
+          <div className="glass-card bento-item-full">
+            <DistanceClock
+              partnerOffset={longDistance.offset}
+              meetingDate={longDistance.meet}
+            />
           </div>
         )}
+      </div>
 
-        <BackgroundMusic />
+      <MemoryCarousel />
+
+      <DailyQuestion />
+
+      {/* Old buttons removed in favor of Navbar */}
+
+      <div style={{ marginTop: '30px', paddingBottom: '120px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
+        <button onClick={() => setShowRecap(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Year in Review</button>
+        <button onClick={() => setShowLegacy(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Legacy Check</button>
+      </div>
+
+      <Navbar onNavigate={handleNavigate} />
+
+      <AnniversaryOverlay />
+
+      <PrivateSection />
+
+      {isNightOwl && (
+        <div style={{ marginTop: '20px', opacity: 0.5, fontSize: '0.8rem' }}>
+          <span title="Secret Night Mode Active">🌙</span>
+          <p>The night is ours.</p>
+        </div>
+      )}
+
+      <BackgroundMusic />
 
 
 
-        <Settings
-          isOpen={showSettings}
-          onClose={() => setShowSettings(false)}
-          onEditPhotos={() => {
-            setShowSettings(false);
-            setIsEditingPhotos(true);
+      <Settings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        onEditPhotos={() => {
+          setShowSettings(false);
+          setIsEditingPhotos(true);
+        }}
+      />
+
+      {isEditingPhotos && (
+        <PhotoSelection
+          isEditing={true}
+          onBack={() => setIsEditingPhotos(false)}
+          onSelect={() => {
+            setIsEditingPhotos(false);
+            // Reload images
+            window.location.reload();
           }}
         />
-
-        {isEditingPhotos && (
-          <PhotoSelection
-            isEditing={true}
-            onBack={() => setIsEditingPhotos(false)}
-            onSelect={() => {
-              setIsEditingPhotos(false);
-              // Reload images
-              window.location.reload();
-            }}
-          />
-        )}
-      </>
-    </ThemeBackground >
+      )}
+    </>
   );
 }
 

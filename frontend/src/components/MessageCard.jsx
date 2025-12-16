@@ -16,7 +16,7 @@ const MessageCard = () => {
     }, [isLoaded, getDailyLoveMessage]);
 
     return (
-        <div className="glass-card" style={{
+        <div className="pop-card" style={{
             marginTop: '2rem',
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(10px)',
