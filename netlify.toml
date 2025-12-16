@@ -1,7 +1,8 @@
 [build]
-  base = "frontend"
-  publish = "dist"
-  command = "npm run build"
+  # Run from root, explicitly enter frontend
+  base = "/" 
+  publish = "frontend/dist"
+  command = "cd frontend && npm install && npm run build"
 
 [[redirects]]
   from = "/*"
