@@ -16,19 +16,21 @@ const MessageCard = () => {
     }, [isLoaded, getDailyLoveMessage]);
 
     return (
-        <div style={{
+        <div className="glass-card" style={{
             marginTop: '2rem',
-            padding: '20px',
-            borderTop: '1px solid rgba(0,0,0,0.05)',
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'opacity 1s ease, transform 1s ease'
+            transition: 'opacity 1s ease, transform 1s ease',
+            textAlign: 'center'
         }}>
+            <h3 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent-color)', marginBottom: '15px' }}>Daily Reflection</h3>
             <p style={{
-                fontSize: '1.1rem',
+                fontSize: '1.2rem',
                 lineHeight: '1.6',
-                fontFamily: 'serif',
-                fontStyle: 'italic'
+                fontFamily: 'var(--font-serif)',
+                fontStyle: 'italic',
+                color: 'var(--text-primary)',
+                margin: 0
             }}>
                 "{message}"
             </p>

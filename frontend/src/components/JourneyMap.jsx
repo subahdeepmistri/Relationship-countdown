@@ -30,68 +30,124 @@ const JourneyMap = ({ onClose }) => {
         <div style={{
             position: 'fixed',
             top: 0, left: 0, width: '100%', height: '100%',
-            background: 'var(--bg-gradient)',
+            background: 'rgba(15, 23, 42, 0.95)', // Deep overlay matching new theme
             zIndex: 3000,
             overflowY: 'auto',
             padding: '80px 20px 40px',
-            color: 'var(--text-primary)'
+            color: 'var(--text-primary)',
+            backdropFilter: 'blur(10px)'
         }}>
             <div style={{ maxWidth: '600px', margin: '0 auto' }}>
                 <button
                     onClick={onClose}
                     style={{
                         position: 'fixed', top: '20px', right: '20px',
-                        fontSize: '1.5rem', background: 'rgba(255,255,255,0.2)',
+                        fontSize: '1.5rem', background: 'rgba(255,255,255,0.1)',
                         backdropFilter: 'blur(10px)', width: '45px', height: '45px',
                         borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.5)', cursor: 'pointer', zIndex: 3001,
+                        border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', zIndex: 3001,
                         color: 'var(--text-primary)'
                     }}
                 >✕</button>
-                <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', textAlign: 'center', marginBottom: '10px' }}>Our Journey 🗺️</h2>
-                <p style={{ textAlign: 'center', opacity: 0.6 }}>Every step brought us here.</p>
+
+                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', margin: '0 0 10px 0', color: '#fff' }}>Our Timeline</h2>
+                    <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Every chapter of our story.</p>
+                </div>
 
                 <div style={{ marginTop: '50px', position: 'relative' }}>
                     {/* Center Line */}
-                    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: 'rgba(0,0,0,0.1)', transform: 'translateX(-50%)' }} />
+                    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: 'linear-gradient(to bottom, transparent, var(--accent-color), transparent)', transform: 'translateX(-50%)' }} />
 
                     {milestones.map((m, i) => (
                         <div key={m.id} style={{
                             display: 'flex',
                             justifyContent: i % 2 === 0 ? 'flex-end' : 'flex-start',
-                            marginBottom: '40px',
+                            marginBottom: '60px',
                             position: 'relative'
                         }}>
                             {/* Dot */}
                             <div style={{
-                                position: 'absolute', left: '50%', top: '20px',
-                                width: '14px', height: '14px', borderRadius: '50%', background: 'var(--accent-color)',
-                                transform: 'translateX(-50%)', border: '3px solid var(--bg-color)', zIndex: 1
+                                position: 'absolute', left: '50%', top: '25px',
+                                width: '16px', height: '16px', borderRadius: '50%',
+                                background: 'var(--bg-color)',
+                                border: '4px solid var(--accent-color)',
+                                transform: 'translateX(-50%)',
+                                zIndex: 1,
+                                boxShadow: `0 0 15px ${m.id % 2 ? 'var(--accent-color)' : 'var(--text-accent)'}`
                             }} />
 
                             <div className="glass-card" style={{
                                 width: '45%',
-                                padding: '20px',
-                                background: '#FFFFFF',
+                                padding: '25px',
                                 textAlign: i % 2 === 0 ? 'right' : 'left',
-                                boxShadow: '0 5px 20px rgba(0,0,0,0.05)',
-                                border: 'none'
+                                position: 'relative'
                             }}>
-                                <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>{m.title}</h4>
-                                <span style={{ fontSize: '0.8rem', opacity: 0.6, display: 'block', marginBottom: '5px' }}>{new Date(m.date).toLocaleDateString()}</span>
-                                {m.desc && <p style={{ fontSize: '0.9rem', margin: 0, opacity: 0.8 }}>{m.desc}</p>}
-                                <button onClick={() => deleteItem(m.id)} style={{ color: 'red', opacity: 0.3, marginTop: '10px', fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer' }}>Delete</button>
+                                <span style={{
+                                    fontSize: '0.8rem',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '1px',
+                                    color: 'var(--accent-color)',
+                                    fontWeight: 'bold',
+                                    display: 'block',
+                                    marginBottom: '5px'
+                                }}>
+                                    {new Date(m.date).toLocaleDateString()}
+                                </span>
+                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem' }}>{m.title}</h4>
+                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{m.desc}</p>}
+                                <button onClick={() => deleteItem(m.id)} style={{ color: '#ef5350', opacity: 0.6, marginTop: '15px', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>Delete</button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="glass-card" style={{ marginTop: '60px', padding: '30px', background: '#FFFFFF', border: '1px dashed #ccc', textAlign: 'center' }}>
-                    <h4 style={{ marginBottom: '20px', fontSize: '1.2rem' }}>Add Milestone</h4>
-                    <input placeholder="Title (e.g. First Date)" value={newTitle} onChange={e => setNewTitle(e.target.value)} style={{ width: '100%', marginBottom: '15px', padding: '12px', boxSizing: 'border-box', borderRadius: '10px', border: '1px solid #eee', background: '#f9f9f9' }} />
-                    <input type="date" value={newDate} onChange={e => setNewDate(e.target.value)} style={{ width: '100%', marginBottom: '15px', padding: '12px', boxSizing: 'border-box', borderRadius: '10px', border: '1px solid #eee', background: '#f9f9f9' }} />
-                    <textarea placeholder="Reflection..." value={newDesc} onChange={e => setNewDesc(e.target.value)} style={{ width: '100%', marginBottom: '20px', padding: '12px', boxSizing: 'border-box', borderRadius: '10px', border: '1px solid #eee', background: '#f9f9f9', height: '80px' }} />
-                    <button onClick={addMilestone} style={{ width: '100%', padding: '15px', background: 'black', color: 'white', borderRadius: '30px', fontWeight: 'bold', fontSize: '1rem', border: 'none', cursor: 'pointer' }}>Add to Timeline</button>
+                <div className="glass-card" style={{ marginTop: '60px', padding: '40px', textAlign: 'center' }}>
+                    <h4 style={{ marginBottom: '25px', fontSize: '1.5rem' }}>Add a New Chapter ✍️</h4>
+                    <div style={{ display: 'grid', gap: '15px' }}>
+                        <input
+                            placeholder="Title (e.g. First Date)"
+                            value={newTitle}
+                            onChange={e => setNewTitle(e.target.value)}
+                            style={{
+                                width: '100%', padding: '15px',
+                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '12px', color: 'white', fontSize: '1rem'
+                            }}
+                        />
+                        <input
+                            type="date"
+                            value={newDate}
+                            onChange={e => setNewDate(e.target.value)}
+                            style={{
+                                width: '100%', padding: '15px',
+                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '12px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif'
+                            }}
+                        />
+                        <textarea
+                            placeholder="What made this moment special?"
+                            value={newDesc}
+                            onChange={e => setNewDesc(e.target.value)}
+                            style={{
+                                width: '100%', padding: '15px', height: '100px',
+                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '12px', color: 'white', fontSize: '1rem', resize: 'none'
+                            }}
+                        />
+                        <button
+                            onClick={addMilestone}
+                            style={{
+                                width: '100%', padding: '18px',
+                                background: 'var(--accent-color)', color: 'white',
+                                borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem',
+                                border: 'none', cursor: 'pointer', marginTop: '10px',
+                                boxShadow: '0 5px 20px rgba(244, 114, 182, 0.4)'
+                            }}
+                        >
+                            Add to Timeline
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -253,68 +253,94 @@ function App() {
         {showJourney && <JourneyMap onClose={() => setShowJourney(false)} />}
         {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
 
-        <div className="app-container" style={{ paddingBottom: '100px' }}>
+        <div className="app-container" style={{ paddingBottom: '120px' }}>
+
+          {/* 1. Header Section */}
           <header style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '20px 0',
-            marginBottom: '20px',
-            position: 'relative'
+            marginBottom: '30px'
           }}>
             {/* Sync Button (Left) */}
             <button
               onClick={() => setShowSync(true)}
               style={{
-                background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer',
-                opacity: 0.7
+                width: '45px', height: '45px',
+                borderRadius: '50%',
+                background: 'var(--glass-bg)',
+                border: 'var(--glass-border)',
+                fontSize: '1.2rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-primary)'
               }}
             >
               🔄
             </button>
 
             <div style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 'min(4rem, 12vw)', // Responsive font size
-              margin: '0 10px',
-              lineHeight: 1,
-              background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--accent-color) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
               textAlign: 'center',
-              flex: 1, // Allow it to fill space but shrink if needed
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
             }}>
-              {getTitle()}
+              <h1 style={{
+                margin: 0,
+                fontSize: 'clamp(1.5rem, 5vw, 2.5rem)',
+                background: 'linear-gradient(to right, #fff, #cbd5e1)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0 2px 10px rgba(255,255,255,0.1)'
+              }}>
+                {getTitle()}
+              </h1>
             </div>
 
             {/* Settings Button (Right) */}
             <button
               onClick={() => setShowSettings(true)}
               style={{
-                background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer',
-                opacity: 0.7
+                width: '45px', height: '45px',
+                borderRadius: '50%',
+                background: 'var(--glass-bg)',
+                border: 'var(--glass-border)',
+                fontSize: '1.2rem',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--text-primary)'
               }}
             >
               ⚙️
             </button>
           </header>
 
-          <MoodPulse />
+          {/* 2. Bento Grid Dashboard */}
+          <div className="bento-grid">
 
-          <Counter />
+            {/* Main Counter - Full Width */}
+            <div className="glass-card bento-item-full" style={{ padding: '30px 20px' }}>
+              <Counter />
+            </div>
 
-          {longDistance && (
-            <DistanceClock
-              partnerOffset={longDistance.offset}
-              meetingDate={longDistance.meet}
-            />
-          )}
+            {/* Mood Pulse - Full Width or Half */}
+            <div className="glass-card bento-item-full" style={{ padding: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                ❤️ Daily Vibe
+              </h3>
+              <MoodPulse />
+            </div>
 
-          <div style={{ margin: '40px 0' }}>
-            <MessageCard />
+            {/* Daily Message */}
+            <div className="glass-card bento-item-full">
+              <MessageCard />
+            </div>
+
+            {/* Long Distance Clock (Conditional) */}
+            {longDistance && (
+              <div className="glass-card bento-item-full">
+                <DistanceClock
+                  partnerOffset={longDistance.offset}
+                  meetingDate={longDistance.meet}
+                />
+              </div>
+            )}
+
           </div>
         </div>
 

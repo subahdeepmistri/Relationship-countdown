@@ -1,8 +1,44 @@
 :root {
-  /* Editorial Theme (Modern Poster) */
-  --bg-color: #E0F2F1;
-  --bg-gradient: linear-gradient(180deg, #E0F2F1 0%, #B2DFDB 100%);
-  /* Soft Mint */
+  /* --- Midnight Premium Palette (Unified Dark Mode) --- */
+
+  /* 1. Backgrounds - Deep & Rich */
+  --bg-color: #020617;
+  /* Slate 950 - Darkest Base */
+  --bg-gradient: linear-gradient(to bottom, #020617 0%, #0B0F19 100%);
+  --bg-image:
+    radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 80% 90%, rgba(139, 92, 246, 0.15) 0%, transparent 50%);
+
+  /* 2. Glass Cards - Ultra Premium */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  /* Subtle tint */
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.5);
+  /* Deep shadow */
+  --glass-blur: 24px;
+
+  /* 3. Typography & Contrast (WCAG AAA Target) */
+  --text-primary: #F8FAFC;
+  /* Slate 50 - Pure White/Grey */
+  --text-secondary: #94A3B8;
+  /* Slate 400 - Readable Muted */
+  --text-accent: #38BDF8;
+  /* Sky 400 - Clear Highlight */
+
+  /* 4. Functional Colors */
+  --accent-color: #A855F7;
+  /* Purple 500 - Sophisticated Accent */
+  --accent-glow: 0 0 20px rgba(168, 85, 247, 0.4);
+
+  --success-color: #4ADE80;
+  --warning-color: #FBBF24;
+
+  /* 5. Metrics */
+  --shape-radius: 28px;
+  /* Softer curves */
+  --font-serif: 'Playfair Display', serif;
+  --font-sans: 'Outfit', sans-serif;
+  --transition-speed: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 *,
@@ -11,94 +47,59 @@
   box-sizing: border-box;
 }
 
-:root {
-  --text-primary: #263238;
-  /* Deep Ink Blue */
-  --text-secondary: #546E7A;
-  /* Blue Grey */
-
-  --accent-color: #FF7043;
-  /* Warm Coral - Primary Action */
-  --accent-secondary: #26A69A;
-  /* Teal - Secondary */
-
-  --card-bg: transparent;
-  /* Removing traditional card backgrounds */
-  --card-shadow: none;
-  /* Removing shadows for flat poster look */
-  --glass-border: none;
-
-  --font-serif: 'Playfair Display', serif;
-  --font-sans: 'Outfit', sans-serif;
-
-  /* Transitions */
-  --transition-speed: 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  /* Slower, smoother */
-}
-
-/* Morning Variation (Cream/Orange) */
-[data-theme="morning"] {
-  --bg-gradient: linear-gradient(180deg, #FAFAFA 0%, #FFF3E0 100%);
-  --text-primary: #3E2723;
-  --text-secondary: #8D6E63;
-  --accent-color: #FF7043;
-}
-
-/* Evening Variation (Deep Teal) */
-[data-theme="evening"] {
-  --bg-gradient: linear-gradient(180deg, #004D40 0%, #00695C 100%);
-  --text-primary: #E0F2F1;
-  --text-secondary: #80CBC4;
-  --accent-color: #FFAB91;
-  /* Soft Coral */
-}
-
-/* Night Variation (Midnight Ink) */
-[data-theme="night"] {
-  --bg-gradient: linear-gradient(180deg, #102027 0%, #263238 100%);
-  --text-primary: #ECEFF1;
-  --text-secondary: #B0BEC5;
-  --accent-color: #FF7043;
-}
-
-/* Global Styles for Editorial Look */
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg-gradient);
+  background: var(--bg-color);
+  background-image: var(--bg-gradient), var(--bg-image);
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text-primary);
-  transition: background 1.5s ease, color 1s ease;
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+  /* iOS Safe Area */
 }
 
 #root {
   width: 100%;
-  max-width: 600px;
+  max-width: 650px;
+  /* Constrained for better readability */
+  margin: 0 auto;
   padding: 20px;
-  box-sizing: border-box;
+  padding-bottom: 140px;
+  /* Space for dock */
 }
 
+/* --- Utility Classes --- */
+
+/* Premium Glass Card */
 .glass-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-radius: 24px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
   border: var(--glass-border);
-  box-shadow: var(--card-shadow);
-  padding: 40px;
-  text-align: center;
-  transition: all var(--transition-speed);
+  border-radius: var(--shape-radius);
+  box-shadow: var(--glass-shadow);
+  padding: 24px;
+  transition: transform var(--transition-speed), border-color var(--transition-speed);
 }
 
+.glass-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Typography Overrides */
 h1,
 h2,
-h3 {
-  font-family: 'Playfair Display', serif;
+h3,
+h4 {
+  font-family: var(--font-serif);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  margin-top: 0;
+  color: #FFFFFF;
+  letter-spacing: -0.01em;
 }
 
 button {
@@ -106,59 +107,73 @@ button {
   border: none;
   background: none;
   font-family: inherit;
+  transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-@media print {
+button:active {
+  transform: scale(0.96);
+}
 
-  .app-container,
-  .no-print,
-  .navbar-dock {
-    display: none !important;
+/* --- Grid Layouts (Mobile Optimized) --- */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.bento-item-full {
+  grid-column: span 2;
+}
+
+/* Mobile Stacking */
+@media (max-width: 600px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 
-  .scrapbook-container {
-    position: static !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: white !important;
-  }
-
-  body {
-    background: white !important;
-    color: black !important;
+  .bento-item-full {
+    grid-column: span 1;
   }
 }
 
-/* Navbar Dock (Desktop / Default) */
+/* --- Navigation Dock (Fixed & Safe) --- */
 .navbar-dock {
   position: fixed;
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%);
+
+  /* Glass look */
+  background: rgba(2, 6, 23, 0.85);
+  /* Darker opacity for contrast */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  padding: 12px 24px;
+  border-radius: 100px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.8);
+
   display: flex;
   gap: 20px;
-  padding: 15px 30px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: 25px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
-  z-index: 1000;
-  width: max-content;
+  z-index: 9999;
+
+  /* Constraints */
+  width: auto;
+  max-width: 92%;
+  min-width: 300px;
+  justify-content: space-between;
 }
 
+/* Mobile Safe Area & sizing */
 @media (max-width: 480px) {
   .navbar-dock {
-    bottom: 20px !important;
-    left: 20px !important;
-    right: 20px !important;
-    width: auto !important;
-    /* Stretch to fill space between left/right */
-    transform: none !important;
-    /* Disable the center translation */
-    padding: 10px 15px !important;
-    gap: 10px !important;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    width: 90%;
+    padding: 10px 20px;
+    gap: 10px;
     justify-content: space-around;
   }
 }

@@ -25,56 +25,59 @@ const Counter = () => {
     if (!stats) return <div style={{ opacity: 0.5, fontStyle: 'italic' }}>Calculating forever...</div>;
 
     return (
-        <div style={{ textAlign: 'center', padding: '2rem 0', position: 'relative' }}>
-            {/* Organic Shape Background for Hero */}
-            <div style={{
-                position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-                width: '300px', height: '300px',
-                background: 'rgba(255, 112, 67, 0.1)', /* Soft Coral Tint */
-                borderRadius: 'var(--shape-radius)',
-                zIndex: -1,
-                filter: 'blur(40px)'
-            }} />
+        <div style={{ textAlign: 'center', position: 'relative' }}>
 
             {/* Hero Days */}
             <div style={{
-                fontSize: '10rem',
+                fontSize: 'clamp(3rem, 12vw, 6rem)', // Reduced max size for cleaner look
                 fontFamily: 'var(--font-serif)',
+                fontWeight: '800',
                 lineHeight: 1,
-                color: 'var(--text-primary)',
-                letterSpacing: '-5px'
+                marginBottom: '10px',
+                background: 'linear-gradient(to bottom, #fff, #cbd5e1)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 0 30px rgba(168, 85, 247, 0.3))' // Premium glow
             }}>
                 {stats.days}
             </div>
+
             <div style={{
-                fontSize: '1.5rem',
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                marginTop: '-1rem',
-                marginBottom: '2rem',
-                color: 'var(--accent-color)'
+                fontSize: '1.2rem',
+                textTransform: 'uppercase',
+                letterSpacing: '4px',
+                color: 'var(--accent-color)',
+                fontWeight: 'bold',
+                marginBottom: '40px'
             }}>
-                days of us
+                Days Together
             </div>
 
             {/* Sub Counters */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'center',
-                gap: '30px',
-                opacity: 0.8
+                gap: 'clamp(20px, 5vw, 40px)', // Responsive gap
+                marginTop: '20px'
             }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.hours}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Hrs</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.hours}</span>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Hours</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.minutes}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Min</span>
+                {/* Divider */}
+                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.minutes}</span>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Mins</span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.seconds}</span>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Sec</span>
+
+                {/* Divider */}
+                <div style={{ width: '1px', background: 'rgba(255,255,255,0.2)' }}></div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <span style={{ fontSize: 'clamp(1.2rem, 4vw, 1.8rem)', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stats.seconds}</span>
+                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6 }}>Secs</span>
                 </div>
             </div>
         </div>

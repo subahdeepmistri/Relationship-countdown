@@ -25,14 +25,14 @@ const MoodPulse = () => {
 
     return (
         <div style={{
-            marginBottom: '20px',
             width: '100%',
             overflowX: 'auto',
             whiteSpace: 'nowrap',
-            padding: '10px 0',
-            scrollbarWidth: 'none'
+            padding: '5px 0 15px 0',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch'
         }}>
-            <div style={{ display: 'inline-flex', gap: '15px', padding: '0 10px' }}>
+            <div style={{ display: 'inline-flex', gap: '12px' }}>
                 {MOODS.map(mood => {
                     const isActive = myStatus === mood.id;
                     return (
@@ -41,48 +41,56 @@ const MoodPulse = () => {
                             onClick={() => handleSetMood(mood.id)}
                             style={{
                                 display: 'flex',
-                                flexDirection: 'column',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '5px',
-                                opacity: isActive ? 1 : 0.7,
-                                transform: isActive ? 'scale(1.1) translateY(-5px)' : 'scale(1)',
-                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                background: isActive ? mood.color : 'rgba(255,255,255,0.4)',
-                                width: '70px',
-                                height: '90px',
-                                borderRadius: 'var(--shape-radius)', /* Organic Shape */
-                                border: 'none',
-                                boxShadow: isActive ? `0 10px 20px -5px ${mood.color}` : 'none',
-                                color: isActive ? 'white' : 'var(--text-primary)'
+                                gap: '8px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: isActive ? `1px solid ${mood.color}` : '1px solid rgba(255,255,255,0.1)',
+                                minWidth: '80px',
+                                height: '100px',
+                                borderRadius: '20px',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                                transform: isActive ? 'scale(1.05)' : 'scale(1)',
+                                boxShadow: isActive ? `0 0 15px ${mood.color}40` : 'none', // Glow instead of solid shadow
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}
                         >
                             <span style={{
-                                fontSize: '1.8rem',
-                                filter: isActive ? 'none' : 'grayscale(0.5)'
+                                fontSize: '2.2rem',
+                                filter: isActive ? 'none' : 'grayscale(1) opacity(0.5)',
+                                transition: 'all 0.3s ease',
+                                textShadow: isActive ? `0 0 10px ${mood.color}` : 'none'
                             }}>
                                 {mood.emoji}
                             </span>
-                            {isActive && (
-                                <span style={{
-                                    fontSize: '0.6rem',
-                                    fontWeight: 'bold',
-                                    marginTop: '2px'
-                                }}>
-                                    {mood.label}
-                                </span>
-                            )}
+                            <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: isActive ? '600' : 'normal',
+                                color: isActive ? mood.color : 'var(--text-secondary)', // Colored text matches glow
+                                opacity: 1
+                            }}>
+                                {mood.label}
+                            </span>
                         </button>
                     );
                 })}
             </div>
             {myStatus && (
-                <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '0.8rem', opacity: 0.8 }}>
-                    Current Vibe: <strong>{MOODS.find(m => m.id === myStatus)?.label}</strong>
+                <div style={{
+                    marginTop: '15px',
+                    textAlign: 'center',
+                    fontSize: '0.9rem',
+                    color: 'var(--text-accent)',
+                    fontWeight: '500'
+                }}>
+                    Currently feeling: <span style={{ color: '#fff' }}>{MOODS.find(m => m.id === myStatus)?.label}</span>
                 </div>
             )}
         </div>
     );
+
 };
 
 export default MoodPulse;
