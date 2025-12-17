@@ -124,50 +124,96 @@ const JourneyMap = ({ onClose }) => {
                             placeholder="Title (e.g. First Date)"
                             value={newTitle}
                             onChange={e => setNewTitle(e.target.value)}
+                            className="glass-input"
                             style={{
                                 width: '100%', padding: '16px',
                                 background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '16px', color: 'white', fontSize: '1rem', outline: 'none',
-                                backdropFilter: 'blur(5px)'
+                                backdropFilter: 'blur(5px)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.5)';
+                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
+                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
+                            }}
+                            onBlur={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.3)';
+                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                e.target.style.boxShadow = 'none';
                             }}
                         />
                         <input
                             type="date"
                             value={newDate}
                             onChange={e => setNewDate(e.target.value)}
+                            className="glass-input"
                             style={{
                                 width: '100%', padding: '16px',
                                 background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
                                 borderRadius: '16px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif',
-                                outline: 'none', backdropFilter: 'blur(5px)'
+                                outline: 'none', backdropFilter: 'blur(5px)',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onFocus={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.5)';
+                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
+                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
+                            }}
+                            onBlur={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.3)';
+                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                e.target.style.boxShadow = 'none';
                             }}
                         />
                         <textarea
                             placeholder="What made this moment special?"
                             value={newDesc}
                             onChange={e => setNewDesc(e.target.value)}
+                            className="glass-input"
                             style={{
-                                width: '100%', padding: '16px', height: '120px',
+                                width: '100%', padding: '16px', minHeight: '120px',
                                 background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '16px', color: 'white', fontSize: '1rem', resize: 'none',
-                                outline: 'none', backdropFilter: 'blur(5px)'
+                                borderRadius: '16px', color: 'white', fontSize: '1rem', resize: 'vertical',
+                                outline: 'none', backdropFilter: 'blur(5px)',
+                                transition: 'all 0.3s ease',
+                                fontFamily: "'Inter', sans-serif"
+                            }}
+                            onFocus={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.5)';
+                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
+                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
+                            }}
+                            onBlur={e => {
+                                e.target.style.background = 'rgba(0,0,0,0.3)';
+                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                e.target.style.boxShadow = 'none';
                             }}
                         />
                         <button
                             onClick={addMilestone}
                             style={{
-                                width: '100%', padding: '18px',
+                                width: '100%', padding: '14px',
                                 background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)', color: 'white',
-                                borderRadius: '30px', fontWeight: '800', fontSize: '1.2rem',
+                                borderRadius: '30px', fontWeight: '700', fontSize: '1rem',
                                 border: 'none', cursor: 'pointer', marginTop: '10px',
-                                boxShadow: '0 10px 30px rgba(236, 72, 153, 0.4)',
+                                boxShadow: '0 8px 25px rgba(236, 72, 153, 0.4)',
                                 letterSpacing: '1px', textTransform: 'uppercase',
-                                transition: 'transform 0.2s',
+                                transition: 'all 0.2s',
+                                position: 'relative', overflow: 'hidden'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 15px 40px rgba(236, 72, 153, 0.6)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 10px 30px rgba(236, 72, 153, 0.4)';
                             }}
                             onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-                            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         >
-                            Add to Timeline
+                            <span style={{ position: 'relative', zIndex: 1 }}>Add to Timeline 🚀</span>
                         </button>
                     </div>
                 </div>

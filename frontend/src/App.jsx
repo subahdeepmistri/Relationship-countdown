@@ -2,7 +2,7 @@ import React from 'react';
 import ThemeBackground from './components/ThemeBackground';
 import Counter from './components/Counter';
 import MessageCard from './components/MessageCard';
-import BackgroundMusic from './components/BackgroundMusic';
+
 import AnniversaryOverlay from './components/AnniversaryOverlay';
 import Settings from './components/Settings';
 import MemoryCarousel from './components/MemoryCarousel';
@@ -23,12 +23,12 @@ import YearlyRecap from './components/YearlyRecap';
 import SyncManager from './components/SyncManager';
 import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
-import LegacyManager from './components/LegacyManager';
+import LegacyCapsule from './components/LegacyCapsule';
 
 import Navbar from './components/Navbar';
 import MoodPulse from './components/MoodPulse';
 import DailyQuestion from './components/DailyQuestion';
-import ConsentScreen from './components/ConsentScreen';
+
 import AnniversarySelection from './components/AnniversarySelection';
 import DateSelection from './components/DateSelection';
 import PhotoSelection from './components/PhotoSelection';
@@ -47,9 +47,7 @@ function App() {
   });
 
   // Initialize from localStorage immediately to prevent "flash" of consent screen
-  const [hasConsented, setHasConsented] = useState(() => {
-    return localStorage.getItem('rc_consent_agreed') === 'true';
-  });
+  const [hasConsented, setHasConsented] = useState(true);
 
   const [hasSelectedType, setHasSelectedType] = useState(() => {
     return !!localStorage.getItem('rc_anniversary_type');
@@ -68,35 +66,26 @@ function App() {
   });
 
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
-  const [isEditingPhotos, setIsEditingPhotos] = useState(false);
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showScrapbook, setShowScrapbook] = useState(false);
-  const [showCapsules, setShowCapsules] = useState(false);
-  const [showGoals, setShowGoals] = useState(false);
-  const [showRecap, setShowRecap] = useState(false);
-  const [showSync, setShowSync] = useState(false);
-  const [showVoice, setShowVoice] = useState(false);
-  const [showJourney, setShowJourney] = useState(false);
-  const [showLegacy, setShowLegacy] = useState(false);
+  // NAVIGATION STATE: Single source of truth to prevent overlaps
+  const [activeView, setActiveView] = useState('home');
+
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [longDistance, setLongDistance] = useState(null); // { offset, meet }
 
-  const [showTimeline, setShowTimeline] = useState(false);
-
   const { getAnniversaryCountdown } = useWasm();
 
+  // Unified Navigation Handler
   const handleNavigate = (view) => {
-    if (view === 'capsules') setShowCapsules(true);
-    if (view === 'goals') setShowGoals(true);
-    if (view === 'voice') setShowVoice(true);
-    if (view === 'journey') setShowJourney(true);
-    if (view === 'timeline') setShowTimeline(true); // New Timeline View
+    setActiveView(view);
+  };
+
+  const handleClose = () => {
+    setActiveView('home');
   };
 
   // ... (useEffects remain unchanged) ...
 
-  // Check for notification on mount/update & Load LD settings
   // Check for notification on mount/update & Load LD settings
   useEffect(() => {
     // 1. Shareable Link Parsing (Magical Viral Feature) 🌟
@@ -173,7 +162,7 @@ function App() {
 
   // Night Owl Check & Scrapbook Listener
   useEffect(() => {
-    const handleScrapbook = () => setShowScrapbook(true);
+    const handleScrapbook = () => setActiveView('scrapbook');
     window.addEventListener('open-scrapbook', handleScrapbook);
 
     const checkTime = () => {
@@ -238,14 +227,7 @@ function App() {
     return <SecurityLock initialMode="verify" onSuccess={() => setIsAppUnlocked(true)} />;
   }
 
-  const handleAgree = () => {
-    localStorage.setItem('rc_consent_agreed', 'true');
-    setHasConsented(true);
-  };
 
-  if (!hasConsented) {
-    return <ConsentScreen onAgree={handleAgree} />;
-  }
 
   const handleTypeSelect = (type) => {
     localStorage.setItem('rc_anniversary_type', type);
@@ -266,9 +248,11 @@ function App() {
     localStorage.setItem('rc_photos_set', 'true');
     setHasSelectedPhotos(true);
     // No reload needed, useEffect will catch it
+    setActiveView('home');
   };
 
   if (!hasSelectedPhotos) {
+    // Use PhotoSelection purely for initial setup here
     return <PhotoSelection onSelect={handlePhotoSelect} onBack={() => setHasSelectedDate(false)} />;
   }
 
@@ -322,20 +306,40 @@ function App() {
 
   return (
     <>
-      {showScrapbook && <ScrapbookView onClose={() => setShowScrapbook(false)} />}
-      {showCapsules && <TimeCapsuleManager onClose={() => setShowCapsules(false)} />}
-      {showGoals && <FutureGoalsTimeline onClose={() => setShowGoals(false)} />}
+      {/* EXCLUSIVE VIEWS - Only one renders at a time */}
+      {activeView === 'scrapbook' && <ScrapbookView onClose={handleClose} />}
+      {activeView === 'capsules' && <TimeCapsuleManager onClose={handleClose} />}
+      {activeView === 'goals' && <FutureGoalsTimeline onClose={handleClose} />}
+      {activeView === 'recap' && <YearlyRecap onClose={handleClose} />}
+      {activeView === 'sync' && <SyncManager onClose={handleClose} />}
+      {activeView === 'voice' && <VoiceDiary onClose={handleClose} />}
+      {activeView === 'journey' && <JourneyMap onClose={handleClose} />}
+      {activeView === 'legacy' && <LegacyCapsule onClose={handleClose} />}
+      {activeView === 'timeline' && <TimelineView onClose={handleClose} />}
+
+      {/* Settings & Edit Photos */}
+      <Settings
+        isOpen={activeView === 'settings'}
+        onClose={handleClose}
+        onEditPhotos={() => setActiveView('edit-photos')}
+      />
+
+      {activeView === 'edit-photos' && (
+        <PhotoSelection
+          isEditing={true}
+          onBack={() => setActiveView('settings')} // Go back to settings
+          onSelect={() => {
+            setActiveView('settings'); // Return to settings after save
+            window.location.reload(); // Reload to update images
+          }}
+        />
+      )}
+
+      {/* BACKGROUND & DECOR */}
       <div className="blob-bg">
         <div className="blob" style={{ top: '-10%', left: '-10%', width: '500px', height: '500px', background: '#FDE68A' }}></div>
         <div className="blob" style={{ bottom: '10%', right: '-10%', width: '400px', height: '400px', background: '#FECACA' }}></div>
       </div>
-
-      {showRecap && <YearlyRecap onClose={() => setShowRecap(false)} />}
-      {showSync && <SyncManager onClose={() => setShowSync(false)} />}
-      {showVoice && <VoiceDiary onClose={() => setShowVoice(false)} />}
-      {showJourney && <JourneyMap onClose={() => setShowJourney(false)} />}
-      {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
-      {showTimeline && <TimelineView onClose={() => setShowTimeline(false)} />}
 
       <div className="app-container" style={{ paddingBottom: '150px' }}>
 
@@ -344,46 +348,63 @@ function App() {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '40px'
+          marginBottom: '40px',
+          padding: '0 10px' // Slight inner spacing
         }}>
-          {/* Sync Button (Left) */}
+          {/* Sync Button (Left) - Modern Squircle */}
           <button
-            onClick={() => setShowSync(true)}
-            title="Refresh countdown & Sync settings"
+            onClick={() => setActiveView('sync')}
+            title="Sync & Updates"
+            className="modern-btn"
             style={{
               width: '48px', height: '48px',
-              borderRadius: '50%',
-              background: '#FFFFFF',
-              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-              fontSize: '1.2rem',
+              borderRadius: '16px', // Modern Squircle
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-primary)',
               cursor: 'pointer',
-              border: 'none'
+              transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)'; }}
+            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
           >
-            🔄
+            {/* Clean Refresh Icon Element */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+              <path d="M16 21h5v-5" />
+            </svg>
           </button>
 
           <div style={{ textAlign: 'center' }}>
             <span style={{
-              display: 'inline-block',
-              padding: '8px 16px',
-              background: '#FFFFFF',
-              borderRadius: '999px',
-              fontSize: '0.85rem',
-              fontWeight: '600',
-              color: 'var(--accent-primary)',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-              marginBottom: '8px'
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              background: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              color: 'var(--accent-primary)', // Using theme accent
+              boxShadow: '0 2px 8px rgba(249, 115, 22, 0.1)',
+              marginBottom: '8px',
+              border: '1px solid rgba(249, 115, 22, 0.1)'
             }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }}></span>
               EST. {getStartDate() ? getStartDate().getFullYear() : new Date().getFullYear()}
             </span>
             <h1 style={{
               margin: '0 0 5px 0',
               fontSize: '1.8rem',
               color: 'var(--text-primary)',
-              letterSpacing: '-1px'
+              letterSpacing: '-1px',
+              textShadow: '0 2px 10px rgba(0,0,0,0.05)'
             }}>
               {getTitle()}
             </h1>
@@ -391,28 +412,38 @@ function App() {
               margin: 0,
               fontSize: '0.9rem',
               color: 'var(--text-secondary)',
-              opacity: 0.8
+              opacity: 0.85,
+              fontWeight: '500'
             }}>
               Tracking love, one day at a time
             </p>
           </div>
 
-          {/* Settings Button (Right) */}
+          {/* Settings Button (Right) - Modern Squircle */}
           <button
-            onClick={() => setShowSettings(true)}
-            title="Edit relationship details"
+            onClick={() => setActiveView('settings')}
+            title="Settings"
             style={{
               width: '48px', height: '48px',
-              borderRadius: '50%',
-              background: 'var(--glass-bg)',
-              border: 'var(--glass-border)',
-              fontSize: '1.2rem',
+              borderRadius: '16px',
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-primary)',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
             }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)'; }}
+            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
           >
-            ⚙️
+            {/* Clean Settings Icon Element */}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
           </button>
         </header>
 
@@ -455,57 +486,56 @@ function App() {
 
       {/* Old buttons removed in favor of Navbar */}
 
+      {/* Updated Footer Buttons with SVGs */}
       <div style={{ marginTop: '30px', paddingBottom: '120px', display: 'flex', gap: '15px', justifyContent: 'center' }}>
         <button
-          onClick={() => setShowRecap(true)}
+          onClick={() => setActiveView('recap')}
           style={{
-            padding: '10px 20px',
+            padding: '12px 24px',
             background: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
             borderRadius: '20px',
-            fontSize: '0.85rem',
+            fontSize: '0.9rem',
             color: 'var(--text-secondary)',
             cursor: 'pointer',
             boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-            transition: 'transform 0.1s'
+            transition: 'all 0.2s',
+            display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600'
           }}
           onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
         >
-          📅 Year in Review
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+          Year in Review
         </button>
 
         <button
-          onClick={() => setShowLegacy(true)}
+          onClick={() => setActiveView('legacy')}
           style={{
-            padding: '10px 20px',
+            padding: '12px 24px',
             background: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
             borderRadius: '20px',
-            fontSize: '0.85rem',
+            fontSize: '0.9rem',
             color: 'var(--text-secondary)',
             cursor: 'pointer',
             boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
-            transition: 'transform 0.1s'
+            transition: 'all 0.2s',
+            display: 'flex', alignItems: 'center', gap: '8px', fontWeight: '600'
           }}
           onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
           onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
         >
-          🔍 Legacy Check
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12h5" /><path d="M22 12h-5" /><path d="M7 12l2-2 2 2 2-2 2 2" /><rect x="2" y="7" width="20" height="10" rx="3" /></svg>
+          Legacy Check
         </button>
       </div>
 
       <Navbar
         onNavigate={handleNavigate}
-        activeView={
-          showCapsules ? 'capsules' :
-            showGoals ? 'goals' :
-              showVoice ? 'voice' :
-                showJourney ? 'journey' :
-                  'home'
-        }
+        activeView={activeView}
       />
 
       <AnniversaryOverlay />
@@ -513,36 +543,21 @@ function App() {
       <PrivateSection />
 
       {isNightOwl && (
-        <div style={{ marginTop: '20px', opacity: 0.5, fontSize: '0.8rem' }}>
+        <div style={{
+          marginTop: '20px',
+          fontSize: '0.9rem',
+          color: 'var(--text-secondary)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          background: 'rgba(255,255,255,0.5)', padding: '5px 15px', borderRadius: '20px',
+          marginBottom: '100px'
+        }}>
           <span title="Secret Night Mode Active">🌙</span>
-          <p>The night is ours.</p>
+          <p style={{ margin: 0, fontWeight: '500' }}>The night is ours.</p>
         </div>
       )}
 
-      <BackgroundMusic />
 
 
-
-      <Settings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        onEditPhotos={() => {
-          setShowSettings(false);
-          setIsEditingPhotos(true);
-        }}
-      />
-
-      {isEditingPhotos && (
-        <PhotoSelection
-          isEditing={true}
-          onBack={() => setIsEditingPhotos(false)}
-          onSelect={() => {
-            setIsEditingPhotos(false);
-            // Reload images
-            window.location.reload();
-          }}
-        />
-      )}
     </>
   );
 }

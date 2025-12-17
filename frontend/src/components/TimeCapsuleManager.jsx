@@ -216,21 +216,22 @@ const TimeCapsuleManager = ({ onClose }) => {
                                 })}
                             </div>
 
-                            <div style={{ position: 'fixed', bottom: '40px', left: '0', width: '100%', textAlign: 'center', pointerEvents: 'none', zIndex: 10 }}>
+                            <div style={{ position: 'fixed', bottom: '110px', left: '0', width: '100%', textAlign: 'center', pointerEvents: 'none', zIndex: 3002 }}>
                                 <button
                                     onClick={() => setView('create')}
                                     style={{
                                         pointerEvents: 'auto',
                                         background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)', color: 'white',
-                                        padding: '18px 40px', borderRadius: '50px',
-                                        fontSize: '1.2rem', fontWeight: 'bold', border: 'none', cursor: 'pointer',
+                                        padding: '16px 32px', borderRadius: '50px',
+                                        fontSize: '1rem', fontWeight: 'bold', border: 'none', cursor: 'pointer',
                                         boxShadow: '0 10px 40px rgba(59, 130, 246, 0.5)',
                                         transition: 'transform 0.2s',
+                                        display: 'inline-flex', alignItems: 'center', gap: '8px'
                                     }}
                                     onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                                     onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                                 >
-                                    + Bury New Capsule
+                                    <span style={{ fontSize: '1.2rem' }}>+</span> Bury New Capsule
                                 </button>
                             </div>
                         </>

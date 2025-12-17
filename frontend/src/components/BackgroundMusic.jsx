@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const BackgroundMusic = () => {
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const audioRef = useRef(null);
 
     // Load state from localStorage on mount
@@ -27,36 +28,49 @@ const BackgroundMusic = () => {
     const toggleMusic = () => setIsPlaying(!isPlaying);
 
     return (
-        <div style={{
-            position: 'fixed',
-            bottom: '20px',
-            right: '20px',
-            zIndex: 100
-        }}>
+        <div
+            style={{
+                position: 'fixed',
+                bottom: '100px',
+                right: '20px',
+                zIndex: 99
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <audio ref={audioRef} loop>
                 <source src="/bg-music.mp3" type="audio/mp3" />
-                Your browser does not support the audio element.
             </audio>
 
             <button
                 onClick={toggleMusic}
                 style={{
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    backdropFilter: 'blur(5px)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    borderRadius: '50%',
-                    width: '40px',
-                    height: '40px',
+                    background: isPlaying ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.3)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    borderRadius: '30px',
+                    padding: isHovered || !isPlaying ? '8px 16px' : '10px',
+                    minWidth: isHovered || !isPlaying ? '100px' : '44px',
+                    height: '44px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'var(--text-primary)',
-                    fontSize: '1.2rem',
-                    transition: 'all 0.3s ease'
+                    gap: '8px',
+                    color: isPlaying ? 'var(--accent-primary)' : 'var(--text-primary)',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflow: 'hidden'
                 }}
-                title={isPlaying ? "Pause Music" : "Play Music"}
             >
-                {isPlaying ? '♪' : '✕'}
+                <span>{isPlaying ? '🔊' : '🔇'}</span>
+                {(isHovered || !isPlaying) && (
+                    <span style={{ whiteSpace: 'nowrap' }}>
+                        {isPlaying ? 'Music On' : 'Play Music'}
+                    </span>
+                )}
             </button>
         </div>
     );
