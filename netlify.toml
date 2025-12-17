@@ -1,8 +1,7 @@
 [build]
-  # Now uses root package.json build script
-  base = "/" 
-  publish = "frontend/dist"
-  command = "npm run build"
+  base = "frontend"
+  publish = "dist"
+  command = "npm install && npm run build"
 
 [[redirects]]
   from = "/*"
