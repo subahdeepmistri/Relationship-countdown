@@ -33,6 +33,8 @@ import AnniversarySelection from './components/AnniversarySelection';
 import DateSelection from './components/DateSelection';
 import PhotoSelection from './components/PhotoSelection';
 import NotificationSelection from './components/NotificationSelection';
+import WelcomeScreen from './components/WelcomeScreen'; // New Onboarding
+import NextMilestoneCard from './components/NextMilestoneCard'; // Phase 4 Milestone
 import { getProfileImage } from './utils/db'; // Import DB
 
 import SecurityLock from './components/SecurityLock';
@@ -94,7 +96,32 @@ function App() {
   // ... (useEffects remain unchanged) ...
 
   // Check for notification on mount/update & Load LD settings
+  // Check for notification on mount/update & Load LD settings
   useEffect(() => {
+    // 1. Shareable Link Parsing (Magical Viral Feature) 🌟
+    const params = new URLSearchParams(window.location.search);
+    const sharedDate = params.get('date');
+    const p1 = params.get('p1');
+    const p2 = params.get('p2');
+
+    if (sharedDate) {
+      // Auto-configure from link
+      localStorage.setItem('rc_start_date', sharedDate);
+      // Also normalize into events
+      const newEvent = { id: 'shared-start', title: 'The Beginning', date: sharedDate, emoji: '❤️', isMain: true };
+      localStorage.setItem('rc_events', JSON.stringify([newEvent]));
+
+      if (p1) localStorage.setItem('rc_partner1', p1);
+      if (p2) localStorage.setItem('rc_partner2', p2);
+
+      // Clean URL without reload
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // Force reload to apply immediately
+      window.location.reload();
+      return;
+    }
+
     checkGentleReminder(); // Update last opened timestamp
 
     // Load LD settings
@@ -195,18 +222,15 @@ function App() {
     setHasSelectedType(true);
   };
 
-  if (!hasSelectedType) {
-    return <AnniversarySelection onSelect={handleTypeSelect} />;
-  }
-
-  const handleDateSelect = (date) => {
-    localStorage.setItem('rc_start_date', date);
-    setHasSelectedDate(true);
-  };
-
   if (!hasSelectedDate) {
-    return <DateSelection onSelect={handleDateSelect} onBack={() => setHasSelectedType(false)} />;
+    return <WelcomeScreen onComplete={() => window.location.reload()} />;
   }
+
+  // Legacy/Partial setup handling (if Type selected but not Date? WelcomeScreen handles both now)
+  // Converting the flow: WelcomeScreen sets Type -> Date -> Names.
+  // So 'hasSelectedType' check is redundant if we gated on Date.
+  // But wait, if user had Type but not Date? WelcomeScreen handles it.
+
 
   const handlePhotoSelect = () => {
     localStorage.setItem('rc_photos_set', 'true');
@@ -355,6 +379,9 @@ function App() {
           <div className="pop-card" style={{ padding: '40px 20px', textAlign: 'center', background: '#FFFFFF', border: 'none', boxShadow: '0 20px 40px -10px rgba(249, 115, 22, 0.15)' }}>
             <Counter />
           </div>
+
+          {/* Phase 4: Next Milestone Dashboard */}
+          <NextMilestoneCard />
 
           {/* Mood Pulse - Pill Container */}
           <div className="pop-card" style={{ padding: '24px', background: '#FFFFFF' }}>
