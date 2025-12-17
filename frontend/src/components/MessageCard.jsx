@@ -2,37 +2,47 @@ import React, { useEffect, useState } from 'react';
 import { useWasm } from '../hooks/useWasm';
 
 const MessageCard = () => {
-    const { isLoaded, getDailyLoveMessage } = useWasm();
     const [message, setMessage] = useState('');
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
-        if (isLoaded) {
-            Promise.resolve(getDailyLoveMessage()).then(msg => {
-                setMessage(msg);
-                setTimeout(() => setVisible(true), 500);
-            });
+        const startDate = localStorage.getItem('rc_start_date');
+        if (startDate) {
+            const start = new Date(startDate);
+            const now = new Date();
+            const diffTime = Math.abs(now - start);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            setMessage(`Today you completed ${diffDays} days together ❤️`);
+            setTimeout(() => setVisible(true), 500);
+        } else {
+            setMessage("Start your journey to see magic here ✨");
+            setTimeout(() => setVisible(true), 500);
         }
-    }, [isLoaded, getDailyLoveMessage]);
+    }, []);
 
     return (
         <div className="pop-card" style={{
-            marginTop: '2rem',
+            marginTop: '0rem', // Adjusted for bento grid
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(10px)',
             transition: 'opacity 1s ease, transform 1s ease',
-            textAlign: 'center'
+            textAlign: 'center',
+            background: '#F0F9FF', // Distinct light blue
+            border: '1px solid #BAE6FD'
         }}>
-            <h3 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '2px', color: 'var(--accent-color)', marginBottom: '15px' }}>Daily Reflection</h3>
+            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: '#0284C7', marginBottom: '15px', fontWeight: '700' }}>
+                Daily Update
+            </h3>
             <p style={{
-                fontSize: '1.2rem',
-                lineHeight: '1.6',
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                color: 'var(--text-primary)',
+                fontSize: '1.1rem',
+                lineHeight: '1.5',
+                fontFamily: 'var(--font-heading)',
+                fontWeight: '600',
+                color: '#0C4A6E',
                 margin: 0
             }}>
-                "{message}"
+                {message}
             </p>
         </div>
     );

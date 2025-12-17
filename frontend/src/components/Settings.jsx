@@ -12,13 +12,60 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
     const [enableAI, setEnableAI] = useState(false);
     const [apiKey, setApiKey] = useState('');
 
+    // Phase 2: Personalization
+    const [partner1, setPartner1] = useState('');
+    const [partner2, setPartner2] = useState('');
+    const [nickname, setNickname] = useState('');
+
+    // Phase 3: Events
+    const [events, setEvents] = useState([]);
+    const [eventTitle, setEventTitle] = useState('');
+    const [eventDate, setEventDate] = useState('');
+
     // Load settings on mount
     useEffect(() => {
         setEnableNotifications(localStorage.getItem('rc_notifications') === 'true');
         setEnableAI(localStorage.getItem('rc_ai_enabled') === 'true');
         setApiKey(localStorage.getItem('rc_ai_key') || '');
         setAppLockEnabled(localStorage.getItem('rc_lock_enabled') === 'true');
+
+        // Load Names
+        setPartner1(localStorage.getItem('rc_partner1') || '');
+        setPartner2(localStorage.getItem('rc_partner2') || '');
+        setNickname(localStorage.getItem('rc_nickname') || '');
+
+        // Load Events
+        const storedEvents = localStorage.getItem('rc_events');
+        if (storedEvents) {
+            setEvents(JSON.parse(storedEvents));
+        } else {
+            const legacyDate = localStorage.getItem('rc_start_date');
+            if (legacyDate) {
+                setEvents([{ id: 'legacy', title: 'The Beginning', date: legacyDate, emoji: '❤️', isMain: true }]);
+            }
+        }
     }, [isOpen]);
+
+    const handleAddEvent = () => {
+        if (!eventTitle || !eventDate) return;
+        const newEvents = [...events, {
+            id: Date.now().toString(),
+            title: eventTitle,
+            date: eventDate,
+            emoji: '📅', // Default for now
+            isMain: false
+        }];
+        setEvents(newEvents);
+        localStorage.setItem('rc_events', JSON.stringify(newEvents));
+        setEventTitle('');
+        setEventDate('');
+    };
+
+    const handleDeleteEvent = (id) => {
+        const newEvents = events.filter(e => e.id !== id);
+        setEvents(newEvents);
+        localStorage.setItem('rc_events', JSON.stringify(newEvents));
+    };
 
     const handleLockToggle = () => {
         if (!appLockEnabled) {
@@ -53,6 +100,11 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
         localStorage.setItem('rc_ai_key', apiKey);
         // Lock enabled state is saved immediately upon success of the modal flow
 
+        // Save Names
+        localStorage.setItem('rc_partner1', partner1);
+        localStorage.setItem('rc_partner2', partner2);
+        localStorage.setItem('rc_nickname', nickname);
+
         // Trigger notification permission if enabled
         if (enableNotifications && Notification.permission !== 'granted') {
             Notification.requestPermission();
@@ -60,23 +112,14 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
 
         onSave && onSave();
         onClose();
+        // Force reload to update header immediately if needed, or rely on state in App
+        window.location.reload();
     };
 
     if (!isOpen) return null;
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0, left: 0,
-            width: '100%', height: '100%',
-            background: 'var(--bg-gradient)', /* Theme Gradient */
-            display: 'flex',
-            flexDirection: 'column',
-            zIndex: 4000,
-            overflowY: 'auto',
-            padding: '20px',
-            color: 'var(--text-primary)'
-        }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             {showLockModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10000 }}>
                     <SecurityLock
@@ -182,6 +225,61 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                             </p>
                         </div>
                     )}
+                </div>
+
+                <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: 'var(--shape-radius)', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+                    <h3 style={{ borderBottom: '2px solid #333', paddingBottom: '5px', marginBottom: '15px' }}>Important Dates</h3>
+                    {events.map(event => (
+                        <div key={event.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', padding: '10px', background: '#f9f9f9', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '1.1rem' }}>{event.emoji} {event.title} ({event.date})</span>
+                            <button
+                                onClick={() => handleDeleteEvent(event.id)}
+                                style={{ background: 'none', border: 'none', color: 'red', fontSize: '1.2rem', cursor: 'pointer' }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+                    ))}
+                    <div style={{ marginTop: '20px', borderTop: '1px solid #f0f0f0', paddingTop: '20px' }}>
+                        <input
+                            type="text"
+                            placeholder="Event Title"
+                            value={newEventTitle}
+                            onChange={(e) => setNewEventTitle(e.target.value)}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '10px' }}
+                        />
+                        <input
+                            type="date"
+                            value={newEventDate}
+                            onChange={(e) => setNewEventDate(e.target.value)}
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '10px' }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ marginRight: '10px' }}>Emoji:</span>
+                            <input
+                                type="text"
+                                value={newEventEmoji}
+                                onChange={(e) => setNewEventEmoji(e.target.value)}
+                                style={{ width: '50px', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', textAlign: 'center' }}
+                                maxLength="2"
+                            />
+                        </div>
+                        <button
+                            onClick={handleAddEvent}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                background: 'var(--accent-color)',
+                                color: 'white',
+                                borderRadius: '8px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontWeight: 'bold'
+                            }}
+                        >
+                            Add Event
+                        </button>
+                    </div>
                 </div>
 
                 <LongDistanceSettings

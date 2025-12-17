@@ -7,6 +7,10 @@ import AnniversaryOverlay from './components/AnniversaryOverlay';
 import Settings from './components/Settings';
 import MemoryCarousel from './components/MemoryCarousel';
 import PrivateSection from './components/PrivateSection';
+// import LinkToTimeline from './components/LinkToTimeline'; // Removed, integrated in Navbar or App state
+import MilestoneCelebration from './components/MilestoneCelebration';
+import TimelineView from './components/TimelineView';
+import LoveNotes from './components/LoveNotes';
 import { useState, useEffect } from 'react';
 import { checkAnniversaryNotification } from './utils/notifications';
 import { useWasm } from './hooks/useWasm';
@@ -75,6 +79,8 @@ function App() {
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [longDistance, setLongDistance] = useState(null); // { offset, meet }
 
+  const [showTimeline, setShowTimeline] = useState(false);
+
   const { getAnniversaryCountdown } = useWasm();
 
   const handleNavigate = (view) => {
@@ -82,6 +88,7 @@ function App() {
     if (view === 'goals') setShowGoals(true);
     if (view === 'voice') setShowVoice(true);
     if (view === 'journey') setShowJourney(true);
+    if (view === 'timeline') setShowTimeline(true); // New Timeline View
   };
 
   // ... (useEffects remain unchanged) ...
@@ -122,6 +129,24 @@ function App() {
     return () => {
       window.removeEventListener('open-scrapbook', handleScrapbook);
       clearInterval(interval);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Phase 3 Migration: Ensure rc_events exists
+    const events = localStorage.getItem('rc_events');
+    const legacyDate = localStorage.getItem('rc_start_date');
+
+    if (!events && legacyDate) {
+      // Migrate legacy date to events array
+      const initialEvent = [{
+        id: Date.now().toString(),
+        title: "The Beginning",
+        date: legacyDate,
+        emoji: "❤️",
+        isMain: true
+      }];
+      localStorage.setItem('rc_events', JSON.stringify(initialEvent));
     }
   }, []);
 
@@ -210,24 +235,24 @@ function App() {
 
   // Dynamic Title Logic
   const getTitle = () => {
-    // If we have profile images, show them instead of text (or alongside)
-    if (profileImages.left || profileImages.right) {
-      return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <img
-            src={profileImages.left || "https://img.icons8.com/doodle/96/boy.png"}
-            style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover' }}
-            alt="Profile 1"
-          />
-          <span style={{ fontSize: '2rem' }}>❤️</span>
-          <img
-            src={profileImages.right || "https://img.icons8.com/doodle/96/girl.png"}
-            style={{ width: '60px', height: '60px', borderRadius: '50%', border: '2px solid white', objectFit: 'cover' }}
-            alt="Profile 2"
-          />
-        </div>
-      )
-    }
+    // 1. Check Personalization
+    const nickname = localStorage.getItem('rc_nickname');
+    const p1 = localStorage.getItem('rc_partner1');
+    const p2 = localStorage.getItem('rc_partner2');
+
+    if (nickname) return nickname;
+    if (p1 && p2) return `${p1} ❤️ ${p2}`;
+
+    // 2. If we have profile images, they are shown in the distinct image block, 
+    //    but update the text fallback just in case or if images are missing.
+    //    (The original logic returned a DIV here which overrides the H1 styles in the render method, 
+    //     so we should handle that carefully. The render method wraps {getTitle()} in an H1.
+    //     If we return a div, strictly speaking it's invalid HTML (div inside h1), but browsers handle it.
+    //     Better to return text or span unless we want to replace the whole H1.)
+
+    // For now, let's keep the image logic if it was effectively replacing the title
+    // But since we are "Personalizing", the names are better than images in the H1 text slot usually.
+    // Let's prioritize the text if set.
 
     const type = localStorage.getItem('rc_anniversary_type') || 'couple';
     const map = {
@@ -256,6 +281,7 @@ function App() {
       {showVoice && <VoiceDiary onClose={() => setShowVoice(false)} />}
       {showJourney && <JourneyMap onClose={() => setShowJourney(false)} />}
       {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
+      {showTimeline && <TimelineView onClose={() => setShowTimeline(false)} />}
 
       <div className="app-container">
 
@@ -340,6 +366,9 @@ function App() {
 
           {/* Message Card */}
           <MessageCard />
+
+          {/* Love Notes (Phase 2 Add) */}
+          <LoveNotes />
         </div>   {/* Long Distance Clock (Conditional) */}
         {longDistance && (
           <div className="glass-card bento-item-full">
@@ -365,7 +394,7 @@ function App() {
       <Navbar onNavigate={handleNavigate} />
 
       <AnniversaryOverlay />
-
+      <MilestoneCelebration />
       <PrivateSection />
 
       {isNightOwl && (
