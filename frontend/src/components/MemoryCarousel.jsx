@@ -37,6 +37,16 @@ const MemoryCarousel = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        // Validation
+        if (file.size > 5 * 1024 * 1024) {
+            alert("This image is too large. Please choose a photo under 5MB.");
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            alert("Please search for a valid image file.");
+            return;
+        }
+
         // Prompt for Caption
         const caption = prompt("Add a caption for this memory (optional):") || "";
 
@@ -52,13 +62,12 @@ const MemoryCarousel = () => {
             // Reload photos
             await loadPhotos();
 
-            setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-
         } catch (err) {
             console.error("Error saving memory:", err);
             alert("Failed to save image locally.");
+        } finally {
             setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -96,13 +105,18 @@ const MemoryCarousel = () => {
                     <button
                         onClick={() => fileInputRef.current.click()}
                         style={{
-                            padding: '8px 16px', borderRadius: '20px', border: 'none',
-                            background: 'var(--accent-color)', color: 'white', fontWeight: 'bold',
-                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px',
-                            boxShadow: '0 4px 10px rgba(255, 112, 67, 0.3)'
+                            padding: '10px 20px', borderRadius: '30px', border: 'none',
+                            background: 'linear-gradient(135deg, #F97316 0%, #EC4899 100%)',
+                            color: 'white', fontWeight: '800', fontSize: '0.9rem',
+                            cursor: isUploading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                            boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)',
+                            opacity: isUploading ? 0.7 : 1,
+                            transition: 'transform 0.2s',
+                            letterSpacing: '0.5px'
                         }}
+                        disabled={isUploading}
                     >
-                        + Add Photo
+                        {isUploading ? 'Uploading...' : '+ Add Photo'}
                     </button>
                     <input
                         type="file"

@@ -28,6 +28,9 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
     const [ldOffset, setLdOffset] = useState('');
     const [ldMeet, setLdMeet] = useState('');
 
+    // Feedback State
+    const [toastMsg, setToastMsg] = useState('');
+
     // Load settings on mount
     useEffect(() => {
         setEnableNotifications(localStorage.getItem('rc_notifications') === 'true');
@@ -59,6 +62,13 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
 
     const handleAddEvent = () => {
         if (!newEventTitle || !newEventDate) return;
+
+        // Prevent duplicates
+        if (events.some(e => e.title === newEventTitle && e.date === newEventDate)) {
+            alert("This event already exists!");
+            return;
+        }
+
         const newEvents = [...events, {
             id: Date.now().toString(),
             title: newEventTitle,
@@ -74,9 +84,11 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
     };
 
     const handleDeleteEvent = (id) => {
-        const newEvents = events.filter(e => e.id !== id);
-        setEvents(newEvents);
-        localStorage.setItem('rc_events', JSON.stringify(newEvents));
+        if (window.confirm("Are you sure you want to remove this date?")) {
+            const newEvents = events.filter(e => e.id !== id);
+            setEvents(newEvents);
+            localStorage.setItem('rc_events', JSON.stringify(newEvents));
+        }
     };
 
     const handleLockToggle = () => {
@@ -127,10 +139,13 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
             Notification.requestPermission();
         }
 
-        onSave && onSave();
-        onClose();
-        // Force reload to update header immediately if needed, or rely on state in App
-        window.location.reload();
+        setToastMsg('Settings saved 💾');
+        setTimeout(() => {
+            onSave && onSave();
+            onClose();
+            // Force reload to update header immediately if needed, or rely on state in App
+            window.location.reload();
+        }, 800);
     };
 
     if (!isOpen) return null;
@@ -150,6 +165,17 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
             backdropFilter: 'blur(4px)',
             padding: '20px'
         }}>
+            {/* Feedback Toast */}
+            {toastMsg && (
+                <div style={{
+                    position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
+                    background: '#10B981', color: 'white', padding: '10px 20px', borderRadius: '20px',
+                    fontWeight: 'bold', zIndex: 10001, boxShadow: '0 5px 15px rgba(0,0,0,0.2)'
+                }}>
+                    {toastMsg}
+                </div>
+            )}
+
             {showLockModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10000 }}>
                     <SecurityLock
@@ -195,46 +221,66 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                         </button>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', cursor: 'pointer', paddingBottom: '15px', borderBottom: '1px solid #f0f0f0' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>🔒 App Lock</span>
-                        <div
-                            onClick={handleLockToggle}
-                            style={{
-                                position: 'relative', width: '50px', height: '28px',
-                                background: appLockEnabled ? 'var(--accent-color)' : '#ccc',
-                                borderRadius: '15px', transition: 'background 0.3s', cursor: 'pointer'
-                            }}
-                        >
-                            <div style={{
-                                position: 'absolute', top: '2px', left: appLockEnabled ? '24px' : '2px',
-                                width: '24px', height: '24px', background: 'white', borderRadius: '50%',
-                                transition: 'all 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                            }} />
+                    <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #f0f0f0' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                            <div>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'block' }}>🔒 App Lock</span>
+                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Protect this space with a private PIN</span>
+                            </div>
+                            <div
+                                onClick={handleLockToggle}
+                                style={{
+                                    position: 'relative', width: '50px', height: '28px',
+                                    background: appLockEnabled ? 'var(--accent-color)' : '#ccc',
+                                    borderRadius: '15px', transition: 'background 0.3s', cursor: 'pointer', flexShrink: 0
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute', top: '2px', left: appLockEnabled ? '24px' : '2px',
+                                    width: '24px', height: '24px', background: 'white', borderRadius: '50%',
+                                    transition: 'all 0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                                }} />
+                            </div>
                         </div>
                     </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', cursor: 'pointer', paddingBottom: '15px', borderBottom: '1px solid #f0f0f0' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>🔔 Anniversary Reminders</span>
-                        <input
-                            type="checkbox"
-                            checked={enableNotifications}
-                            onChange={(e) => setEnableNotifications(e.target.checked)}
-                            style={{ transform: 'scale(1.5)', accentColor: 'var(--accent-color)' }}
-                        />
-                    </label>
+                    <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid #f0f0f0' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                            <div>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'block' }}>🔔 Anniversary Reminders</span>
+                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Reminder messages shown inside the app</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={enableNotifications}
+                                onChange={(e) => setEnableNotifications(e.target.checked)}
+                                style={{ transform: 'scale(1.5)', accentColor: 'var(--accent-color)' }}
+                            />
+                        </label>
+                        {/* Helper text if needed */}
+                        {enableNotifications && <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '5px' }}>No notifications are sent outside this app.</div>}
+                    </div>
 
-                    <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', cursor: 'pointer' }}>
-                        <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>✨ AI Love Messages</span>
-                        <input
-                            type="checkbox"
-                            checked={enableAI}
-                            onChange={(e) => setEnableAI(e.target.checked)}
-                            style={{ transform: 'scale(1.5)', accentColor: 'var(--accent-color)' }}
-                        />
-                    </label>
+                    <div style={{ marginBottom: '10px' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+                            <div>
+                                <span style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'block' }}>✨ AI Love Messages</span>
+                                <span style={{ fontSize: '0.8rem', color: '#666' }}>Occasional romantic messages generated for you</span>
+                            </div>
+                            <input
+                                type="checkbox"
+                                checked={enableAI}
+                                onChange={(e) => setEnableAI(e.target.checked)}
+                                style={{ transform: 'scale(1.5)', accentColor: 'var(--accent-color)' }}
+                            />
+                        </label>
+                    </div>
 
                     {enableAI && (
                         <div style={{ marginTop: '15px', background: '#FAFAFA', padding: '15px', borderRadius: '10px' }}>
+                            <div style={{ marginBottom: '10px', fontSize: '0.85rem', fontStyle: 'italic', color: '#555', background: '#fff', padding: '10px', borderRadius: '6px', border: '1px dashed #ccc' }}>
+                                "Preview: Every day with you is my favorite adventure..."
+                            </div>
                             <input
                                 type="password"
                                 placeholder="Enter OpenAI API Key"
@@ -258,15 +304,17 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                 </div>
 
                 <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: 'var(--shape-radius)', marginBottom: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                    <h3 style={{ borderBottom: '2px solid #333', paddingBottom: '5px', marginBottom: '15px' }}>Important Dates</h3>
+                    <h3 style={{ borderBottom: '2px solid #333', paddingBottom: '5px', marginBottom: '5px' }}>Important Dates</h3>
+                    <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '15px' }}>These dates are used to calculate your relationship timeline.</p>
+
                     {events.map(event => (
                         <div key={event.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', padding: '10px', background: '#f9f9f9', borderRadius: '8px' }}>
                             <span style={{ fontSize: '1.1rem' }}>{event.emoji} {event.title} ({event.date})</span>
                             <button
                                 onClick={() => handleDeleteEvent(event.id)}
-                                style={{ background: 'none', border: 'none', color: 'red', fontSize: '1.2rem', cursor: 'pointer' }}
+                                style={{ background: 'none', border: 'none', color: '#ff7675', fontSize: '1.2rem', cursor: 'pointer', opacity: 0.7 }}
                             >
-                                &times;
+                                🗑️
                             </button>
                         </div>
                     ))}
@@ -280,6 +328,7 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                         />
                         <input
                             type="date"
+                            placeholder="DD / MM / YYYY"
                             value={newEventDate}
                             onChange={(e) => setNewEventDate(e.target.value)}
                             style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '10px' }}
@@ -358,7 +407,10 @@ const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, se
     return (
         <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: 'var(--shape-radius)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', cursor: 'pointer' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>✈️ Long Distance</span>
+                <div>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', display: 'block' }}>✈️ Long Distance</span>
+                    <span style={{ fontSize: '0.8rem', color: '#666' }}>Unlocks long-distance reflections and messages</span>
+                </div>
                 <input
                     type="checkbox"
                     checked={enabled}

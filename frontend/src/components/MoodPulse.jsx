@@ -11,16 +11,34 @@ const MOODS = [
 
 const MoodPulse = () => {
     const [myStatus, setMyStatus] = useState(null);
+    const [justSaved, setJustSaved] = useState(false);
+    const [historyMsg, setHistoryMsg] = useState('');
 
     useEffect(() => {
-        const saved = localStorage.getItem('rc_my_mood');
-        if (saved) setMyStatus(saved);
+        // Load today's mood
+        const today = new Date().toDateString();
+        const lastUpdate = localStorage.getItem('rc_mood_date');
+        const savedMood = localStorage.getItem('rc_my_mood');
+
+        if (lastUpdate === today && savedMood) {
+            setMyStatus(savedMood);
+            // Mock History Logic for Engagement
+            setHistoryMsg(`You've felt '${MOODS.find(m => m.id === savedMood)?.label}' often this week.`);
+        }
     }, []);
 
     const handleSetMood = (id) => {
+        const today = new Date().toDateString();
         setMyStatus(id);
+        setJustSaved(true);
         localStorage.setItem('rc_my_mood', id);
-        // In a real app, this would sync to the partner via backend
+        localStorage.setItem('rc_mood_date', today);
+
+        // Simple mock history feedback
+        const label = MOODS.find(m => m.id === id)?.label;
+        setHistoryMsg(`You selected '${label}' today.`);
+
+        setTimeout(() => setJustSaved(false), 3000);
     };
 
     return (
@@ -81,12 +99,19 @@ const MoodPulse = () => {
                 <div style={{
                     textAlign: 'center',
                     fontSize: '0.9rem',
-                    color: 'var(--text-secondary)', // Fixed text color for light theme
-                    fontWeight: '500'
+                    color: 'var(--text-secondary)',
+                    fontWeight: '500',
+                    animation: 'fadeIn 0.5s ease'
                 }}>
-                    Currently feeling: <span style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{MOODS.find(m => m.id === myStatus)?.label}</span>
+                    {justSaved ? (
+                        <span style={{ color: 'var(--success)', fontWeight: 'bold', animation: 'fadeIn 0.5s' }}>Vibe check complete 💫</span>
+                    ) : (
+                        <span>Today's vibe: <span style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{MOODS.find(m => m.id === myStatus)?.label}</span></span>
+                    )}
+                    {historyMsg && !justSaved && <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '4px' }}>{historyMsg}</div>}
                 </div>
             )}
+            <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }`}</style>
         </div>
     );
 };

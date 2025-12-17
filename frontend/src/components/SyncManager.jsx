@@ -63,29 +63,8 @@ const SyncManager = ({ onClose }) => {
     const [exportData, setExportData] = useState('');
     const [importString, setImportString] = useState('');
     const [status, setStatus] = useState('');
-
-    const handleExport = async () => {
-        if (!password) { setStatus('Enter a pairing code first.'); return; }
-
-        const data = {
-            capsules: JSON.parse(localStorage.getItem('rc_capsules') || '[]'),
-            goals: JSON.parse(localStorage.getItem('rc_goals') || '[]'),
-            journey: JSON.parse(localStorage.getItem('rc_journey') || '[]'),
-            settings: {
-                music: localStorage.getItem('rc_bg_music_enabled'),
-                notifications: localStorage.getItem('rc_notifications')
-            }
-        };
-
-        try {
-            setStatus('Encrypting...');
-            const encrypted = await encryptData(data, password);
-            setExportData(encrypted);
-            setStatus('Ready to share. Copy the code below.');
-        } catch (e) {
-            setStatus('Encryption failed.');
-        }
-    };
+    const [copyBtnText, setCopyBtnText] = useState('📋 Copy to Clipboard');
+    const [confirmedPrivacy, setConfirmedPrivacy] = useState(false);
 
     const handleImport = async () => {
         if (!password || !importString) { setStatus('Missing code or data.'); return; }
@@ -95,24 +74,64 @@ const SyncManager = ({ onClose }) => {
             const data = await decryptData(importString, password);
 
             if (data) {
+                // Confirm Overwrite
+                if (!window.confirm("⚠️ WARNING: This will overwrite your current relationship data (memories, timeline, voice notes) with the imported data. Are you sure?")) {
+                    setStatus('Import cancelled.');
+                    return;
+                }
+
                 // Merge/Overwrite Logic
                 if (data.capsules) localStorage.setItem('rc_capsules', JSON.stringify(data.capsules));
                 if (data.goals) localStorage.setItem('rc_goals', JSON.stringify(data.goals));
                 if (data.journey) localStorage.setItem('rc_journey', JSON.stringify(data.journey));
+                if (data.voice) localStorage.setItem('rc_voice_entries', JSON.stringify(data.voice));
+
+                // Settings optional merge?
+                if (data.settings) {
+                    // Maybe ask user? For now, we auto-merge essential settings
+                }
 
                 setStatus('Sync Complete! Reloading...');
-                setTimeout(() => window.location.reload(), 1000);
+                setTimeout(() => window.location.reload(), 1500);
             } else {
-                setStatus('Invalid Password or Data.');
+                setStatus('Invalid Password or Data Integrity Check Failed.');
             }
         } catch (e) {
-            setStatus('Import failed.');
+            setStatus('Import failed. Check your password.');
+        }
+    };
+
+    const handleExport = async () => {
+        if (!password) { setStatus('Enter a pairing code first.'); return; }
+        if (password.length < 6) { setStatus('Code too short. Use at least 6 characters.'); return; }
+        if (!confirmedPrivacy) { setStatus('Please confirm you understand the privacy warning.'); return; }
+
+        const data = {
+            capsules: JSON.parse(localStorage.getItem('rc_capsules') || '[]'),
+            goals: JSON.parse(localStorage.getItem('rc_goals') || '[]'),
+            journey: JSON.parse(localStorage.getItem('rc_journey') || '[]'),
+            voice: JSON.parse(localStorage.getItem('rc_voice_entries') || '[]'),
+            settings: {
+                music: localStorage.getItem('rc_bg_music_enabled'),
+                notifications: localStorage.getItem('rc_notifications')
+            }
+        };
+
+        try {
+            setStatus('Encrypting your relationship data...');
+            const encrypted = await encryptData(data, password);
+            setExportData(encrypted);
+            setStatus('Ready to share. Copy the code below.');
+        } catch (e) {
+            setStatus('Encryption failed.');
         }
     };
 
     const copyToClipboard = () => {
         navigator.clipboard.writeText(exportData);
-        setStatus('Copied to clipboard!');
+        setCopyBtnText('✅ Copied!');
+        setTimeout(() => setCopyBtnText('📋 Copy to Clipboard'), 2000);
+        setStatus('Copied to clipboard! Send this to your partner securely.');
     };
 
     return (
@@ -168,7 +187,9 @@ const SyncManager = ({ onClose }) => {
                                 fontWeight: 'bold',
                                 background: mode === 'export' ? 'var(--accent-color)' : 'transparent',
                                 color: mode === 'export' ? 'white' : 'var(--text-secondary)',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                cursor: 'pointer',
+                                border: 'none'
                             }}
                         >
                             📤 Send Data
@@ -182,7 +203,9 @@ const SyncManager = ({ onClose }) => {
                                 fontWeight: 'bold',
                                 background: mode === 'import' ? 'var(--accent-color)' : 'transparent',
                                 color: mode === 'import' ? 'white' : 'var(--text-secondary)',
-                                transition: 'all 0.3s ease'
+                                transition: 'all 0.3s ease',
+                                cursor: 'pointer',
+                                border: 'none'
                             }}
                         >
                             📥 Receive Data
@@ -208,35 +231,54 @@ const SyncManager = ({ onClose }) => {
                                     border: '1px solid #ddd',
                                     fontSize: '1rem',
                                     background: '#F5F5F5',
-                                    outline: 'none'
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
                                 }}
                             />
                         </div>
 
                         {mode === 'export' ? (
                             <div className="fade-in">
-                                <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '20px' }}>
-                                    This will encrypt your timeline, goals, and capsules into a secure text block.
-                                </p>
+                                <div style={{ background: '#FFF3CD', borderLeft: '4px solid #FFC107', padding: '15px', borderRadius: '4px', marginBottom: '20px' }}>
+                                    <p style={{ margin: 0, fontSize: '0.9rem', color: '#856404' }}>
+                                        <strong>⚠️ Privacy Warning:</strong> This will export a snapshot of your timeline, messages, and voice notes.
+                                        The file is encrypted, but you should only share the output code with your partner securely (e.g. Signal, in-person).
+                                    </p>
+                                </div>
+
+                                <label style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', cursor: 'pointer' }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={confirmedPrivacy}
+                                        onChange={e => setConfirmedPrivacy(e.target.checked)}
+                                        style={{ marginRight: '10px', width: '20px', height: '20px' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', color: '#333' }}>I understand and want to generate the sync code.</span>
+                                </label>
+
                                 <button
                                     onClick={handleExport}
                                     style={{
                                         width: '100%',
                                         padding: '15px',
-                                        background: 'black',
+                                        background: confirmedPrivacy ? 'black' : '#ccc',
                                         color: 'white',
                                         borderRadius: '30px',
                                         fontSize: '1rem',
                                         fontWeight: 'bold',
-                                        marginBottom: '20px'
+                                        marginBottom: '20px',
+                                        border: 'none',
+                                        cursor: confirmedPrivacy ? 'pointer' : 'not-allowed',
+                                        transition: 'background 0.3s'
                                     }}
+                                    disabled={!confirmedPrivacy}
                                 >
                                     Generate Encrypted Data
                                 </button>
 
                                 {exportData && (
                                     <div style={{ background: '#F5F5F5', padding: '15px', borderRadius: '10px', wordBreak: 'break-all' }}>
-                                        <div style={{ maxHeight: '100px', overflowY: 'auto', fontSize: '0.8rem', color: '#888', marginBottom: '10px' }}>
+                                        <div style={{ maxHeight: '100px', overflowY: 'auto', fontSize: '0.7rem', color: '#888', marginBottom: '10px', fontFamily: 'monospace', padding: '10px', background: '#e0e0e0', borderRadius: '5px' }}>
                                             {exportData}
                                         </div>
                                         <button
@@ -245,10 +287,12 @@ const SyncManager = ({ onClose }) => {
                                                 width: '100%', padding: '10px',
                                                 border: '2px solid var(--accent-color)',
                                                 color: 'var(--accent-color)',
-                                                borderRadius: '20px', fontWeight: 'bold'
+                                                background: 'transparent',
+                                                borderRadius: '20px', fontWeight: 'bold',
+                                                cursor: 'pointer'
                                             }}
                                         >
-                                            📋 Copy to Clipboard
+                                            {copyBtnText}
                                         </button>
                                     </div>
                                 )}
@@ -259,7 +303,7 @@ const SyncManager = ({ onClose }) => {
                                     Paste the encrypted text block from your partner's device here.
                                 </p>
                                 <textarea
-                                    placeholder="Paste the jagged text here..."
+                                    placeholder="Paste the encrypted code here..."
                                     value={importString}
                                     onChange={(e) => setImportString(e.target.value)}
                                     style={{
@@ -271,7 +315,9 @@ const SyncManager = ({ onClose }) => {
                                         fontSize: '0.9rem',
                                         background: '#F5F5F5',
                                         marginBottom: '20px',
-                                        fontFamily: 'monospace'
+                                        fontFamily: 'monospace',
+                                        outline: 'none',
+                                        boxSizing: 'border-box'
                                     }}
                                 />
                                 <button
@@ -283,11 +329,14 @@ const SyncManager = ({ onClose }) => {
                                         color: 'white',
                                         borderRadius: '30px',
                                         fontSize: '1rem',
-                                        fontWeight: 'bold'
+                                        fontWeight: 'bold',
+                                        border: 'none',
+                                        cursor: 'pointer'
                                     }}
                                 >
                                     Decrypt & Restore Data
                                 </button>
+
                             </div>
                         )}
 
@@ -296,8 +345,8 @@ const SyncManager = ({ onClose }) => {
                                 marginTop: '20px',
                                 padding: '10px',
                                 borderRadius: '8px',
-                                background: status.includes('Invalid') || status.includes('failed') ? '#FFEBEE' : '#E8F5E9',
-                                color: status.includes('Invalid') || status.includes('failed') ? '#D32F2F' : '#388E3C',
+                                background: status.includes('Invalid') || status.includes('failed') || status.includes('Missing') || status.includes('warning') ? '#FFEBEE' : '#E8F5E9',
+                                color: status.includes('Invalid') || status.includes('failed') || status.includes('Missing') || status.includes('warning') ? '#D32F2F' : '#388E3C',
                                 textAlign: 'center',
                                 fontWeight: 'bold',
                                 fontSize: '0.9rem'

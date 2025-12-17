@@ -152,13 +152,13 @@ const SecurityLock = ({ initialMode = 'auto', onSuccess, onCancel }) => {
 
             <h2 style={{
                 fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '10px',
-                textAlign: 'center'
+                textAlign: 'center', color: '#fff'
             }}>
                 {title}
             </h2>
             <p style={{
-                opacity: 0.6, marginBottom: '40px', maxWidth: '80%', textAlign: 'center',
-                lineHeight: 1.5
+                opacity: 0.8, marginBottom: '40px', maxWidth: '80%', textAlign: 'center',
+                lineHeight: 1.5, color: '#e2e8f0'
             }}>
                 {subtitle}
             </p>
@@ -175,7 +175,15 @@ const SecurityLock = ({ initialMode = 'auto', onSuccess, onCancel }) => {
                 ))}
             </div>
 
-            {error && <div style={{ color: '#e74c3c', marginBottom: '20px', fontWeight: 'bold' }}>{error}</div>}
+            {error && <div style={{ color: '#e74c3c', marginBottom: '20px', fontWeight: 'bold', animation: 'shake 0.5s' }}>{error}</div>}
+
+            <style>{`
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `}</style>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '25px' }}>
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (

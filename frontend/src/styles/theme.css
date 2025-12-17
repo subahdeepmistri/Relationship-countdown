@@ -168,3 +168,79 @@ h4 {
     /* Reduce padding to give text space */
   }
 }
+
+/* --- Journey Map Responsive Layout --- */
+.journey-container {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.journey-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, #60a5fa, transparent);
+  transform: translateX(-50%);
+  box-shadow: 0 0 15px #60a5fa;
+  opacity: 0.8;
+}
+
+.journey-item {
+  display: flex;
+  margin-bottom: 60px;
+  position: relative;
+  width: 100%;
+}
+
+.journey-item.left {
+  justify-content: flex-start;
+}
+
+.journey-item.right {
+  justify-content: flex-end;
+}
+
+.journey-dot {
+  position: absolute;
+  left: 50%;
+  top: 25px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 3px solid #60a5fa;
+  transform: translateX(-50%);
+  z-index: 1;
+  box-shadow: 0 0 20px #60a5fa;
+}
+
+.journey-card {
+  width: 45%;
+  position: relative;
+}
+
+/* Mobile Layout for Journey Map (< 768px iQOO Neo 10 etc) */
+@media (max-width: 768px) {
+  .journey-line {
+    left: 20px;
+    transform: none;
+  }
+
+  .journey-item {
+    justify-content: flex-start !important;
+    padding-left: 50px;
+  }
+
+  .journey-dot {
+    left: 20px;
+    transform: translateX(-50%);
+  }
+
+  .journey-card {
+    width: 100% !important;
+    text-align: left !important;
+  }
+}

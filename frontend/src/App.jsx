@@ -36,6 +36,7 @@ import NotificationSelection from './components/NotificationSelection';
 import WelcomeScreen from './components/WelcomeScreen'; // New Onboarding
 import NextMilestoneCard from './components/NextMilestoneCard'; // Phase 4 Milestone
 import { getProfileImage } from './utils/db'; // Import DB
+import { getStartDate } from './utils/relationshipLogic';
 
 import SecurityLock from './components/SecurityLock';
 
@@ -123,6 +124,35 @@ function App() {
     }
 
     checkGentleReminder(); // Update last opened timestamp
+
+    // START DATE OVERRIDE (User Request)
+    // Ensures the date is set to their specific anniversary
+    const TARGET_DATE = '2023-01-24';
+    if (localStorage.getItem('rc_start_date') !== TARGET_DATE) {
+      console.log("Updating start date to user preference:", TARGET_DATE);
+      localStorage.setItem('rc_start_date', TARGET_DATE);
+
+      // Also update the main event in rc_events if it exists
+      const events = JSON.parse(localStorage.getItem('rc_events') || '[]');
+      const mainIndex = events.findIndex(e => e.isMain);
+      if (mainIndex >= 0) {
+        events[mainIndex].date = TARGET_DATE;
+        localStorage.setItem('rc_events', JSON.stringify(events));
+      } else {
+        // If no events, create the main one
+        events.push({
+          id: 'main-event',
+          title: 'The Beginning',
+          date: TARGET_DATE,
+          emoji: '❤️',
+          isMain: true
+        });
+        localStorage.setItem('rc_events', JSON.stringify(events));
+      }
+
+      // Force reload to apply changes fresh
+      window.location.reload();
+    }
 
     // Load LD settings
     const ldEnabled = localStorage.getItem('rc_ld_enabled') === 'true';
@@ -307,7 +337,7 @@ function App() {
       {showLegacy && <LegacyManager onClose={() => setShowLegacy(false)} />}
       {showTimeline && <TimelineView onClose={() => setShowTimeline(false)} />}
 
-      <div className="app-container">
+      <div className="app-container" style={{ paddingBottom: '150px' }}>
 
         {/* 1. Header Section - Minimal */}
         <header style={{
@@ -319,6 +349,7 @@ function App() {
           {/* Sync Button (Left) */}
           <button
             onClick={() => setShowSync(true)}
+            title="Refresh countdown & Sync settings"
             style={{
               width: '48px', height: '48px',
               borderRadius: '50%',
@@ -326,7 +357,9 @@ function App() {
               boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
               fontSize: '1.2rem',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-primary)'
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              border: 'none'
             }}
           >
             🔄
@@ -338,36 +371,45 @@ function App() {
               padding: '8px 16px',
               background: '#FFFFFF',
               borderRadius: '999px',
-              fontSize: '0.9rem',
+              fontSize: '0.85rem',
               fontWeight: '600',
               color: 'var(--accent-primary)',
               boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
               marginBottom: '8px'
             }}>
-              EST. 2024
+              EST. {getStartDate() ? getStartDate().getFullYear() : new Date().getFullYear()}
             </span>
             <h1 style={{
-              margin: 0,
+              margin: '0 0 5px 0',
               fontSize: '1.8rem',
               color: 'var(--text-primary)',
               letterSpacing: '-1px'
             }}>
               {getTitle()}
             </h1>
+            <p style={{
+              margin: 0,
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)',
+              opacity: 0.8
+            }}>
+              Tracking love, one day at a time
+            </p>
           </div>
 
           {/* Settings Button (Right) */}
           <button
             onClick={() => setShowSettings(true)}
+            title="Edit relationship details"
             style={{
               width: '48px', height: '48px',
-
               borderRadius: '50%',
               background: 'var(--glass-bg)',
               border: 'var(--glass-border)',
               fontSize: '1.2rem',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: 'var(--text-primary)'
+              color: 'var(--text-primary)',
+              cursor: 'pointer'
             }}
           >
             ⚙️
@@ -455,7 +497,16 @@ function App() {
         </button>
       </div>
 
-      <Navbar onNavigate={handleNavigate} />
+      <Navbar
+        onNavigate={handleNavigate}
+        activeView={
+          showCapsules ? 'capsules' :
+            showGoals ? 'goals' :
+              showVoice ? 'voice' :
+                showJourney ? 'journey' :
+                  'home'
+        }
+      />
 
       <AnniversaryOverlay />
       <MilestoneCelebration />

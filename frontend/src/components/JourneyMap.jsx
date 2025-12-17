@@ -30,14 +30,18 @@ const JourneyMap = ({ onClose }) => {
         <div style={{
             position: 'fixed',
             top: 0, left: 0, width: '100%', height: '100%',
-            background: 'rgba(15, 23, 42, 0.95)', // Deep overlay matching new theme
+            background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)', // Deep Night Blue
             zIndex: 3000,
             overflowY: 'auto',
             padding: '80px 20px 40px',
-            color: 'var(--text-primary)',
-            backdropFilter: 'blur(10px)'
+            color: 'white',
+            backdropFilter: 'blur(20px)'
         }}>
-            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+            {/* Background Atmosphere Blobs */}
+            <div style={{ position: 'fixed', top: '-10%', left: '-20%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '-20%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+
+            <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
                 <button
                     onClick={onClose}
                     style={{
@@ -46,73 +50,85 @@ const JourneyMap = ({ onClose }) => {
                         backdropFilter: 'blur(10px)', width: '45px', height: '45px',
                         borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                         border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', zIndex: 3001,
-                        color: 'var(--text-primary)'
+                        color: 'white',
+                        transition: 'transform 0.2s',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
                     }}
+                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
+                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 >✕</button>
 
-                <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                    <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '3rem', margin: '0 0 10px 0', color: '#fff' }}>Our Timeline</h2>
-                    <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Every chapter of our story.</p>
+                <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                    <h2 style={{
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: '3.5rem',
+                        margin: '0 0 10px 0',
+                        background: 'linear-gradient(to right, #e2e8f0, #93c5fd)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        textShadow: '0 0 30px rgba(147, 197, 253, 0.3)'
+                    }}>Our Timeline</h2>
+                    <p style={{ fontSize: '1.1rem', color: '#cbd5e1', letterSpacing: '0.5px' }}>Every chapter of our story.</p>
                 </div>
 
-                <div style={{ marginTop: '50px', position: 'relative' }}>
+                <div className="journey-container" style={{ marginTop: '50px' }}>
                     {/* Center Line */}
-                    <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: '2px', background: 'linear-gradient(to bottom, transparent, var(--accent-color), transparent)', transform: 'translateX(-50%)' }} />
+                    <div className="journey-line" />
 
                     {milestones.map((m, i) => (
-                        <div key={m.id} style={{
-                            display: 'flex',
-                            justifyContent: i % 2 === 0 ? 'flex-end' : 'flex-start',
-                            marginBottom: '60px',
-                            position: 'relative'
-                        }}>
+                        <div key={m.id} className={`journey-item ${i % 2 === 0 ? 'right' : 'left'}`}>
                             {/* Dot */}
-                            <div style={{
-                                position: 'absolute', left: '50%', top: '25px',
-                                width: '16px', height: '16px', borderRadius: '50%',
-                                background: 'var(--bg-color)',
-                                border: '4px solid var(--accent-color)',
-                                transform: 'translateX(-50%)',
-                                zIndex: 1,
-                                boxShadow: `0 0 15px ${m.id % 2 ? 'var(--accent-color)' : 'var(--text-accent)'}`
-                            }} />
+                            <div className="journey-dot" />
 
-                            <div className="pop-card" style={{
-                                width: '45%',
+                            <div className="glass-card journey-card" style={{
                                 padding: '25px',
                                 textAlign: i % 2 === 0 ? 'right' : 'left',
-                                position: 'relative'
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '20px',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
                             }}>
                                 <span style={{
                                     fontSize: '0.8rem',
                                     textTransform: 'uppercase',
                                     letterSpacing: '1px',
-                                    color: 'var(--accent-color)',
+                                    color: '#93c5fd',
                                     fontWeight: 'bold',
                                     display: 'block',
                                     marginBottom: '5px'
                                 }}>
                                     {new Date(m.date).toLocaleDateString()}
                                 </span>
-                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem' }}>{m.title}</h4>
-                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{m.desc}</p>}
-                                <button onClick={() => deleteItem(m.id)} style={{ color: '#ef5350', opacity: 0.6, marginTop: '15px', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>Delete</button>
+                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{m.title}</h4>
+                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: '#cbd5e1', lineHeight: 1.6 }}>{m.desc}</p>}
+                                <button onClick={() => deleteItem(m.id)} style={{ color: '#f87171', opacity: 0.7, marginTop: '15px', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>Delete</button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <div className="pop-card" style={{ marginTop: '60px', padding: '40px', textAlign: 'center' }}>
-                    <h4 style={{ marginBottom: '25px', fontSize: '1.5rem' }}>Add a New Chapter ✍️</h4>
-                    <div style={{ display: 'grid', gap: '15px' }}>
+                <div className="glass-card" style={{
+                    marginTop: '80px',
+                    padding: '40px',
+                    textAlign: 'center',
+                    background: 'rgba(30, 41, 59, 0.6)',
+                    borderRadius: '30px',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(15px)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+                }}>
+                    <h4 style={{ marginBottom: '30px', fontSize: '1.5rem', color: 'white' }}>Add a New Chapter ✍️</h4>
+                    <div style={{ display: 'grid', gap: '20px' }}>
                         <input
                             placeholder="Title (e.g. First Date)"
                             value={newTitle}
                             onChange={e => setNewTitle(e.target.value)}
                             style={{
-                                width: '100%', padding: '15px',
-                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '12px', color: 'white', fontSize: '1rem'
+                                width: '100%', padding: '16px',
+                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '16px', color: 'white', fontSize: '1rem', outline: 'none',
+                                backdropFilter: 'blur(5px)'
                             }}
                         />
                         <input
@@ -120,9 +136,10 @@ const JourneyMap = ({ onClose }) => {
                             value={newDate}
                             onChange={e => setNewDate(e.target.value)}
                             style={{
-                                width: '100%', padding: '15px',
-                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '12px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif'
+                                width: '100%', padding: '16px',
+                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '16px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif',
+                                outline: 'none', backdropFilter: 'blur(5px)'
                             }}
                         />
                         <textarea
@@ -130,20 +147,25 @@ const JourneyMap = ({ onClose }) => {
                             value={newDesc}
                             onChange={e => setNewDesc(e.target.value)}
                             style={{
-                                width: '100%', padding: '15px', height: '100px',
-                                background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '12px', color: 'white', fontSize: '1rem', resize: 'none'
+                                width: '100%', padding: '16px', height: '120px',
+                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '16px', color: 'white', fontSize: '1rem', resize: 'none',
+                                outline: 'none', backdropFilter: 'blur(5px)'
                             }}
                         />
                         <button
                             onClick={addMilestone}
                             style={{
                                 width: '100%', padding: '18px',
-                                background: 'var(--accent-color)', color: 'white',
-                                borderRadius: '30px', fontWeight: 'bold', fontSize: '1.1rem',
+                                background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)', color: 'white',
+                                borderRadius: '30px', fontWeight: '800', fontSize: '1.2rem',
                                 border: 'none', cursor: 'pointer', marginTop: '10px',
-                                boxShadow: '0 5px 20px rgba(244, 114, 182, 0.4)'
+                                boxShadow: '0 10px 30px rgba(236, 72, 153, 0.4)',
+                                letterSpacing: '1px', textTransform: 'uppercase',
+                                transition: 'transform 0.2s',
                             }}
+                            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
+                            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                         >
                             Add to Timeline
                         </button>
