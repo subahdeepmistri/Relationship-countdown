@@ -101,8 +101,8 @@ function App() {
     // 1. Shareable Link Parsing (Magical Viral Feature) 🌟
     const params = new URLSearchParams(window.location.search);
     const sharedDate = params.get('date');
-    const p1 = params.get('p1');
-    const p2 = params.get('p2');
+    const p1 = params.get('p1') || params.get('name1');
+    const p2 = params.get('p2') || params.get('name2');
 
     if (sharedDate) {
       // Auto-configure from link

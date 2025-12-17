@@ -140,3 +140,31 @@ h4 {
     gap: 0;
   }
 }
+
+/* User Specific Critical Mobile Fix (<600px) */
+@media (max-width: 600px) {
+  #root {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+
+  /* Force wrap the timer items to prevent overflow */
+  .pop-card>div[style*="flex"] {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+
+  /* Ensure timer pills don't overflow */
+  .pop-card>div>div[style*="background"] {
+    min-width: 70px !important;
+    /* Slightly smaller min-width */
+    padding: 10px 15px !important;
+  }
+
+  /* Counter text clamp adjustment happens in JS, 
+     but we can enforce container safety here */
+  .pop-card {
+    padding: 20px 15px !important;
+    /* Reduce padding to give text space */
+  }
+}
