@@ -106,14 +106,21 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                         <label style={{
                             display: 'inline-block',
                             marginTop: '10px',
-                            background: '#039BE5',
-                            color: 'white',
-                            padding: '5px 15px',
-                            fontSize: '0.8rem',
-                            borderRadius: '5px',
-                            cursor: 'pointer'
-                        }}>
-                            Add Photo
+                            background: '#4F46E5', // High contrast Indigo
+                            color: '#FFFFFF',      // Pure White text
+                            padding: '10px 24px',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                            borderRadius: '30px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)',
+                            transition: 'transform 0.2s',
+                            letterSpacing: '0.5px'
+                        }}
+                            onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+                            onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+                        >
+                            + Add Photo
                             <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 1)} />
                         </label>
                     </div>
@@ -143,14 +150,21 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                         <label style={{
                             display: 'inline-block',
                             marginTop: '10px',
-                            background: '#039BE5',
-                            color: 'white',
-                            padding: '5px 15px',
-                            fontSize: '0.8rem',
-                            borderRadius: '5px',
-                            cursor: 'pointer'
-                        }}>
-                            Add Photo
+                            background: '#4F46E5', // High contrast Indigo
+                            color: '#FFFFFF',      // Pure White text
+                            padding: '10px 24px',
+                            fontSize: '0.9rem',
+                            fontWeight: '600',
+                            borderRadius: '30px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(79, 70, 229, 0.4)', // Matching shadow
+                            transition: 'transform 0.2s',
+                            letterSpacing: '0.5px'
+                        }}
+                            onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+                            onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+                        >
+                            + Add Photo
                             <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 2)} />
                         </label>
                     </div>

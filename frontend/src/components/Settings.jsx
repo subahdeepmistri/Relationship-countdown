@@ -19,8 +19,14 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
 
     // Phase 3: Events
     const [events, setEvents] = useState([]);
-    const [eventTitle, setEventTitle] = useState('');
-    const [eventDate, setEventDate] = useState('');
+    const [newEventTitle, setNewEventTitle] = useState('');
+    const [newEventDate, setNewEventDate] = useState('');
+    const [newEventEmoji, setNewEventEmoji] = useState('📅');
+
+    // Long Distance State (Lifted)
+    const [ldEnabled, setLdEnabled] = useState(false);
+    const [ldOffset, setLdOffset] = useState('');
+    const [ldMeet, setLdMeet] = useState('');
 
     // Load settings on mount
     useEffect(() => {
@@ -44,21 +50,27 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                 setEvents([{ id: 'legacy', title: 'The Beginning', date: legacyDate, emoji: '❤️', isMain: true }]);
             }
         }
+
+        // Load Long Distance
+        setLdEnabled(localStorage.getItem('rc_ld_enabled') === 'true');
+        setLdOffset(localStorage.getItem('rc_ld_offset') || '');
+        setLdMeet(localStorage.getItem('rc_ld_meet') || '');
     }, [isOpen]);
 
     const handleAddEvent = () => {
-        if (!eventTitle || !eventDate) return;
+        if (!newEventTitle || !newEventDate) return;
         const newEvents = [...events, {
             id: Date.now().toString(),
-            title: eventTitle,
-            date: eventDate,
-            emoji: '📅', // Default for now
+            title: newEventTitle,
+            date: newEventDate,
+            emoji: newEventEmoji,
             isMain: false
         }];
         setEvents(newEvents);
         localStorage.setItem('rc_events', JSON.stringify(newEvents));
-        setEventTitle('');
-        setEventDate('');
+        setNewEventTitle('');
+        setNewEventDate('');
+        setNewEventEmoji('📅');
     };
 
     const handleDeleteEvent = (id) => {
@@ -105,6 +117,11 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
         localStorage.setItem('rc_partner2', partner2);
         localStorage.setItem('rc_nickname', nickname);
 
+        // Save Long Distance
+        localStorage.setItem('rc_ld_enabled', ldEnabled);
+        localStorage.setItem('rc_ld_offset', ldOffset);
+        localStorage.setItem('rc_ld_meet', ldMeet);
+
         // Trigger notification permission if enabled
         if (enableNotifications && Notification.permission !== 'granted') {
             Notification.requestPermission();
@@ -119,7 +136,20 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999, // High z-index to stay on top
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)',
+            padding: '20px'
+        }}>
             {showLockModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10000 }}>
                     <SecurityLock
@@ -130,7 +160,7 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                 </div>
             )}
 
-            <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingTop: '40px' }}>
+            <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', paddingTop: '0px', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
                     <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.5rem', margin: 0 }}>Settings</h2>
                     <button onClick={onClose} style={{
@@ -268,42 +298,50 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
                             onClick={handleAddEvent}
                             style={{
                                 width: '100%',
-                                padding: '10px',
-                                background: 'var(--accent-color)',
+                                padding: '12px',
+                                marginTop: '10px',
+                                background: 'linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)', // Blue gradient
                                 color: 'white',
-                                borderRadius: '8px',
+                                borderRadius: '12px',
                                 border: 'none',
                                 cursor: 'pointer',
-                                fontWeight: 'bold'
+                                fontWeight: 'bold',
+                                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)'
                             }}
                         >
-                            Add Event
+                            + Add Event
                         </button>
                     </div>
                 </div>
 
                 <LongDistanceSettings
-                    onSave={(data) => {
-                        localStorage.setItem('rc_ld_enabled', data.enabled);
-                        localStorage.setItem('rc_ld_offset', data.offset);
-                        localStorage.setItem('rc_ld_meet', data.meet);
-                    }}
+                    enabled={ldEnabled}
+                    setEnabled={setLdEnabled}
+                    offset={ldOffset}
+                    setOffset={setLdOffset}
+                    meet={ldMeet}
+                    setMeet={setLdMeet}
                 />
 
                 <div style={{ marginTop: '40px', textAlign: 'center' }}>
                     <button
                         onClick={handleSave}
                         style={{
-                            padding: '15px 50px',
-                            background: 'var(--accent-color)',
+                            padding: '16px 50px',
+                            background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)', // Vivid Purple to Pink
                             color: 'white',
                             borderRadius: '30px',
-                            fontSize: '1.1rem',
+                            fontSize: '1.2rem',
                             fontWeight: 'bold',
                             border: 'none',
                             cursor: 'pointer',
-                            boxShadow: '0 5px 15px rgba(255, 112, 67, 0.3)'
+                            boxShadow: '0 10px 25px -5px rgba(236, 72, 153, 0.5)', // Glowing shadow
+                            transition: 'transform 0.2s',
+                            width: '100%',
+                            maxWidth: '300px'
                         }}
+                        onMouseDown={(e) => e.target.style.transform = 'scale(0.98)'}
+                        onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
                     >
                         Save Changes
                     </button>
@@ -316,22 +354,7 @@ const Settings = ({ isOpen, onClose, onSave, onEditPhotos }) => {
 
 export default Settings;
 
-const LongDistanceSettings = ({ onSave }) => {
-    const [enabled, setEnabled] = useState(false);
-    const [offset, setOffset] = useState('');
-    const [meet, setMeet] = useState('');
-
-    useEffect(() => {
-        setEnabled(localStorage.getItem('rc_ld_enabled') === 'true');
-        setOffset(localStorage.getItem('rc_ld_offset') || '');
-        setMeet(localStorage.getItem('rc_ld_meet') || '');
-    }, []);
-
-    // Pass changes up on render/change - simplified for this modal structure
-    useEffect(() => {
-        onSave({ enabled, offset, meet });
-    }, [enabled, offset, meet, onSave]);
-
+const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, setMeet }) => {
     return (
         <div style={{ background: '#FFFFFF', padding: '20px', borderRadius: 'var(--shape-radius)', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', cursor: 'pointer' }}>

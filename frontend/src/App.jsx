@@ -386,9 +386,46 @@ function App() {
 
       {/* Old buttons removed in favor of Navbar */}
 
-      <div style={{ marginTop: '30px', paddingBottom: '120px', display: 'flex', gap: '20px', justifyContent: 'center' }}>
-        <button onClick={() => setShowRecap(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Year in Review</button>
-        <button onClick={() => setShowLegacy(true)} style={{ fontSize: '0.8rem', opacity: 0.6, textDecoration: 'underline' }}>Legacy Check</button>
+      <div style={{ marginTop: '30px', paddingBottom: '120px', display: 'flex', gap: '15px', justifyContent: 'center' }}>
+        <button
+          onClick={() => setShowRecap(true)}
+          style={{
+            padding: '10px 20px',
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+            transition: 'transform 0.1s'
+          }}
+          onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+        >
+          📅 Year in Review
+        </button>
+
+        <button
+          onClick={() => setShowLegacy(true)}
+          style={{
+            padding: '10px 20px',
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '20px',
+            fontSize: '0.85rem',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.05)',
+            transition: 'transform 0.1s'
+          }}
+          onMouseDown={(e) => e.target.style.transform = 'scale(0.95)'}
+          onMouseUp={(e) => e.target.style.transform = 'scale(1)'}
+        >
+          🔍 Legacy Check
+        </button>
       </div>
 
       <Navbar onNavigate={handleNavigate} />
