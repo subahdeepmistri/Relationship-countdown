@@ -49,7 +49,18 @@ function App() {
 
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
-  const [isSessionUnlocked, setIsSessionUnlocked] = useState(!settings.appLockEnabled);
+  // Initialize strictly based on settings
+  const [isSessionUnlocked, setIsSessionUnlocked] = useState(() => !settings.appLockEnabled);
+
+  // Sync Lock State when settings change
+  useEffect(() => {
+    // If user disables lock, auto-unlock session
+    if (!settings.appLockEnabled) {
+      setIsSessionUnlocked(true);
+    }
+    // Note: We don't auto-lock if they enable it, as they are currently active. 
+    // It will lock on next reload.
+  }, [settings.appLockEnabled]);
 
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });

@@ -12,11 +12,11 @@ const SecurityLock = ({ initialMode = 'verify', onSuccess, onCancel }) => {
         if (initialMode === 'verify') {
             const storedHash = localStorage.getItem('rc_app_pin_hash');
             if (!storedHash) {
-                // If no pin but asked to verify, effectively unlock or treat as error
-                // For safety, we just unlock? Or force setup? 
-                // Context handles "if appLockEnabled". If enabled but no pin, that's weird.
-                // We'll assume if no hash, we can't verify, so we might need fallback.
-                // But for now, standard flow.
+                // FALLBACK: If lock is enabled but no PIN is stored, force Setup mode.
+                // This prevents being stuck in a locked state with no way out.
+                // Alternatively, we could auto-unlock, but that defeats security.
+                // Safest bet for user experience: Ask them to set a new PIN.
+                setMode('setup');
             }
         }
     }, [initialMode]);
