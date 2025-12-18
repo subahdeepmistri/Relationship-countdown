@@ -378,6 +378,8 @@ function App() {
             <DistanceClock
               partnerOffset={settings.longDistance.offset}
               meetingDate={settings.longDistance.meet}
+              myLoc={settings.longDistance.myLoc}
+              partnerLoc={settings.longDistance.partnerLoc}
             />
           </div>
         )}

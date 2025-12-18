@@ -19,7 +19,9 @@ const KEYS = {
     ANNIVERSARY_TYPE: 'rc_anniversary_type',
     LD_ENABLED: 'rc_ld_enabled',
     LD_OFFSET: 'rc_ld_offset',
-    LD_MEET: 'rc_ld_meet'
+    LD_MEET: 'rc_ld_meet',
+    LD_MY_LOC: 'rc_ld_my_loc',
+    LD_PARTNER_LOC: 'rc_ld_partner_loc'
 };
 
 export const storage = {

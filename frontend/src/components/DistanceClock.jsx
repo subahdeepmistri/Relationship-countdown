@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const DistanceClock = ({ partnerOffset, meetingDate }) => {
+const DistanceClock = ({ partnerOffset, meetingDate, myLoc, partnerLoc }) => {
     const [myTime, setMyTime] = useState('');
     const [theirTime, setTheirTime] = useState('');
     const [meetingDiff, setMeetingDiff] = useState(null);
@@ -39,12 +39,12 @@ const DistanceClock = ({ partnerOffset, meetingDate }) => {
         <div className="pop-card" style={{ marginTop: '20px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', marginBottom: '15px' }}>
                 <div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>My Time</div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>{myLoc || "My Time"}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{myTime}</div>
                 </div>
                 <div style={{ fontSize: '1.5rem', opacity: 0.4 }}>✈️</div>
                 <div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>Their Time</div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.7, textTransform: 'uppercase' }}>{partnerLoc || "Their Time"}</div>
                     <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{theirTime}</div>
                 </div>
             </div>

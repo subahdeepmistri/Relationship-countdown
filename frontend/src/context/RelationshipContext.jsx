@@ -32,7 +32,9 @@ export const RelationshipProvider = ({ children }) => {
             longDistance: {
                 enabled: storage.get(storage.KEYS.LD_ENABLED, false),
                 offset: storage.get(storage.KEYS.LD_OFFSET, ''),
-                meet: storage.get(storage.KEYS.LD_MEET, '')
+                meet: storage.get(storage.KEYS.LD_MEET, ''),
+                myLoc: storage.get(storage.KEYS.LD_MY_LOC, ''),
+                partnerLoc: storage.get(storage.KEYS.LD_PARTNER_LOC, '')
             },
             setupComplete: storage.get(storage.KEYS.SETUP_COMPLETE, false),
             photosSet: storage.get(storage.KEYS.PHOTOS_SET, false),
@@ -119,6 +121,8 @@ export const RelationshipProvider = ({ children }) => {
                 if (updates.longDistance.enabled !== undefined) storage.set(storage.KEYS.LD_ENABLED, updates.longDistance.enabled);
                 if (updates.longDistance.offset !== undefined) storage.set(storage.KEYS.LD_OFFSET, updates.longDistance.offset);
                 if (updates.longDistance.meet !== undefined) storage.set(storage.KEYS.LD_MEET, updates.longDistance.meet);
+                if (updates.longDistance.myLoc !== undefined) storage.set(storage.KEYS.LD_MY_LOC, updates.longDistance.myLoc);
+                if (updates.longDistance.partnerLoc !== undefined) storage.set(storage.KEYS.LD_PARTNER_LOC, updates.longDistance.partnerLoc);
             }
 
             return newState;

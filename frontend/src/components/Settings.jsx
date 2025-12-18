@@ -26,6 +26,8 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     const [ldEnabled, setLdEnabled] = useState(false);
     const [ldOffset, setLdOffset] = useState('');
     const [ldMeet, setLdMeet] = useState('');
+    const [ldMyLoc, setLdMyLoc] = useState('');
+    const [ldPartnerLoc, setLdPartnerLoc] = useState('');
 
     const [toastMsg, setToastMsg] = useState('');
 
@@ -46,6 +48,8 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             setLdEnabled(settings.longDistance.enabled);
             setLdOffset(settings.longDistance.offset);
             setLdMeet(settings.longDistance.meet);
+            setLdMyLoc(settings.longDistance.myLoc);
+            setLdPartnerLoc(settings.longDistance.partnerLoc);
         }
     }, [isOpen, settings, relationship]);
 
@@ -90,8 +94,11 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
             longDistance: {
                 enabled: ldEnabled,
+                enabled: ldEnabled,
                 offset: ldOffset,
-                meet: ldMeet
+                meet: ldMeet,
+                myLoc: ldMyLoc,
+                partnerLoc: ldPartnerLoc
             }
         });
 
@@ -253,6 +260,8 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                         enabled={ldEnabled} setEnabled={setLdEnabled}
                         offset={ldOffset} setOffset={setLdOffset}
                         meet={ldMeet} setMeet={setLdMeet}
+                        myLoc={ldMyLoc} setMyLoc={setLdMyLoc}
+                        partnerLoc={ldPartnerLoc} setPartnerLoc={setLdPartnerLoc}
                     />
 
 
@@ -345,7 +354,7 @@ const GlassToggle = ({ label, desc, active, onToggle, icon }) => (
     </div>
 );
 
-const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, setMeet }) => {
+const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, setMeet, myLoc, setMyLoc, partnerLoc, setPartnerLoc }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
@@ -379,8 +388,28 @@ const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, se
                         display: 'flex', flexDirection: 'column', gap: '10px'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94a3b8' }}>
-                            <span>My Time</span>
-                            <span>Partner's Time</span>
+                            <input
+                                type="text"
+                                placeholder="My City/Country"
+                                value={myLoc}
+                                onChange={(e) => setMyLoc(e.target.value)}
+                                className="glass-input"
+                                style={{
+                                    width: '45%', padding: '6px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)',
+                                    border: 'none', color: '#94a3b8', textAlign: 'left'
+                                }}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Partner's City/Country"
+                                value={partnerLoc}
+                                onChange={(e) => setPartnerLoc(e.target.value)}
+                                className="glass-input"
+                                style={{
+                                    width: '45%', padding: '6px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)',
+                                    border: 'none', color: '#94a3b8', textAlign: 'right'
+                                }}
+                            />
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: 'white' }}>
                             <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
