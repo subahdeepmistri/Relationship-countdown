@@ -44,6 +44,9 @@ import EventHorizon from './components/EventHorizon';
 import UpdatePrompt from './components/UpdatePrompt';
 
 function App() {
+  const APP_VERSION = '1.1.0';
+  useEffect(() => console.log(`App Version: ${APP_VERSION}`), []);
+
   const { relationship, settings, updateRelationship, updateSettings } = useRelationship();
 
   // Local Session State (Navigation & Security)
