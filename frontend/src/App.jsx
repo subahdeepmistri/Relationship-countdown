@@ -42,6 +42,8 @@ import { useWasm } from './hooks/useWasm';
 import { checkGentleReminder } from './utils/reminders';
 import EventHorizon from './components/EventHorizon';
 
+import UpdatePrompt from './components/UpdatePrompt';
+
 function App() {
   const { relationship, settings, updateRelationship, updateSettings } = useRelationship();
 
@@ -189,6 +191,7 @@ function App() {
 
   return (
     <>
+      <UpdatePrompt />
       <ThemeBackground />
 
       {/* EXCLUSIVE VIEWS */}
