@@ -86,7 +86,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         updateSettings({
             notifications: enableNotifications,
             aiEnabled: enableAI,
-            aiKey: apiKey.trim(),
+            aiKey: apiKey.replace(/^Bearer\s+/i, '').trim(),
 
             longDistance: {
                 enabled: ldEnabled,
@@ -206,7 +206,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                     className="glass-input"
                                 />
                                 <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '8px', color: '#94a3b8' }}>
-                                    Key is stored securely on your device.
+                                    Key is stored securely on your device. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'underline' }}>Get Key</a>
                                 </p>
                             </div>
                         )}
