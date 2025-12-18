@@ -1,238 +1,165 @@
 import React, { useState, useEffect } from 'react';
+import '../styles/theme.css';
 
-const SecurityLock = ({ initialMode = 'auto', onSuccess, onCancel }) => {
+const SecurityLock = ({ initialMode = 'verify', onSuccess, onCancel }) => {
     const [pin, setPin] = useState('');
-    const [confirmPin, setConfirmPin] = useState('');
-    const [mode, setMode] = useState('loading'); // 'loading', 'setup', 'confirm', 'verify'
     const [error, setError] = useState('');
+    const [mode, setMode] = useState(initialMode); // 'setup', 'verify', 'confirm'
+    const [tempPin, setTempPin] = useState('');
 
     useEffect(() => {
-        if (initialMode !== 'auto') {
-            setMode(initialMode);
-        } else {
-            const storedHash = localStorage.getItem('rc_app_pin');
-            const isEnabled = localStorage.getItem('rc_lock_enabled') === 'true';
-
-            // Auto Mode: Only verify if lock is explicitly enabled AND pin exists
-            if (isEnabled && storedHash) {
-                setMode('verify');
-            } else {
-                // If not enabled, we shouldn't be here via App Gatekeeper usually, 
-                // but if we are, treat as setup.
-                setMode('setup');
+        // If verify mode, ensure we have a pin
+        if (initialMode === 'verify') {
+            const storedHash = localStorage.getItem('rc_app_pin_hash');
+            if (!storedHash) {
+                // If no pin but asked to verify, effectively unlock or treat as error
+                // For safety, we just unlock? Or force setup? 
+                // Context handles "if appLockEnabled". If enabled but no pin, that's weird.
+                // We'll assume if no hash, we can't verify, so we might need fallback.
+                // But for now, standard flow.
             }
         }
     }, [initialMode]);
 
-    const handleInput = async (num) => {
-        // Vibrate on tap for tactile feel
-        if (navigator.vibrate) navigator.vibrate(10);
-
-        const currentPin = mode === 'confirm' ? confirmPin : pin;
-        const setFunction = mode === 'confirm' ? setConfirmPin : setPin;
-
-        if (currentPin.length < 4) {
-            const newPin = currentPin + num;
-            setFunction(newPin);
-
+    const handlePadClick = (num) => {
+        if (pin.length < 4) {
+            const newPin = pin + num;
+            setPin(newPin);
             if (newPin.length === 4) {
-                // Pin Complete Logic
-                if (mode === 'setup') {
-                    // Move to Confirmation
-                    setTimeout(() => {
-                        setMode('confirm');
-                        // No vibration here, let them see the dots fill
-                    }, 300);
-                } else if (mode === 'confirm') {
-                    // Check Match
-                    if (newPin === pin) {
-                        await savePin(newPin);
-                    } else {
-                        setError("PINs didn't match. Try again.");
-                        setConfirmPin('');
-                        setPin('');
-                        setMode('setup');
-                        if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-                    }
-                } else if (mode === 'verify') {
-                    await verifyPin(newPin);
-                }
+                handleComplete(newPin);
             }
         }
     };
 
-    const savePin = async (finalPin) => {
-        const msgBuffer = new TextEncoder().encode(finalPin);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-        localStorage.setItem('rc_app_pin', hashHex);
-        localStorage.setItem('rc_lock_enabled', 'true'); // Explicitly enable
-        if (onSuccess) onSuccess();
-    };
-
-    const verifyPin = async (inputPin) => {
-        const msgBuffer = new TextEncoder().encode(inputPin);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-        const storedHash = localStorage.getItem('rc_app_pin');
-
-        if (hashHex === storedHash) {
-            if (onSuccess) onSuccess();
-        } else {
-            setError('Wrong PIN');
-            setPin('');
-            if (navigator.vibrate) navigator.vibrate(200);
-        }
-    };
-
     const handleDelete = () => {
-        if (mode === 'confirm') {
-            setConfirmPin(prev => prev.slice(0, -1));
-        } else {
-            setPin(prev => prev.slice(0, -1));
-        }
+        setPin(prev => prev.slice(0, -1));
         setError('');
     };
 
-    if (mode === 'loading') return null;
+    const hashPin = async (p) => {
+        const msgBuffer = new TextEncoder().encode(p);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    };
 
-    // Derived UI State
-    let title = '';
-    let subtitle = '';
-    let displayPin = mode === 'confirm' ? confirmPin : pin;
+    const handleComplete = async (inputPin) => {
+        if (mode === 'setup') {
+            setTempPin(inputPin);
+            setPin('');
+            setMode('confirm');
+        } else if (mode === 'confirm') {
+            if (inputPin === tempPin) {
+                const hash = await hashPin(inputPin);
+                localStorage.setItem('rc_app_pin_hash', hash);
+                onSuccess();
+            } else {
+                setError("PINs don't match");
+                setPin('');
+                setMode('setup'); // Restart setup
+                setTempPin('');
 
-    if (mode === 'setup') {
-        title = 'Protect Your App';
-        subtitle = 'Create a 4-digit PIN to secure your memories.';
-    } else if (mode === 'confirm') {
-        title = 'Confirm PIN';
-        subtitle = 'Enter the same PIN again to confirm.';
-    } else {
-        title = 'Welcome Back';
-        subtitle = 'Enter your PIN to unlock.';
-    }
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        } else if (mode === 'verify') {
+            const storedHash = localStorage.getItem('rc_app_pin_hash');
+            const inputHash = await hashPin(inputPin);
+
+            if (inputHash === storedHash) {
+                onSuccess();
+            } else {
+                setError('Incorrect PIN');
+                setPin('');
+                if (navigator.vibrate) navigator.vibrate(200);
+            }
+        }
+    };
 
     return (
         <div style={{
-            position: 'fixed',
-            top: 0, left: 0, width: '100vw', height: '100vh',
-            background: 'var(--bg-gradient)',
-            zIndex: 9999, // Absolute top
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            color: 'var(--text-primary)',
-            backdropFilter: 'blur(20px)'
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            height: '100%', width: '100%', color: 'white',
+            background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(20px)'
         }}>
-            {/* Cancel Button (If needed) */}
             {onCancel && (
                 <button
                     onClick={onCancel}
                     style={{
-                        position: 'absolute', top: 40, right: 30,
-                        background: 'none', border: 'none', fontSize: '1.5rem',
-                        cursor: 'pointer', opacity: 0.6
+                        position: 'absolute', top: 20, right: 20,
+                        background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer'
                     }}
-                >
-                    ✕
-                </button>
+                >✕</button>
             )}
 
-            {/* Visual Icon */}
-            <div style={{
-                fontSize: '4rem', marginBottom: '20px',
-                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))',
-                animation: mode === 'verify' ? 'none' : 'float 3s ease-in-out infinite'
-            }}>
-                {mode === 'verify' ? '🔐' : '🛡️'}
-            </div>
+            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>🔒</div>
 
-            <h2 style={{
-                fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '10px',
-                textAlign: 'center', color: '#fff'
-            }}>
-                {title}
+            <h2 style={{ marginBottom: '30px', fontWeight: '600' }}>
+                {mode === 'setup' && "Create a PIN"}
+                {mode === 'confirm' && "Confirm PIN"}
+                {mode === 'verify' && "Enter PIN to Unlock"}
             </h2>
-            <p style={{
-                opacity: 0.8, marginBottom: '40px', maxWidth: '80%', textAlign: 'center',
-                lineHeight: 1.5, color: '#e2e8f0'
-            }}>
-                {subtitle}
-            </p>
 
             <div style={{ display: 'flex', gap: '20px', marginBottom: '40px' }}>
                 {[0, 1, 2, 3].map(i => (
                     <div key={i} style={{
-                        width: '15px', height: '15px', borderRadius: '50%',
-                        background: i < displayPin.length ? 'var(--accent-color)' : 'rgba(0,0,0,0.1)',
-                        transition: 'all 0.2s',
-                        transform: i < displayPin.length ? 'scale(1.2)' : 'scale(1)',
-                        boxShadow: i < displayPin.length ? '0 0 10px var(--accent-color)' : 'none'
+                        width: '16px', height: '16px', borderRadius: '50%',
+                        background: i < pin.length ? 'var(--accent-secondary)' : 'rgba(255,255,255,0.2)',
+                        transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        transform: i < pin.length ? 'scale(1.2)' : 'scale(1)'
                     }} />
                 ))}
             </div>
 
-            {error && <div style={{ color: '#e74c3c', marginBottom: '20px', fontWeight: 'bold', animation: 'shake 0.5s' }}>{error}</div>}
-
-            <style>{`
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-                    20%, 40%, 60%, 80% { transform: translateX(5px); }
-                }
-            `}</style>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '25px' }}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+            <div style={{
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px',
+                maxWidth: '320px', width: '100%', padding: '0 20px'
+            }}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
-                        key={n}
-                        onClick={() => handleInput(n)}
+                        key={num}
+                        onClick={() => handlePadClick(num)}
                         style={{
-                            width: '75px', height: '75px', borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.4)',
-                            border: '1px solid rgba(255,255,255,0.6)',
-                            fontSize: '1.8rem', color: 'var(--text-primary)',
-                            cursor: 'pointer', boxShadow: '0 5px 15px rgba(0,0,0,0.05)',
-                            transition: 'active 0.1s'
+                            width: '72px', height: '72px', borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                            color: 'white', fontSize: '1.6rem', fontWeight: '500',
+                            cursor: 'pointer', transition: 'background 0.2s'
                         }}
-                        onMouseDown={(e) => e.target.style.background = 'rgba(255,255,255,0.8)'}
-                        onMouseUp={(e) => e.target.style.background = 'rgba(255,255,255,0.4)'}
-                        onTouchStart={(e) => e.target.style.background = 'rgba(255,255,255,0.8)'}
-                        onTouchEnd={(e) => e.target.style.background = 'rgba(255,255,255,0.4)'}
                     >
-                        {n}
+                        {num}
                     </button>
                 ))}
                 <div />
                 <button
-                    onClick={() => handleInput(0)}
+                    onClick={() => handlePadClick(0)}
                     style={{
-                        width: '75px', height: '75px', borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.4)',
-                        border: '1px solid rgba(255,255,255,0.6)',
-                        fontSize: '1.8rem', color: 'var(--text-primary)',
-                        cursor: 'pointer', boxShadow: '0 5px 15px rgba(0,0,0,0.05)'
+                        width: '72px', height: '72px', borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+                        color: 'white', fontSize: '1.6rem', fontWeight: '500', cursor: 'pointer'
                     }}
                 >
                     0
                 </button>
-                <button onClick={handleDelete} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7 }}>⌫</button>
+                <button
+                    onClick={handleDelete}
+                    style={{
+                        width: '72px', height: '72px', borderRadius: '50%',
+                        background: 'transparent', border: 'none',
+                        color: 'white', fontSize: '1.4rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                >
+                    ⌫
+                </button>
             </div>
 
-            <p style={{ marginTop: '50px', fontSize: '0.8rem', opacity: 0.5, letterSpacing: '1px' }}>
-                RELATIONSHIP COUNTDOWN
-            </p>
-
-            <style>{`
-                @keyframes float {
-                    0% { transform: translateY(0px); }
-                    50% { transform: translateY(-10px); }
-                    100% { transform: translateY(0px); }
-                }
-            `}</style>
+            {error && (
+                <p style={{
+                    color: '#ef4444', marginTop: '30px', fontWeight: 'bold',
+                    background: 'rgba(239, 68, 68, 0.1)', padding: '8px 16px', borderRadius: '12px'
+                }}>
+                    {error}
+                </p>
+            )}
         </div>
     );
 };

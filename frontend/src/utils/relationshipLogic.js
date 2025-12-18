@@ -1,11 +1,22 @@
 export const getStartDate = () => {
     // Priority: 1. rc_start_date (Simple string) 2. rc_events (Complex object)
     const storedDate = localStorage.getItem('rc_start_date');
-    if (storedDate) return new Date(storedDate);
+
+    const parseLocal = (dateStr) => {
+        if (!dateStr) return null;
+        // Handle "YYYY-MM-DD" manually to force Local Midnight (not UTC)
+        if (dateStr.includes('-') && dateStr.length === 10) {
+            const [y, m, d] = dateStr.split('-').map(Number);
+            return new Date(y, m - 1, d, 0, 0, 0, 0);
+        }
+        return new Date(dateStr); // Fallback
+    };
+
+    if (storedDate) return parseLocal(storedDate);
 
     const events = JSON.parse(localStorage.getItem('rc_events') || '[]');
     const mainEvent = events.find(e => e.isMain) || events[0];
-    if (mainEvent) return new Date(mainEvent.date);
+    if (mainEvent) return parseLocal(mainEvent.date);
 
     return null;
 };

@@ -29,27 +29,46 @@ export function useWasm() {
     const now = new Date();
     // Dynamic Date from Setup Wizard
     const storedDate = localStorage.getItem('rc_start_date') || '2023-01-24';
-    const startDate = new Date(storedDate); // Renamed to avoid conflict with global MOCK_START_DATE
 
+    // Manual Parse to Local Midnight (Fixes Timezone Offsets)
+    let startDate;
+    if (storedDate.includes('-')) {
+      const [y, m, d] = storedDate.split('-').map(Number);
+      startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+    } else {
+      startDate = new Date(storedDate);
+    }
+
+    // 1. STRICT "IS TODAY" CHECK
+    // Only compare Month and Date. Year is irrelevant for "Is it the anniversary?"
+    const isToday = now.getDate() === startDate.getDate() && now.getMonth() === startDate.getMonth();
+
+    // 2. CALCULATION FOR "DAYS REMAINING" (Next Anniversary)
     let nextAnniversary = new Date();
     nextAnniversary.setMonth(startDate.getMonth());
     nextAnniversary.setDate(startDate.getDate());
-    nextAnniversary.setHours(0, 0, 0, 0); // Set to start of the day for accurate comparison
+    nextAnniversary.setHours(0, 0, 0, 0); // Midnight start
 
-    // If the anniversary has already passed this year, set it for next year
-    if (nextAnniversary < now) {
-      nextAnniversary.setFullYear(now.getFullYear() + 1);
-    } else {
-      // If it's in the future this year, ensure it's for the current year
-      nextAnniversary.setFullYear(now.getFullYear());
+    const currentYear = now.getFullYear();
+    nextAnniversary.setFullYear(currentYear);
+
+    const nowMidnight = new Date(now);
+    nowMidnight.setHours(0, 0, 0, 0);
+
+    // If strictly in the past, move to next year
+    if (nextAnniversary < nowMidnight) {
+      nextAnniversary.setFullYear(currentYear + 1);
     }
+    // If today, daysLeft should be 0.
+    // Logic above works: if today, nextAnn==nowMidnight (since we set hours 0), so not <. Wont increment.
+    // diff will be 0.
 
-    const diff = nextAnniversary - now;
+    const diff = nextAnniversary - nowMidnight;
     const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
     return {
       days_remaining: daysLeft,
-      is_today: daysLeft === 0 || (now.getDate() === nextAnniversary.getDate() && now.getMonth() === nextAnniversary.getMonth())
+      is_today: isToday
     };
   };
 

@@ -3,7 +3,7 @@ const DB_NAME = 'rc_media_db';
 const AUDIO_STORE = 'audio_files';
 const PHOTO_STORE = 'photo_files';
 const PROFILE_STORE = 'profile_photos';
-const PRIVATE_STORE = 'private_vault'; // New encrypted store
+
 const DB_VERSION = 4; // Bump version for private vault
 
 export const openDB = () => {
@@ -21,9 +21,7 @@ export const openDB = () => {
             if (!db.objectStoreNames.contains(PROFILE_STORE)) {
                 db.createObjectStore(PROFILE_STORE, { keyPath: 'id' });
             }
-            if (!db.objectStoreNames.contains(PRIVATE_STORE)) {
-                db.createObjectStore(PRIVATE_STORE, { keyPath: 'id' });
-            }
+
         };
 
         request.onsuccess = (event) => resolve(event.target.result);
@@ -122,7 +120,4 @@ export const savePhoto = async (id, blob, caption = '', date = new Date().toISOS
 export const getPhotos = () => getAllFromStore(PHOTO_STORE);
 export const deletePhoto = (id) => deleteFromStore(PHOTO_STORE, id);
 
-// Private Vault API (Encrypted Blobs)
-export const savePrivateItem = (id, encryptedData) => saveToStore(PRIVATE_STORE, id, encryptedData);
-export const getPrivateItems = () => getAllFromStore(PRIVATE_STORE);
-export const deletePrivateItem = (id) => deleteFromStore(PRIVATE_STORE, id);
+

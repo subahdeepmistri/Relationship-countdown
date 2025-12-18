@@ -7,7 +7,7 @@ import MessageCard from './components/MessageCard';
 import AnniversaryOverlay from './components/AnniversaryOverlay';
 import Settings from './components/Settings';
 import MemoryCarousel from './components/MemoryCarousel';
-import PrivateSection from './components/PrivateSection';
+
 // import LinkToTimeline from './components/LinkToTimeline'; // Removed, integrated in Navbar or App state
 import MilestoneCelebration from './components/MilestoneCelebration';
 import TimelineView from './components/TimelineView';
@@ -21,6 +21,7 @@ import SyncManager from './components/SyncManager';
 import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
 import LegacyCapsule from './components/LegacyCapsule';
+import AboutSection from './components/AboutSection';
 
 import Navbar from './components/Navbar';
 import MoodPulse from './components/MoodPulse';
@@ -39,6 +40,7 @@ import SecurityLock from './components/SecurityLock';
 import { checkAnniversaryNotification } from './utils/notifications';
 import { useWasm } from './hooks/useWasm';
 import { checkGentleReminder } from './utils/reminders';
+import EventHorizon from './components/EventHorizon';
 
 function App() {
   const { relationship, settings, updateRelationship, updateSettings } = useRelationship();
@@ -46,6 +48,7 @@ function App() {
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
   const [isSessionUnlocked, setIsSessionUnlocked] = useState(!settings.appLockEnabled);
+
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
 
@@ -80,12 +83,19 @@ function App() {
 
     checkGentleReminder();
 
-    // Check Wasm Anniversary
-    const status = getAnniversaryCountdown();
-    if (status && status.is_today) {
-      checkAnniversaryNotification(true);
-    }
-  }, [getAnniversaryCountdown, updateRelationship]); // Added updateRelationship to dependencies
+    // Check Wasm Anniversary (Instant & Periodic)
+    const checkAnniversary = () => {
+      const status = getAnniversaryCountdown();
+      if (status && status.is_today) {
+        checkAnniversaryNotification(true);
+      }
+    };
+
+    checkAnniversary(); // Immediate check
+    const midnightTimer = setInterval(checkAnniversary, 60000); // Check every minute
+
+    return () => clearInterval(midnightTimer);
+  }, [getAnniversaryCountdown, updateRelationship]);
 
   // 2. Profile Images Loading (Side Effect for Blobs)
   useEffect(() => {
@@ -131,6 +141,8 @@ function App() {
   if (settings.appLockEnabled && !isSessionUnlocked) {
     return <SecurityLock initialMode="verify" onSuccess={() => setIsSessionUnlocked(true)} />;
   }
+
+
 
   // 2. Onboarding Flow
   if (!relationship.startDate) {
@@ -189,12 +201,14 @@ function App() {
       {activeView === 'journey' && <JourneyMap onClose={handleClose} />}
       {activeView === 'legacy' && <LegacyCapsule onClose={handleClose} />}
       {activeView === 'timeline' && <TimelineView onClose={handleClose} />}
+      {activeView === 'about' && <AboutSection onClose={handleClose} />}
 
       {/* Settings & Overlays */}
       <Settings
         isOpen={activeView === 'settings'}
         onClose={handleClose}
         onEditPhotos={() => setActiveView('edit-photos')}
+        onOpenAbout={() => setActiveView('about')}
       />
 
       {activeView === 'edit-photos' && (
@@ -249,6 +263,54 @@ function App() {
           </button>
 
           <div style={{ textAlign: 'center' }}>
+
+            {/* Couple Avatars Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+              <div style={{ position: 'relative', width: '160px', height: '90px' }}>
+                {/* Left Avatar */}
+                <div style={{
+                  position: 'absolute', left: 0, top: 0,
+                  width: '85px', height: '85px', borderRadius: '50%',
+                  border: '4px solid white', overflow: 'hidden',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)', zIndex: 1,
+                  background: '#f1f5f9'
+                }}>
+                  {profileImages.left ? (
+                    <img src={profileImages.left} alt="P1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', background: '#cbd5e1' }}>👤</div>
+                  )}
+                </div>
+
+                {/* Right Avatar */}
+                <div style={{
+                  position: 'absolute', right: 0, top: 0,
+                  width: '85px', height: '85px', borderRadius: '50%',
+                  border: '4px solid white', overflow: 'hidden',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)', zIndex: 1,
+                  background: '#f1f5f9'
+                }}>
+                  {profileImages.right ? (
+                    <img src={profileImages.right} alt="P2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', background: '#cbd5e1' }}>👤</div>
+                  )}
+                </div>
+
+                {/* Heart Connector */}
+                <div style={{
+                  position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+                  width: '34px', height: '34px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #F472B6 0%, #DB2777 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  zIndex: 10, border: '3px solid white', fontSize: '1rem', color: 'white',
+                  boxShadow: '0 4px 10px rgba(219, 39, 119, 0.4)'
+                }}>
+                  ❤️
+                </div>
+              </div>
+            </div>
+
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
               padding: '6px 14px', background: 'rgba(255, 255, 255, 0.9)',
@@ -322,6 +384,7 @@ function App() {
       </div>
 
       <MemoryCarousel />
+      <EventHorizon />
       <DailyQuestion />
 
       {/* Footer Navigation */}
@@ -340,7 +403,7 @@ function App() {
       <Navbar onNavigate={handleNavigate} activeView={activeView} />
       <AnniversaryOverlay />
       <MilestoneCelebration />
-      <PrivateSection />
+
 
       {isNightOwl && (
         <div style={{

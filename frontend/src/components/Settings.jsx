@@ -3,7 +3,7 @@ import '../styles/theme.css';
 import SecurityLock from './SecurityLock';
 import { useRelationship } from '../context/RelationshipContext';
 
-const Settings = ({ isOpen, onClose, onEditPhotos }) => {
+const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
     const { settings, relationship, updateSettings, updateRelationship } = useRelationship();
 
     const [appLockEnabled, setAppLockEnabled] = useState(false);
@@ -36,7 +36,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     // Initialize Buffer from Context when Opened
     useEffect(() => {
         if (isOpen) {
-            setAppLockEnabled(settings.appLockEnabled);
+
             setEnableNotifications(settings.notifications);
             setEnableAI(settings.aiEnabled);
             setApiKey(settings.aiKey);
@@ -81,6 +81,8 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         }
     };
 
+
+
     const handleLockToggle = () => {
         if (!appLockEnabled) {
             setLockModalMode('setup');
@@ -108,8 +110,9 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         updateSettings({
             notifications: enableNotifications,
             aiEnabled: enableAI,
-            aiKey: apiKey,
+            aiKey: apiKey.trim(),
             appLockEnabled: appLockEnabled, // Ensure sync
+
             longDistance: {
                 enabled: ldEnabled,
                 offset: ldOffset,
@@ -138,7 +141,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
     return (
         <div style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 9999,
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10005,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.98) 100%)',
             backdropFilter: 'blur(15px)', animation: 'fadeIn 0.3s ease-out'
@@ -170,6 +173,8 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                     />
                 </div>
             )}
+
+
 
             <div style={{
                 maxWidth: '500px', width: '95%', height: '90%', display: 'flex', flexDirection: 'column',
@@ -204,16 +209,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                         </button>
                     </div>
 
-                    <div className="settings-section">
-                        <SectionHeader title="Privacy & Security" icon={<Icons.Lock />} />
-                        <GlassToggle
-                            label="App Lock"
-                            desc="Protect with a PIN"
-                            active={appLockEnabled}
-                            onToggle={handleLockToggle}
-                            icon={<Icons.Shield />}
-                        />
-                    </div>
+
 
                     <div className="settings-section">
                         <SectionHeader title="Experience" icon={<Icons.Sparkles />} />
@@ -247,6 +243,17 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                 </p>
                             </div>
                         )}
+                    </div>
+
+                    <div className="settings-section">
+                        <SectionHeader title="Privacy & Security" icon={<Icons.Lock />} />
+                        <GlassToggle
+                            label="App Lock"
+                            desc="Protect with a PIN"
+                            active={appLockEnabled}
+                            onToggle={handleLockToggle}
+                            icon={<Icons.Shield />}
+                        />
                     </div>
 
                     <div className="settings-section">
@@ -289,13 +296,28 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                         offset={ldOffset} setOffset={setLdOffset}
                         meet={ldMeet} setMeet={setLdMeet}
                     />
+                    <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
+                        <button onClick={() => { onClose(); onOpenAbout(); }} style={{
+                            width: '100%', padding: '16px', background: 'transparent',
+                            border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', color: '#94a3b8',
+                            fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                            cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem'
+                        }}
+                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
+                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
+                        >
+                            <span style={{ display: 'flex' }}><Icons.Info /></span> About & Credits
+                        </button>
+                    </div>
 
-                    <div style={{ height: '80px' }}></div>
+
                 </div>
 
                 <div style={{
-                    position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
-                    width: '90%', maxWidth: '400px', display: 'flex', gap: '10px'
+                    paddingTop: '20px',
+                    paddingBottom: '20px',
+                    display: 'flex', gap: '10px',
+                    marginTop: 'auto' // Pushes to bottom if flex container
                 }}>
                     <button onClick={onClose} style={{
                         flex: 1, padding: '16px', background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)',
@@ -338,7 +360,8 @@ const Icons = {
     Globe: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>,
     Camera: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>,
     Trash: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
-    X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
+    Info: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
 };
 
 const SectionHeader = ({ title, icon }) => (
@@ -377,6 +400,22 @@ const GlassToggle = ({ label, desc, active, onToggle, icon }) => (
 );
 
 const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, setMeet }) => {
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    useEffect(() => {
+        if (!enabled) return;
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, [enabled]);
+
+    const getPartnerTime = () => {
+        if (!offset) return "---";
+        const now = currentTime;
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const partnerDate = new Date(utc + (3600000 * parseFloat(offset)));
+        return partnerDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
     return (
         <div className="settings-section">
             <SectionHeader title="Distance Tools" icon={<Icons.Plane />} />
@@ -389,10 +428,47 @@ const LongDistanceSettings = ({ enabled, setEnabled, offset, setOffset, meet, se
             />
             {enabled && (
                 <div className="nested-settings">
-                    <label style={{ display: 'block', marginBottom: '15px', color: '#e2e8f0', fontSize: '0.9rem' }}>
-                        Partner Timezone (Hours +/-):
-                        <input type="number" placeholder="-5" value={offset} onChange={(e) => setOffset(e.target.value)} className="glass-input" style={{ marginTop: '5px' }} />
-                    </label>
+                    <div style={{
+                        background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '16px', marginBottom: '15px',
+                        display: 'flex', flexDirection: 'column', gap: '10px'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94a3b8' }}>
+                            <span>My Time</span>
+                            <span>Partner's Time</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: 'white' }}>
+                            <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span style={{ color: '#38BDF8' }}>{getPartnerTime()}</span>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                            <button onClick={() => setOffset(String((parseFloat(offset || 0) - 1)))} style={{
+                                width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>−</button>
+
+                            <div style={{ flex: 1, textAlign: 'center' }}>
+                                <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>UTC Offset</label>
+                                <input
+                                    type="number"
+                                    value={offset}
+                                    onChange={(e) => setOffset(e.target.value)}
+                                    className="glass-input"
+                                    style={{ textAlign: 'center', padding: '8px' }}
+                                    placeholder="e.g. -5"
+                                />
+                            </div>
+
+                            <button onClick={() => setOffset(String((parseFloat(offset || 0) + 1)))} style={{
+                                width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)',
+                                background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>+</button>
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', textAlign: 'center', margin: '5px 0 0 0' }}>
+                            Adjust until the time on the right matches your partner's current time.
+                        </p>
+                    </div>
+
                     <label style={{ display: 'block', color: '#e2e8f0', fontSize: '0.9rem' }}>
                         Next Meeting Date:
                         <input type="date" value={meet} onChange={(e) => setMeet(e.target.value)} className="glass-input" style={{ marginTop: '5px', fontFamily: 'sans-serif' }} />
