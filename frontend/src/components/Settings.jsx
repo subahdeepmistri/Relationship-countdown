@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/theme.css';
-import SecurityLock from './SecurityLock';
+
 import { useRelationship } from '../context/RelationshipContext';
 
 const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
     const { settings, relationship, updateSettings, updateRelationship } = useRelationship();
-
-    const [appLockEnabled, setAppLockEnabled] = useState(false);
-    const [showLockModal, setShowLockModal] = useState(false);
-    const [lockModalMode, setLockModalMode] = useState('setup');
 
     // Local Buffer State (Editing)
     const [enableNotifications, setEnableNotifications] = useState(false);
@@ -83,27 +79,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
 
 
 
-    const handleLockToggle = () => {
-        if (!appLockEnabled) {
-            setLockModalMode('setup');
-            setShowLockModal(true);
-        } else {
-            setLockModalMode('verify');
-            setShowLockModal(true);
-        }
-    };
 
-    const handleLockSuccess = () => {
-        if (lockModalMode === 'setup') {
-            setAppLockEnabled(true);
-            // We update context immediately for lock status to ensure consistency
-            updateSettings({ appLockEnabled: true });
-        } else {
-            setAppLockEnabled(false);
-            updateSettings({ appLockEnabled: false });
-        }
-        setShowLockModal(false);
-    };
 
     const handleSave = () => {
         // commit all buffers to context
@@ -111,7 +87,6 @@ const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
             notifications: enableNotifications,
             aiEnabled: enableAI,
             aiKey: apiKey.trim(),
-            appLockEnabled: appLockEnabled, // Ensure sync
 
             longDistance: {
                 enabled: ldEnabled,
@@ -164,15 +139,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
                 </div>
             )}
 
-            {showLockModal && (
-                <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 10000 }}>
-                    <SecurityLock
-                        initialMode={lockModalMode}
-                        onSuccess={handleLockSuccess}
-                        onCancel={() => setShowLockModal(false)}
-                    />
-                </div>
-            )}
+
 
 
 
@@ -245,16 +212,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
                         )}
                     </div>
 
-                    <div className="settings-section">
-                        <SectionHeader title="Privacy & Security" icon={<Icons.Lock />} />
-                        <GlassToggle
-                            label="App Lock"
-                            desc="Protect with a PIN"
-                            active={appLockEnabled}
-                            onToggle={handleLockToggle}
-                            icon={<Icons.Shield />}
-                        />
-                    </div>
+
 
                     <div className="settings-section">
                         <SectionHeader title="Timeline Events" icon={<Icons.Calendar />} />

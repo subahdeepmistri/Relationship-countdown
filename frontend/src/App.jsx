@@ -36,7 +36,6 @@ import NextMilestoneCard from './components/NextMilestoneCard'; // Phase 4 Miles
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
 import { getStartDate } from './utils/relationshipLogic'; // Can likely be replaced by context data
 
-import SecurityLock from './components/SecurityLock';
 import { checkAnniversaryNotification } from './utils/notifications';
 import { useWasm } from './hooks/useWasm';
 import { checkGentleReminder } from './utils/reminders';
@@ -49,18 +48,6 @@ function App() {
 
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
-  // Initialize strictly based on settings
-  const [isSessionUnlocked, setIsSessionUnlocked] = useState(() => !settings.appLockEnabled);
-
-  // Sync Lock State when settings change
-  useEffect(() => {
-    // If user disables lock, auto-unlock session
-    if (!settings.appLockEnabled) {
-      setIsSessionUnlocked(true);
-    }
-    // Note: We don't auto-lock if they enable it, as they are currently active. 
-    // It will lock on next reload.
-  }, [settings.appLockEnabled]);
 
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
@@ -149,11 +136,7 @@ function App() {
 
   // --- RENDER GATES ---
 
-  // 1. Security Lock (Pin required?)
-  // If app lock is enabled within settings, but session is not unlocked
-  if (settings.appLockEnabled && !isSessionUnlocked) {
-    return <SecurityLock initialMode="verify" onSuccess={() => setIsSessionUnlocked(true)} />;
-  }
+
 
 
 
