@@ -21,7 +21,7 @@ import SyncManager from './components/SyncManager';
 import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
 import LegacyCapsule from './components/LegacyCapsule';
-
+import AboutSection from './components/AboutSection';
 
 import Navbar from './components/Navbar';
 import MoodPulse from './components/MoodPulse';
@@ -198,13 +198,14 @@ function App() {
       {activeView === 'journey' && <JourneyMap onClose={handleClose} />}
       {activeView === 'legacy' && <LegacyCapsule onClose={handleClose} />}
       {activeView === 'timeline' && <TimelineView onClose={handleClose} />}
-
+      {activeView === 'about' && <AboutSection onClose={handleClose} />}
 
       {/* Settings & Overlays */}
       <Settings
         isOpen={activeView === 'settings'}
         onClose={handleClose}
         onEditPhotos={() => setActiveView('edit-photos')}
+        onOpenAbout={() => setActiveView('about')}
       />
 
       {activeView === 'edit-photos' && (
