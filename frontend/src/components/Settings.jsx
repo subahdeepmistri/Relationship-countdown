@@ -3,7 +3,7 @@ import '../styles/theme.css';
 
 import { useRelationship } from '../context/RelationshipContext';
 
-const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
+const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     const { settings, relationship, updateSettings, updateRelationship } = useRelationship();
 
     // Local Buffer State (Editing)
@@ -254,19 +254,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos, onOpenAbout }) => {
                         offset={ldOffset} setOffset={setLdOffset}
                         meet={ldMeet} setMeet={setLdMeet}
                     />
-                    <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '20px' }}>
-                        <button onClick={() => { onClose(); onOpenAbout(); }} style={{
-                            width: '100%', padding: '16px', background: 'transparent',
-                            border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', color: '#94a3b8',
-                            fontWeight: '500', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                            cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem'
-                        }}
-                            onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'}
-                            onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'}
-                        >
-                            <span style={{ display: 'flex' }}><Icons.Info /></span> About & Credits
-                        </button>
-                    </div>
+
 
 
                 </div>
