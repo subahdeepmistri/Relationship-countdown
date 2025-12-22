@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
+// Defined mood options with new additions
 const MOODS = [
-    { id: 'love', emoji: '❤️', label: 'Love You', color: '#e74c3c' },
-    { id: 'miss', emoji: '🥺', label: 'Miss You', color: '#3498db' },
-    { id: 'happy', emoji: '✨', label: 'Happy', color: '#f1c40f' },
-    { id: 'busy', emoji: '💻', label: 'Busy', color: '#95a5a6' },
-    { id: 'sleepy', emoji: '😴', label: 'Sleepy', color: '#9b59b6' },
-    { id: 'hungry', emoji: '🍕', label: 'Hungry', color: '#e67e22' },
+    { id: 'love', emoji: '❤️', label: 'Love You', color: '#ff6b6b', message: "Sending all my love to you! ❤️" },
+    { id: 'miss', emoji: '🥺', label: 'Miss You', color: '#54a0ff', message: "Missing you more than words can say." },
+    { id: 'calm', emoji: '😌', label: 'Calm', color: '#1dd1a1', message: "Peaceful vibes sent your way. 🍃" },
+    { id: 'tired', emoji: '😴', label: 'Tired', color: '#a29bfe', message: "Rest well, my love. 🌙" },
+    { id: 'happy', emoji: '✨', label: 'Happy', color: '#feca57', message: "So happy to see you shine! ✨" },
+    { id: 'excited', emoji: '🎉', label: 'Excited', color: '#ff9ff3', message: "Yay! Can't wait for what's next! 🎉" },
 ];
 
 const MoodPulse = () => {
     const [myStatus, setMyStatus] = useState(null);
-    const [justSaved, setJustSaved] = useState(false);
-    const [historyMsg, setHistoryMsg] = useState('');
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [hasDropped, setHasDropped] = useState(false);
 
     useEffect(() => {
         // Load today's mood
@@ -22,205 +24,205 @@ const MoodPulse = () => {
 
         if (lastUpdate === today && savedMood) {
             setMyStatus(savedMood);
-            // Mock History Logic for Engagement
-            setHistoryMsg(`You've felt '${MOODS.find(m => m.id === savedMood)?.label}' often this week.`);
+            setHasDropped(true);
         }
     }, []);
 
-    const handleSetMood = (id) => {
+    const handleMoodSelect = (moodId) => {
         const today = new Date().toDateString();
-        setMyStatus(id);
-        setJustSaved(true);
-        localStorage.setItem('rc_my_mood', id);
+
+        // 1. Play haptic
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+
+        // 2. Set state implies "dropping"
+        localStorage.setItem('rc_my_mood', moodId);
         localStorage.setItem('rc_mood_date', today);
-
-        // Simple mock history feedback
-        const label = MOODS.find(m => m.id === id)?.label;
-        setHistoryMsg(`You selected '${label}' today.`);
-
-        setTimeout(() => setJustSaved(false), 3000);
+        setMyStatus(moodId);
+        setHasDropped(true);
+        setIsExpanded(false);
     };
 
-    // Drag to Scroll Logic
-    const scrollRef = React.useRef(null);
-    const isDown = React.useRef(false);
-    const startX = React.useRef(0);
-    const scrollLeft = React.useRef(0);
-    const hasMoved = React.useRef(false); // Track if actual dragging occurred
-
-    const handleMouseDown = (e) => {
-        isDown.current = true;
-        hasMoved.current = false; // Reset movement flag
-        startX.current = e.pageX - scrollRef.current.offsetLeft;
-        scrollLeft.current = scrollRef.current.scrollLeft;
-        scrollRef.current.style.cursor = 'grabbing';
-    };
-
-    const handleMouseLeave = () => {
-        isDown.current = false;
-        scrollRef.current.style.cursor = 'grab';
-    };
-
-    const handleMouseUp = () => {
-        isDown.current = false;
-        scrollRef.current.style.cursor = 'grab';
-    };
-
-    const handleMouseMove = (e) => {
-        if (!isDown.current) return;
-        e.preventDefault();
-        const x = e.pageX - scrollRef.current.offsetLeft;
-        const walk = (x - startX.current) * 2; // Scroll-fast factor
-
-        // Only mark as moved if notable distance to prevent accidental micro-jitter blocking clicks
-        if (Math.abs(x - startX.current) > 5) {
-            hasMoved.current = true;
-        }
-
-        scrollRef.current.scrollLeft = scrollLeft.current - walk;
-    };
-
-    const handleItemClick = (e, moodId) => {
-        // If we dragged (moved more than 5px), block the click
-        if (hasMoved.current) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-        }
-        // Otherwise, it's a valid click
-        handleSetMood(moodId);
-    };
+    const currentMoodData = MOODS.find(m => m.id === myStatus);
 
     return (
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%', maxWidth: '100%' }}>
-            {/* Scroll Container with Fading Edges Mask */}
-            <div style={{
-                position: 'relative',
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mood-drop-container"
+            style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(24px)',
+                borderRadius: '32px',
+                padding: '32px 20px',
+                boxShadow: '0 25px 50px -12px rgba(0,0,0,0.08), 0 0 0 1px rgba(255,255,255,0.4)',
                 width: '100%',
-                // Mask easing for smooth fade out on sides
-                maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-                WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)'
+                position: 'relative',
+                overflow: 'visible', // Allow animations to pop out if needed
+                textAlign: 'center'
+            }}
+        >
+            {/* Header */}
+            <h3 style={{
+                fontSize: '1rem',
+                fontWeight: '600',
+                color: '#64748b',
+                marginBottom: '24px',
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase'
             }}>
-                <div
-                    ref={scrollRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                    style={{
-                        display: 'flex',
-                        gap: '15px',
-                        overflowX: 'auto',
-                        padding: '10px 10% 20px 10%', // More padding for clear edges
-                        scrollSnapType: 'x mandatory',
-                        WebkitOverflowScrolling: 'touch',
-                        scrollbarWidth: 'none',
-                        msOverflowStyle: 'none',
-                        cursor: 'grab',
-                        userSelect: 'none' // Prevent text selection while dragging
-                    }}
-                    className="no-scrollbar"
-                >
-                    {MOODS.map(mood => {
-                        const isActive = myStatus === mood.id;
-                        return (
-                            <button
-                                key={mood.id}
-                                onClick={(e) => handleItemClick(e, mood.id)}
+                Today's Mood Drop
+            </h3>
+
+            {/* Interaction Area */}
+            <div style={{ position: 'relative', height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AnimatePresence>
+                    {!hasDropped ? (
+                        /* ORB INTERACTION */
+                        isExpanded ? (
+                            /* EXPANDED STATE - MOOD GRID */
+                            <motion.div
+                                key="grid"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.5, filter: 'blur(10px)' }}
+                                transition={{ type: 'spring', bounce: 0.3 }}
                                 style={{
-                                    flex: '0 0 auto', // Prevent shrinking
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    background: isActive ? '#fff' : 'rgba(241, 245, 249, 0.8)',
-                                    border: isActive ? `2px solid ${mood.color}` : '1px solid transparent',
-                                    minWidth: '85px',
-                                    height: '110px',
-                                    borderRadius: '50px',
-                                    // Removed pointer-events: none logic as we handle it via onClick check now
-                                    transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Bouncy spring
-                                    transform: isActive ? 'scale(1.1) translateY(-5px)' : 'scale(1)',
-                                    position: 'relative',
-                                    scrollSnapAlign: 'center',
-                                    boxShadow: isActive
-                                        ? `0 15px 30px -10px ${mood.color}66` // Colored glow
-                                        : '0 4px 6px -1px rgba(0,0,0,0.05)'
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(3, 1fr)',
+                                    gap: '12px',
+                                    width: '100%',
+                                    maxWidth: '300px'
                                 }}
                             >
-                                <span style={{
-                                    fontSize: '2.5rem',
-                                    filter: isActive ? 'none' : 'grayscale(1) opacity(0.5)',
-                                    marginBottom: '8px',
-                                    transition: 'all 0.3s ease',
-                                    transform: isActive ? 'scale(1.1)' : 'scale(1)'
-                                }}>
-                                    {mood.emoji}
-                                </span>
-                                <span style={{
-                                    fontSize: '0.7rem',
-                                    fontWeight: '800',
-                                    color: isActive ? mood.color : '#94a3b8',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.5px'
-                                }}>
-                                    {mood.label}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Inline style to hide scrollbar but keep functionality */}
-            <style>{`.no-scrollbar::-webkit-scrollbar { display: none; }`}</style>
-
-            {/* Desktop hint (optional, but good for UX) */}
-            <div style={{ textAlign: 'center', fontSize: '0.7rem', opacity: 0.4, marginTop: '-15px' }}>
-                Swipe or drag to explore
-            </div>
-
-            {myStatus && (
-                <div style={{
-                    textAlign: 'center',
-                    fontSize: '1rem',
-                    color: '#64748b',
-                    fontWeight: '500',
-                    animation: 'fadeIn 0.5s ease',
-                    marginTop: '-5px'
-                }}>
-                    {justSaved ? (
-                        <span style={{
-                            display: 'inline-block',
-                            color: 'white',
-                            background: '#10b981',
-                            padding: '6px 16px',
-                            borderRadius: '20px',
-                            fontSize: '0.85rem',
-                            boxShadow: '0 4px 10px rgba(16, 185, 129, 0.3)',
-                            animation: 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                        }}>
-                            Response Saved ✨
-                        </span>
+                                {MOODS.map((mood) => (
+                                    <motion.button
+                                        key={mood.id}
+                                        onClick={() => handleMoodSelect(mood.id)}
+                                        whileTap={{ scale: 0.9 }}
+                                        style={{
+                                            background: '#fff',
+                                            border: `2px solid ${mood.color}20`,
+                                            borderRadius: '20px',
+                                            padding: '12px 0',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
+                                        }}
+                                    >
+                                        <span style={{ fontSize: '1.8rem', marginBottom: '4px' }}>{mood.emoji}</span>
+                                        <span style={{ fontSize: '0.7rem', fontWeight: '600', color: mood.color }}>{mood.label}</span>
+                                    </motion.button>
+                                ))}
+                            </motion.div>
+                        ) : (
+                            /* IDLE ORB */
+                            <motion.button
+                                key="orb"
+                                onClick={() => setIsExpanded(true)}
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{
+                                    scale: [1, 1.05, 1],
+                                    opacity: 1,
+                                    y: [0, -5, 0]
+                                }}
+                                exit={{ scale: 1.5, opacity: 0 }}
+                                transition={{
+                                    repeat: Infinity,
+                                    duration: 4,
+                                    ease: "easeInOut"
+                                }}
+                                whileTap={{ scale: 0.9 }}
+                                style={{
+                                    width: '100px',
+                                    height: '100px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%)', // Default mysterious gradient
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 20px 40px -10px rgba(63, 43, 150, 0.4)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                <span style={{ fontSize: '2rem', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>💧</span>
+                            </motion.button>
+                        )
                     ) : (
-                        <span>
-                            Today's vibe: <span style={{
-                                color: MOODS.find(m => m.id === myStatus)?.color,
-                                fontWeight: '800',
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px'
-                            }}>{MOODS.find(m => m.id === myStatus)?.label}</span>
-                        </span>
+                        /* DROPPED STATE - ANIMATED EMOJI */
+                        <motion.div
+                            key="dropped"
+                            initial={{ y: -100, opacity: 0, scale: 1.5 }}
+                            animate={{ y: 0, opacity: 1, scale: 1 }}
+                            transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <motion.div
+                                animate={{ rotate: [0, -10, 10, 0] }}
+                                transition={{ delay: 0.5, repeat: Infinity, repeatDelay: 3 }}
+                                style={{
+                                    fontSize: '4rem',
+                                    filter: `drop-shadow(0 20px 30px ${currentMoodData?.color}60)`
+                                }}
+                            >
+                                {currentMoodData?.emoji}
+                            </motion.div>
+                            <motion.div
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: '60px', opacity: 1 }}
+                                transition={{ delay: 0.3, duration: 0.6 }}
+                                style={{
+                                    height: '10px',
+                                    background: currentMoodData?.color,
+                                    borderRadius: '50%',
+                                    marginTop: '20px',
+                                    filter: 'blur(8px)'
+                                }}
+                            />
+                        </motion.div>
                     )}
-                    {historyMsg && !justSaved && <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '8px', fontStyle: 'italic' }}>{historyMsg}</div>}
-                </div>
-            )}
-            <style>{`
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-                @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-            `}</style>
-        </div>
+                </AnimatePresence>
+            </div>
+
+            {/* Feedback Footer */}
+            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '10px' }}>
+                <AnimatePresence mode="wait">
+                    {!hasDropped ? (
+                        <motion.p
+                            key="prompt"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.7 }}
+                            exit={{ opacity: 0 }}
+                            style={{ fontSize: '0.9rem', color: '#64748b' }}
+                        >
+                            Tap drop to share feelings
+                        </motion.p>
+                    ) : (
+                        <motion.div
+                            key="feedback"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.4 }}
+                            style={{ textAlign: 'center' }}
+                        >
+                            <p style={{ margin: 0, fontWeight: '500', color: currentMoodData?.color }}>
+                                You felt "{currentMoodData?.label}"
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#94a3b8', fontStyle: 'italic' }}>
+                                {currentMoodData?.message}
+                            </p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </motion.div>
     );
 };
 

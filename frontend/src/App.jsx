@@ -186,10 +186,63 @@ function App() {
     return map[type] || 'Us';
   };
 
+  // Easter Egg State
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const longPressTimer = React.useRef(null);
+
+  const handleLongPressStart = () => {
+    longPressTimer.current = setTimeout(() => {
+      setShowEasterEgg(true);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }, 800);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+    }
+  };
+
   return (
     <>
       <UpdatePrompt />
       <ThemeBackground />
+
+      {/* EASTER EGG OVERLAY */}
+      {showEasterEgg && (
+        <div
+          onClick={() => setShowEasterEgg(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            zIndex: 3000, background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+            padding: '24px', animation: 'fadeIn 0.8s ease-out', color: 'white'
+          }}>
+
+          <div style={{ fontSize: '4rem', marginBottom: '20px', animation: 'pulse 2s infinite' }}>❤️</div>
+
+          <h2 style={{
+            fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '16px',
+            background: 'linear-gradient(to right, #F472B6, #F97316)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+          }}>
+            If you’re reading this…
+          </h2>
+
+          <p style={{
+            fontSize: '1.2rem', lineHeight: '1.6', color: '#cbd5e1', maxWidth: '400px',
+            fontStyle: 'italic', fontWeight: '300'
+          }}>
+            I still choose you.<br />
+            Always.
+          </p>
+
+          <div style={{ marginTop: '40px', opacity: 0.5, fontSize: '0.9rem' }}>
+            (Tap anywhere to close)
+          </div>
+        </div>
+      )}
 
       {/* EXCLUSIVE VIEWS */}
       {activeView === 'scrapbook' && <ScrapbookView onClose={handleClose} />}
@@ -298,14 +351,24 @@ function App() {
                 </div>
 
                 {/* Heart Connector */}
-                <div style={{
-                  position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-                  width: '34px', height: '34px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #F472B6 0%, #DB2777 100%)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  zIndex: 10, border: '3px solid white', fontSize: '1rem', color: 'white',
-                  boxShadow: '0 4px 10px rgba(219, 39, 119, 0.4)'
-                }}>
+                <div
+                  title="Every beat is yours."
+                  onDoubleClick={() => setShowEasterEgg(true)}
+                  onTouchStart={handleLongPressStart}
+                  onTouchEnd={handleLongPressEnd}
+                  onMouseDown={handleLongPressStart}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressEnd}
+                  style={{
+                    position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+                    width: '34px', height: '34px', borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #F472B6 0%, #DB2777 100%)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 10, border: '3px solid white', fontSize: '1rem', color: 'white',
+                    boxShadow: '0 4px 10px rgba(219, 39, 119, 0.4)',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}>
                   ❤️
                 </div>
               </div>
@@ -328,7 +391,8 @@ function App() {
               {getTitle()}
             </h1>
             <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '500' }}>
-              Tracking love, one day at a time
+              Some people count days.<br />
+              I count moments with you.
             </p>
           </div>
 

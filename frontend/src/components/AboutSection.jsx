@@ -1,23 +1,187 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import { motion } from 'framer-motion';
 
 const AboutSection = ({ onClose }) => {
+    const [isEasterEggVisible, setIsEasterEggVisible] = useState(false);
+
+    const [longPressTimer, setLongPressTimer] = useState(null);
+
+    const handleStart = () => {
+        const timer = setTimeout(() => {
+            setIsEasterEggVisible(prev => !prev);
+        }, 800); // 800ms for long press
+        setLongPressTimer(timer);
+    };
+
+    const handleEnd = () => {
+        if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            setLongPressTimer(null);
+        }
+    };
+
+    const [timeLeft, setTimeLeft] = useState({});
+    const [isLocked, setIsLocked] = useState(true);
+
+    useEffect(() => {
+        const targetDate = new Date('2026-01-24T00:00:00');
+
+        const calculateTimeLeft = () => {
+            const difference = +targetDate - +new Date();
+            let timeLeft = {};
+
+            if (difference > 0) {
+                timeLeft = {
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60)
+                };
+                setIsLocked(true);
+            } else {
+                if (isLocked) {
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#F472B6', '#F97316', '#FFFFFF']
+                    });
+                }
+                setIsLocked(false);
+            }
+            return timeLeft;
+        };
+
+        setTimeLeft(calculateTimeLeft());
+
+        const timer = setInterval(() => {
+            setTimeLeft(calculateTimeLeft());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [isLocked]);
+
+
+    const handleHeartInteraction = () => {
+        setIsEasterEggVisible(prev => !prev);
+    };
+
+    if (isLocked) {
+        return (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 2000,
+                    background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', // Darker, more mysterious
+                    backdropFilter: 'blur(30px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                }}>
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '24px',
+                        right: '24px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        color: 'white'
+                    }}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+
+                <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    style={{ fontSize: '4rem', marginBottom: '20px', filter: 'drop-shadow(0 0 20px rgba(244,114,182,0.4))' }}>
+                    🔒
+                </motion.div>
+
+                <h2 style={{
+                    fontSize: '1.5rem',
+                    marginBottom: '30px',
+                    fontWeight: '300',
+                    letterSpacing: '1px',
+                    textAlign: 'center',
+                    color: '#e2e8f0'
+                }}>
+                    This story unlocks in...
+                </h2>
+
+                <div style={{
+                    display: 'flex',
+                    gap: '15px',
+                    textAlign: 'center',
+                    fontFamily: 'monospace' // Or a better font if available
+                }}>
+                    {Object.keys(timeLeft).length > 0 && (
+                        <>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#F472B6' }}>{timeLeft.days}</span>
+                                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', opacity: 0.7 }}>Days</span>
+                            </div>
+                            <span style={{ fontSize: '2rem', color: '#475569' }}>:</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#F472B6' }}>{String(timeLeft.hours).padStart(2, '0')}</span>
+                                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', opacity: 0.7 }}>Hrs</span>
+                            </div>
+                            <span style={{ fontSize: '2rem', color: '#475569' }}>:</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#F472B6' }}>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', opacity: 0.7 }}>Mins</span>
+                            </div>
+                            <span style={{ fontSize: '2rem', color: '#475569' }}>:</span>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <span style={{ fontSize: '2rem', fontWeight: 'bold', color: '#F472B6' }}>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', opacity: 0.7 }}>Secs</span>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </motion.div>
+        );
+    }
+
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            zIndex: 2000,
-            background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)', // Deep Night Blue
-            backdropFilter: 'blur(20px)',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '24px',
-            overflowY: 'auto',
-            animation: 'fadeIn 0.4s ease-out',
-            color: 'white'
-        }}>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 2000,
+                background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)', // Deep Night Blue
+                backdropFilter: 'blur(20px)',
+                display: 'flex',
+                flexDirection: 'column',
+                padding: '24px',
+                overflowY: 'auto',
+                animation: 'fadeIn 0.4s ease-out',
+                color: 'white'
+            }}>
             {/* Background Atmosphere Blobs */}
             <div style={{ position: 'fixed', top: '-10%', right: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
             <div style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
@@ -70,21 +234,63 @@ const AboutSection = ({ onClose }) => {
                     textAlign: 'center',
                     marginBottom: '40px'
                 }}>
-                    <div style={{
-                        fontSize: '4rem',
-                        marginBottom: '10px',
-                        animation: 'float 6s ease-in-out infinite'
-                    }}>
+                    <div
+                        title="Every beat leads back to you."
+                        onDoubleClick={handleHeartInteraction}
+                        // Long Press Support
+                        onMouseDown={handleStart}
+                        onMouseUp={handleEnd}
+                        onMouseLeave={handleEnd}
+                        onTouchStart={handleStart}
+                        onTouchEnd={handleEnd}
+                        style={{
+                            fontSize: '4rem',
+                            marginBottom: '10px',
+                            animation: 'pulse 2s infinite',
+                            cursor: 'help',
+                            userSelect: 'none',
+                            WebkitUserSelect: 'none', // Critical for preventing text selection on iOS
+                            touchAction: 'manipulation' // Improves touch handling
+                        }}>
                         ❤️
                     </div>
-                    <p style={{
-                        fontSize: '1.2rem',
-                        lineHeight: '1.8',
-                        color: '#cbd5e1',
-                        fontWeight: '500'
-                    }}>
-                        Counting moments, keeping promises, and bridging distances.
-                    </p>
+                    {isEasterEggVisible ? (
+                        <div style={{ animation: 'fadeIn 0.5s ease-out', minHeight: '60px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            <p style={{
+                                fontSize: '1.3rem',
+                                lineHeight: '1.6',
+                                color: '#F472B6',
+                                fontWeight: '600',
+                                margin: 0,
+                                fontFamily: '"Dancing Script", cursive',
+                                fontStyle: 'italic',
+                                textShadow: '0 2px 10px rgba(244, 114, 182, 0.4)'
+                            }}>
+                                “If you’re reading this…
+                            </p>
+                            <p style={{
+                                fontSize: '1.3rem',
+                                lineHeight: '1.6',
+                                color: '#F472B6',
+                                fontWeight: '600',
+                                margin: 0,
+                                fontFamily: '"Dancing Script", cursive',
+                                fontStyle: 'italic',
+                                textShadow: '0 2px 10px rgba(244, 114, 182, 0.4)'
+                            }}>
+                                I still choose you. Always.”
+                            </p>
+                        </div>
+                    ) : (
+                        <p style={{
+                            fontSize: '1.2rem',
+                            lineHeight: '1.8',
+                            color: '#cbd5e1',
+                            fontWeight: '500'
+                        }}>
+                            Counting moments, keeping promises, and bridging distances.
+                        </p>
+                    )}
                 </div>
 
                 {/* Developer / Dedication Card */}
@@ -99,6 +305,15 @@ const AboutSection = ({ onClose }) => {
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
+                    <style>
+                        {`
+                            @keyframes bloom {
+                                0% { transform: scale(0.5); opacity: 0; filter: blur(4px); }
+                                70% { transform: scale(1.1); opacity: 1; filter: blur(0px); }
+                                100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+                            }
+                        `}
+                    </style>
                     {/* Decorative Elements */}
                     <div style={{
                         position: 'absolute', top: -50, right: -50, width: 120, height: 120,
@@ -114,28 +329,52 @@ const AboutSection = ({ onClose }) => {
                         fontWeight: '700',
                         marginBottom: '16px'
                     }}>
-                        Created with Love
+                        CREATED WITH LOVE
                     </p>
 
                     <h3 style={{
                         fontFamily: 'var(--font-serif)',
-                        fontSize: '2.5rem',
-                        margin: '0 0 10px 0',
+                        fontSize: '2.0rem',
+                        margin: '0 0 20px 0',
                         background: 'linear-gradient(to right, #F472B6, #F97316)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent'
                     }}>
-                        For Sexie
+                        For Sexie <span style={{
+                            display: 'inline-block',
+                            animation: 'bloom 1.5s ease-out forwards',
+                            animationDelay: '0.3s',
+                            opacity: 0 // Start invisible for fade-in effect
+                        }}>🌸</span>
                     </h3>
 
-                    <p style={{
-                        fontSize: '0.9rem',
-                        color: '#94a3b8',
+                    <div style={{
+                        fontSize: '1rem',
+                        color: '#cbd5e1',
                         marginBottom: '30px',
-                        fontStyle: 'italic'
+                        lineHeight: '1.7',
+                        textAlign: 'left',
+                        background: 'rgba(255,255,255,0.03)',
+                        padding: '24px',
+                        borderRadius: '16px',
+                        border: '1px solid rgba(255,255,255,0.05)'
                     }}>
-                        Currently maintained by <b>Spidey</b> 🕸️
-                    </p>
+                        <p style={{ marginBottom: '16px' }}>
+                            This app exists because <b>you exist</b> in my life.<br />
+                            Every second counted here is a quiet reminder that
+                            even when we’re apart, <b>we’re never truly distant.</b>
+                        </p>
+                        <p style={{ marginBottom: '16px' }}>
+                            I made this for our third anniversary,
+                            but it carries something far greater than a date —
+                            it carries <b>our story, our effort, and our forever.</b>
+                        </p>
+
+                        <div style={{ textAlign: 'right', marginTop: '16px', fontStyle: 'italic', fontFamily: '"Dancing Script", cursive' }}>
+                            Always yours,<br />
+                            <strong>Spidey 🕷️</strong>
+                        </div>
+                    </div>
 
                     <div style={{
                         borderTop: '2px dashed rgba(255,255,255,0.1)',
@@ -144,7 +383,7 @@ const AboutSection = ({ onClose }) => {
                     }} />
 
                     <div style={{ textAlign: 'left', marginTop: '20px' }}>
-                        <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: '#94A3B8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>Developer Contact</p>
+                        <p style={{ margin: '0 0 12px 0', fontSize: '0.8rem', color: '#94A3B8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '1px' }}>The One Who Built This—For You</p>
 
                         {/* Developer Name */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '16px' }}>
@@ -217,10 +456,11 @@ const AboutSection = ({ onClose }) => {
                     opacity: 0.6,
                     color: '#94a3b8'
                 }}>
-                    v1.0.0 • Forever & Always
+                    Built with love. Meant to last. <br />
+                    Lovingly maintained by Spidey 🕷️
                 </div>
             </div>
-        </div>
+        </motion.div>
     );
 };
 

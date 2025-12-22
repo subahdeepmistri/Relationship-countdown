@@ -34,7 +34,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     // Initialize Buffer from Context when Opened
     useEffect(() => {
         if (isOpen) {
-
+            setToastMsg(''); // Clear any stale toast messages
             setEnableNotifications(settings.notifications);
             setEnableAI(settings.aiEnabled);
             setApiKey(settings.aiKey);
@@ -52,6 +52,14 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             setLdPartnerLoc(settings.longDistance.partnerLoc);
         }
     }, [isOpen, settings, relationship]);
+
+    // Auto-dismiss toast safety
+    useEffect(() => {
+        if (toastMsg) {
+            const timer = setTimeout(() => setToastMsg(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMsg]);
 
     const handleAddEvent = () => {
         if (!newEventTitle || !newEventDate) return;
