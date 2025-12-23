@@ -54,6 +54,9 @@ const KEYS = {
     // Scrapbook Metadata
     SCRAPBOOK_META: 'rc_scrapbook_meta',
 
+    // Journey/Timeline
+    JOURNEY: 'rc_journey',
+
     // App Meta
     APP_VERSION: 'rc_app_version',
     LAST_SYNC: 'rc_last_sync',

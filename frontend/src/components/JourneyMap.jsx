@@ -9,6 +9,7 @@ const JourneyMap = ({ onClose }) => {
     const [newDesc, setNewDesc] = useState('');
     const [isLaunching, setIsLaunching] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For delete confirmation modal
 
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem('rc_journey') || '[]');
@@ -38,11 +39,22 @@ const JourneyMap = ({ onClose }) => {
         }, 800);
     };
 
-    const deleteItem = (id) => {
-        if (!window.confirm("Remove this memory?")) return;
-        const updated = milestones.filter(m => m.id !== id);
+    // Show delete confirmation modal
+    const requestDelete = (id) => {
+        setDeleteConfirmId(id);
+    };
+
+    // Perform the actual delete
+    const confirmDelete = () => {
+        if (!deleteConfirmId) return;
+        const updated = milestones.filter(m => m.id !== deleteConfirmId);
         setMilestones(updated);
         localStorage.setItem('rc_journey', JSON.stringify(updated));
+        setDeleteConfirmId(null);
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirmId(null);
     };
 
     const triggerConfetti = () => {
@@ -85,6 +97,121 @@ const JourneyMap = ({ onClose }) => {
             {/* Background Atmosphere Blobs */}
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
+
+            {/* Delete Confirmation Modal - Premium Dark Theme */}
+            {deleteConfirmId && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0,
+                        width: '100%', height: '100%',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}
+                    onClick={cancelDelete}
+                >
+                    <div
+                        style={{
+                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+                            backdropFilter: 'blur(20px)',
+                            borderRadius: '28px',
+                            padding: '32px 28px',
+                            maxWidth: '340px',
+                            width: '90%',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Icon */}
+                        <div style={{
+                            width: '72px', height: '72px',
+                            margin: '0 auto 20px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid rgba(239, 68, 68, 0.3)'
+                        }}>
+                            <span style={{ fontSize: '2rem' }}>📜</span>
+                        </div>
+
+                        <h3 style={{
+                            color: 'white',
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            margin: '0 0 12px 0',
+                            fontFamily: 'var(--font-heading)'
+                        }}>
+                            Erase This Chapter?
+                        </h3>
+
+                        <p style={{
+                            color: '#94a3b8',
+                            fontSize: '0.95rem',
+                            margin: '0 0 28px 0',
+                            lineHeight: '1.5'
+                        }}>
+                            This moment will be removed from your story. Are you sure you want to let it go?
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={cancelDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Keep It
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Remove
+                            </button>
+                        </div>
+
+                        <p style={{
+                            marginTop: '18px',
+                            fontSize: '0.75rem',
+                            color: 'rgba(255,255,255,0.3)',
+                            fontStyle: 'italic'
+                        }}>
+                            Every chapter matters, even the quiet ones
+                        </p>
+                    </div>
+                </div>
+            )}
 
             <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
                 {/* Success Toast */}
@@ -205,7 +332,7 @@ const JourneyMap = ({ onClose }) => {
                                 </span>
                                 <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', fontFamily: 'var(--font-heading)' }}>{m.title}</h4>
                                 {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: '#cbd5e1', lineHeight: 1.6, fontFamily: 'var(--font-serif)' }}>{m.desc}</p>}
-                                <button onClick={() => deleteItem(m.id)} style={{
+                                <button onClick={() => requestDelete(m.id)} style={{
                                     color: '#f87171', opacity: 0.6, marginTop: '15px', fontSize: '0.8rem',
                                     background: 'none', border: 'none', cursor: 'pointer',
                                     display: 'flex', alignItems: 'center', gap: '5px'

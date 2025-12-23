@@ -328,56 +328,188 @@ const TimeCapsuleManager = ({ onClose }) => {
 
 // Extracted Sub-components
 const CreateView = ({ newContent, setNewContent, unlockDate, setUnlockDate, onSave, onCancel }) => (
-    <div className="pop-card" style={{ padding: '40px', textAlign: 'left', background: 'rgba(255, 255, 255, 0.95)', borderRadius: '40px', width: '90%', maxWidth: '500px', color: '#1e293b', border: 'none', boxShadow: '0 50px 100px -20px rgba(0,0,0,0.5)' }}>
-        <h3 style={{ marginTop: 0, fontSize: '2rem', marginBottom: '10px', fontFamily: 'var(--font-heading)' }}>Seal a Memory</h3>
-        <p style={{ fontSize: '1rem', opacity: 0.7, marginBottom: '30px', color: '#475569', lineHeight: '1.5' }}>
-            Write a message for the future. It will remain locked inside this capsule until the moment is right.
+    <div style={{
+        padding: '40px 28px',
+        textAlign: 'center',
+        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '36px',
+        width: '92%',
+        maxWidth: '440px',
+        color: 'white',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)',
+        position: 'relative',
+        overflow: 'hidden'
+    }}>
+        {/* Top Accent Line */}
+        <div style={{
+            position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+            width: '60%', height: '3px',
+            background: 'linear-gradient(90deg, transparent, rgba(251, 113, 133, 0.6), transparent)',
+            borderRadius: '0 0 10px 10px'
+        }} />
+
+        {/* Atmospheric Glow */}
+        <div style={{
+            position: 'absolute', top: '-50px', right: '-50px',
+            width: '200px', height: '200px',
+            background: 'radial-gradient(circle, rgba(251, 113, 133, 0.15) 0%, transparent 70%)',
+            pointerEvents: 'none'
+        }} />
+
+        {/* Icon */}
+        <div style={{
+            width: '80px', height: '80px',
+            margin: '0 auto 24px',
+            background: 'rgba(251, 113, 133, 0.1)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px solid rgba(251, 113, 133, 0.2)',
+            position: 'relative'
+        }}>
+            <span style={{ fontSize: '2.2rem' }}>💌</span>
+        </div>
+
+        <h3 style={{
+            marginTop: 0,
+            fontSize: '1.8rem',
+            marginBottom: '10px',
+            fontFamily: 'var(--font-heading)',
+            background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            letterSpacing: '-0.5px'
+        }}>Seal a Memory</h3>
+
+        <p style={{
+            fontSize: '0.95rem',
+            marginBottom: '28px',
+            color: '#94a3b8',
+            lineHeight: '1.6',
+            maxWidth: '320px',
+            margin: '0 auto 28px'
+        }}>
+            Write a message for the future. It will remain locked until the moment is right.
         </p>
 
         <textarea
             style={{
                 width: '100%',
-                height: '160px',
-                marginBottom: '25px',
-                background: '#f1f5f9',
-                border: '2px solid transparent',
-                padding: '20px',
-                borderRadius: '24px',
-                fontSize: '1.05rem',
-                color: '#334155',
+                height: '140px',
+                marginBottom: '24px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                padding: '18px',
+                borderRadius: '20px',
+                fontSize: '1rem',
+                color: 'white',
                 resize: 'none',
                 outline: 'none',
                 boxSizing: 'border-box',
-                transition: 'all 0.2s',
+                transition: 'all 0.3s',
                 fontFamily: 'var(--font-serif)',
-                boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.03)'
+                lineHeight: '1.6'
             }}
-            onFocus={e => { e.target.style.background = 'white'; e.target.style.borderColor = '#fb7185'; }}
-            onBlur={e => { e.target.style.background = '#f1f5f9'; e.target.style.borderColor = 'transparent'; }}
+            onFocus={e => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.target.style.borderColor = 'rgba(251, 113, 133, 0.4)';
+                e.target.style.boxShadow = '0 0 0 4px rgba(251, 113, 133, 0.1)';
+            }}
+            onBlur={e => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.05)';
+                e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                e.target.style.boxShadow = 'none';
+            }}
             placeholder="Dear Future Us..."
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
         />
 
-        <label style={{ display: 'block', marginBottom: '35px' }}>
-            <span style={{ fontWeight: '700', fontSize: '0.8rem', color: '#94a3b8', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px', display: 'block' }}>Unlock Date</span>
+        <label style={{ display: 'block', marginBottom: '28px', textAlign: 'left' }}>
+            <span style={{
+                fontWeight: '700',
+                fontSize: '0.75rem',
+                color: 'rgba(255,255,255,0.5)',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                marginBottom: '10px',
+                display: 'block'
+            }}>When should it unlock?</span>
             <input
                 type="date"
                 min={new Date().toISOString().split('T')[0]}
                 style={{
-                    width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid #e2e8f0',
-                    fontSize: '1rem', outline: 'none', background: 'white', color: '#334155',
-                    fontFamily: 'var(--font-heading)', fontWeight: '600'
+                    width: '100%',
+                    padding: '16px 18px',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: 'white',
+                    fontFamily: 'var(--font-heading)',
+                    fontWeight: '600',
+                    transition: 'all 0.3s',
+                    cursor: 'pointer'
+                }}
+                onFocus={e => {
+                    e.target.style.borderColor = 'rgba(251, 113, 133, 0.4)';
+                    e.target.style.boxShadow = '0 0 0 4px rgba(251, 113, 133, 0.1)';
+                }}
+                onBlur={e => {
+                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                    e.target.style.boxShadow = 'none';
                 }}
                 value={unlockDate}
                 onChange={(e) => setUnlockDate(e.target.value)}
             />
         </label>
 
-        <div style={{ display: 'flex', gap: '15px' }}>
-            <button onClick={onCancel} style={{ flex: 1, padding: '16px', border: 'none', background: '#f1f5f9', color: '#64748b', borderRadius: '20px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', transition: 'background 0.2s' }}>Cancel</button>
-            <button onClick={onSave} style={{ flex: 1, background: 'var(--accent-lux-gradient)', color: 'white', padding: '16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', boxShadow: '0 10px 25px rgba(251, 113, 133, 0.4)' }}>Seal It 🔒</button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+                onClick={onCancel}
+                style={{
+                    flex: 1,
+                    padding: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: '#94a3b8',
+                    borderRadius: '18px',
+                    cursor: 'pointer',
+                    fontWeight: '600',
+                    fontSize: '1rem',
+                    transition: 'all 0.2s'
+                }}
+            >Cancel</button>
+            <button
+                onClick={onSave}
+                style={{
+                    flex: 1.2,
+                    background: 'linear-gradient(135deg, #fb7185 0%, #f43f5e 100%)',
+                    color: 'white',
+                    padding: '16px',
+                    borderRadius: '18px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    fontSize: '1rem',
+                    boxShadow: '0 10px 30px -5px rgba(244, 63, 94, 0.5)',
+                    transition: 'all 0.2s'
+                }}
+            >Seal It 🔐</button>
         </div>
+
+        <p style={{
+            marginTop: '20px',
+            fontSize: '0.8rem',
+            color: 'rgba(255,255,255,0.3)',
+            fontStyle: 'italic'
+        }}>
+            Your words become tomorrow's treasure
+        </p>
     </div>
 );
 

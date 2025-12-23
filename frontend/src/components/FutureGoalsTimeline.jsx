@@ -101,27 +101,117 @@ const FutureGoalsTimeline = ({ onClose }) => {
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
-            {/* Delete Confirmation Modal */}
+            {/* Delete Confirmation Modal - Premium Dark Theme */}
             {goalToDelete && (
-                <div style={{
-                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)',
-                    zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '20px'
-                }}>
-                    <div style={{
-                        background: 'white', padding: '30px', borderRadius: '30px', maxWidth: '320px', textAlign: 'center',
-                        color: '#1e293b', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-                    }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🍂</div>
-                        <h3 style={{ margin: '0 0 10px', fontSize: '1.4rem', fontFamily: 'var(--font-heading)' }}>Let this dream go?</h3>
-                        <p style={{ color: '#64748b', marginBottom: '25px', fontSize: '1rem' }}>
-                            Are you sure you want to let this dream go?
-                        </p>
-                        <div style={{ display: 'flex', gap: '10px' }}>
-                            <button onClick={() => setGoalToDelete(null)} style={{ flex: 1, padding: '12px', borderRadius: '15px', border: 'none', background: '#f1f5f9', color: '#64748b', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}>Keep it</button>
-                            <button onClick={confirmDelete} style={{ flex: 1, padding: '12px', borderRadius: '15px', border: 'none', background: '#ffe4e6', color: '#e11d48', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer' }}>Yes, remove</button>
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0,
+                        width: '100%', height: '100%',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}
+                    onClick={() => setGoalToDelete(null)}
+                >
+                    <div
+                        style={{
+                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+                            backdropFilter: 'blur(20px)',
+                            borderRadius: '28px',
+                            padding: '32px 28px',
+                            maxWidth: '340px',
+                            width: '90%',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Warning Icon */}
+                        <div style={{
+                            width: '72px', height: '72px',
+                            margin: '0 auto 20px',
+                            background: 'rgba(251, 191, 36, 0.15)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid rgba(251, 191, 36, 0.3)'
+                        }}>
+                            <span style={{ fontSize: '2rem' }}>🌙</span>
                         </div>
+
+                        <h3 style={{
+                            color: 'white',
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            margin: '0 0 12px 0',
+                            fontFamily: 'var(--font-heading)'
+                        }}>
+                            Let This Dream Go?
+                        </h3>
+
+                        <p style={{
+                            color: '#94a3b8',
+                            fontSize: '0.95rem',
+                            margin: '0 0 28px 0',
+                            lineHeight: '1.5'
+                        }}>
+                            This dream will fade from your timeline. Are you ready to release it?
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setGoalToDelete(null)}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Keep It
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Release
+                            </button>
+                        </div>
+
+                        <p style={{
+                            marginTop: '18px',
+                            fontSize: '0.75rem',
+                            color: 'rgba(255,255,255,0.3)',
+                            fontStyle: 'italic'
+                        }}>
+                            Some dreams are meant to be revisited later
+                        </p>
                     </div>
                 </div>
             )}
@@ -208,7 +298,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                             marginBottom: '40px'
                         }}>
                             <span className="animate-pulse-slow" style={{ fontSize: '3rem', display: 'block', marginBottom: '20px', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.2))' }}>✨</span>
-                            <h3 style={{ margin: '0 0 10px', fontSize: '1.4rem' }}>A Blank Canvas</h3>
+                            <h3 style={{ margin: '0 0 10px', fontSize: '1.4rem', color: 'white', fontFamily: 'var(--font-heading)' }}>A Blank Canvas</h3>
                             <p style={{ opacity: 0.7, margin: 0, fontSize: '1rem', lineHeight: '1.6', color: '#cbd5e1' }}>
                                 The future is yours to write.<br />Add a dream to start your journey.
                             </p>

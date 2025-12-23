@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { storage } from '../utils/storageAdapter';
 
 const QUESTIONS = [
     "What is your favorite memory of us so far?",
@@ -13,6 +14,8 @@ const QUESTIONS = [
     "What is a small thing I do that makes you smile?",
     // Add more... (In a real app, this list would be huge)
 ];
+
+const MAX_STORED_DAYS = 30; // Limit stored answers to prevent unbounded growth
 
 const DailyQuestion = () => {
     const [question, setQuestion] = useState("");
@@ -35,16 +38,36 @@ const DailyQuestion = () => {
         const index = dayOfYear % QUESTIONS.length;
         setQuestion(QUESTIONS[index]);
 
-        // Check if already answered today (mock check)
-        const saved = localStorage.getItem(`rc_daily_answer_${new Date().toDateString()}`);
-        if (saved) {
-            setAnswer(saved);
+        // Check if already answered today using consolidated storage
+        const todayKey = today.toDateString();
+        const answers = storage.get(storage.KEYS.DAILY_ANSWERS, {});
+
+        if (answers[todayKey]) {
+            setAnswer(answers[todayKey].text || answers[todayKey]);
             setIsAnswered(true);
         }
     }, []);
 
     const saveAnswer = () => {
-        localStorage.setItem(`rc_daily_answer_${new Date().toDateString()}`, answer);
+        const todayKey = new Date().toDateString();
+        const answers = storage.get(storage.KEYS.DAILY_ANSWERS, {});
+
+        // Add today's answer
+        answers[todayKey] = {
+            text: answer,
+            mood: selectedMood,
+            savedAt: new Date().toISOString()
+        };
+
+        // Clean up old entries (keep only last MAX_STORED_DAYS)
+        const allDates = Object.keys(answers).sort((a, b) => new Date(b) - new Date(a));
+        if (allDates.length > MAX_STORED_DAYS) {
+            allDates.slice(MAX_STORED_DAYS).forEach(oldKey => {
+                delete answers[oldKey];
+            });
+        }
+
+        storage.set(storage.KEYS.DAILY_ANSWERS, answers);
         setIsAnswered(true);
     };
 

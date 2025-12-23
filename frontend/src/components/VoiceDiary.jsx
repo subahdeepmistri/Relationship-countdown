@@ -13,6 +13,7 @@ const VoiceDiary = ({ onClose }) => {
     const [permState, setPermState] = useState('prompt'); // 'prompt', 'granted', 'denied'
     const [playingId, setPlayingId] = useState(null);
     const [saveSuccess, setSaveSuccess] = useState(false); // For heart burst feedback
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For delete confirmation modal
 
     // Missing Refs
     const mediaRecorderRef = useRef(null);
@@ -40,6 +41,17 @@ const VoiceDiary = ({ onClose }) => {
             return () => clearTimeout(t);
         }
     }, [saveSuccess]);
+
+    // CRITICAL: Clean up timer on unmount to prevent memory leak
+    useEffect(() => {
+        return () => {
+            stopTimer();
+            // Also stop any active recording if component unmounts
+            if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+                mediaRecorderRef.current.stop();
+            }
+        };
+    }, []);
 
     const startRecording = async () => {
         try {
@@ -122,16 +134,20 @@ const VoiceDiary = ({ onClose }) => {
         if (e.button !== 0 && e.type === 'mousedown') return; // Only left click or touch
         if (permState === 'denied') return;
 
-        // Visual feedback immediate, but recording starts
+        // If already recording, stop it (toggle behavior)
+        if (isRecording) {
+            stopRecording();
+            return;
+        }
+
+        // Start recording
         startRecording();
     };
 
     const handlePressEnd = (e) => {
-        // Stop immediately on release
-        if (isRecording) {
-            // If duration was 0 (instant tap), we could discard, but let's just save for simplicity or logic check inside onstop
-            stopRecording();
-        }
+        // Only stop on release if we're in "hold to record" mode
+        // Since we now support tap-to-stop, we don't need to stop here
+        // This prevents double-stop issues
     };
 
 
@@ -175,13 +191,33 @@ const VoiceDiary = ({ onClose }) => {
         }
     };
 
-    // ... deleteEntry and formatTime remain same ...
-    const deleteEntry = async (id) => {
-        if (!window.confirm("Delete this voice note permanently?")) return;
-        await deleteAudio(id);
-        const updated = entries.filter(e => e.id !== id);
+    // Show delete confirmation modal
+    const requestDelete = (id) => {
+        setDeleteConfirmId(id);
+    };
+
+    // Perform the actual delete
+    const confirmDelete = async () => {
+        if (!deleteConfirmId) return;
+
+        // CRITICAL: Stop playback if this entry is currently playing
+        if (playingId === deleteConfirmId) {
+            audioRef.current.pause();
+            audioRef.current.src = '';
+            setPlayingId(null);
+            setPlaybackProgress(0);
+            setPlaybackTime(0);
+        }
+
+        await deleteAudio(deleteConfirmId);
+        const updated = entries.filter(e => e.id !== deleteConfirmId);
         setEntries(updated);
         localStorage.setItem('rc_voice_entries', JSON.stringify(updated));
+        setDeleteConfirmId(null);
+    };
+
+    const cancelDelete = () => {
+        setDeleteConfirmId(null);
     };
 
     const formatTime = (secs) => {
@@ -356,7 +392,7 @@ const VoiceDiary = ({ onClose }) => {
                             letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600',
                             transition: 'color 0.3s'
                         }}>
-                            {permState === 'denied' ? 'Microphone Access Denied' : isRecording ? 'Recording... Release to Save' : 'Hold to Record'}
+                            {permState === 'denied' ? 'Microphone Access Denied' : isRecording ? 'Recording... Tap to Stop' : 'Tap to Record'}
                         </p>
                     </div>
                 </div>
@@ -413,7 +449,8 @@ const VoiceDiary = ({ onClose }) => {
                                         {playingId === entry.id ? '⏸' : '▶'}
                                     </button>
                                     <button
-                                        onClick={() => deleteEntry(entry.id)}
+                                        onClick={() => requestDelete(entry.id)}
+                                        aria-label="Delete voice note"
                                         style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '1.1rem', color: '#f87171', padding: '10px' }}
                                         title="Delete"
                                     >
@@ -437,6 +474,111 @@ const VoiceDiary = ({ onClose }) => {
                     ))}
                 </div>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}
+                    onClick={cancelDelete}
+                >
+                    <div
+                        style={{
+                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+                            backdropFilter: 'blur(20px)',
+                            borderRadius: '28px',
+                            padding: '32px 28px',
+                            maxWidth: '340px',
+                            width: '90%',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Warning Icon */}
+                        <div style={{
+                            width: '72px', height: '72px',
+                            margin: '0 auto 20px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid rgba(239, 68, 68, 0.3)'
+                        }}>
+                            <span style={{ fontSize: '2rem' }}>🗑️</span>
+                        </div>
+
+                        <h3 style={{
+                            color: 'white',
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            margin: '0 0 12px 0',
+                            fontFamily: 'var(--font-heading)'
+                        }}>
+                            Delete Voice Note?
+                        </h3>
+
+                        <p style={{
+                            color: '#94a3b8',
+                            fontSize: '0.95rem',
+                            margin: '0 0 28px 0',
+                            lineHeight: '1.5'
+                        }}>
+                            This memory will be permanently erased from your diary. This action cannot be undone.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={cancelDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Keep It
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

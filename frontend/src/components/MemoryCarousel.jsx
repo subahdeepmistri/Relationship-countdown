@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { savePhoto, getPhotos, deletePhoto } from '../utils/db';
 import '../styles/theme.css';
 
@@ -6,6 +6,9 @@ const MemoryCarousel = () => {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Object URLs cache to prevent memory leaks
+    const [objectUrls, setObjectUrls] = useState({});
 
     // Lightbox State
     const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -20,11 +23,33 @@ const MemoryCarousel = () => {
         loadPhotos();
     }, []);
 
+    // CRITICAL: Cleanup object URLs on unmount to prevent memory leak
+    useEffect(() => {
+        return () => {
+            Object.values(objectUrls).forEach(url => {
+                URL.revokeObjectURL(url);
+            });
+        };
+    }, [objectUrls]);
+
     const loadPhotos = async () => {
         try {
             const memoryList = await getPhotos();
             // Sort by createdAt desc
             memoryList.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+
+            // Create object URLs once and cache them
+            const urls = {};
+            memoryList.forEach(photo => {
+                if (photo.blob) {
+                    urls[photo.id] = URL.createObjectURL(photo.blob);
+                }
+            });
+
+            // Revoke old URLs before setting new ones
+            Object.values(objectUrls).forEach(url => URL.revokeObjectURL(url));
+
+            setObjectUrls(urls);
             setPhotos(memoryList);
         } catch (error) {
             console.error("Error fetching memories:", error);
@@ -173,7 +198,7 @@ const MemoryCarousel = () => {
                             className="memory-item"
                             onClick={() => setSelectedPhoto(photo)}
                         >
-                            <img src={URL.createObjectURL(photo.blob)} alt="Memory" loading="lazy" />
+                            <img src={objectUrls[photo.id]} alt="Memory" loading="lazy" />
                             <div className="memory-overlay">
                                 <span style={{ fontSize: '0.9rem', color: 'white' }}>👁️ View</span>
                             </div>
@@ -204,7 +229,7 @@ const MemoryCarousel = () => {
                     </button>
 
                     <img
-                        src={URL.createObjectURL(selectedPhoto.blob)}
+                        src={objectUrls[selectedPhoto.id]}
                         alt="Full Memory"
                         style={{
                             maxWidth: '90%', maxHeight: '70vh', objectFit: 'contain',
