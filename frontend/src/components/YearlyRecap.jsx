@@ -51,7 +51,7 @@ const YearlyRecap = ({ onClose }) => {
             color: 'white',
             zIndex: 1700,
             overflowY: 'auto',
-            padding: '40px 20px',
+            padding: '40px 20px 140px 20px',
             textAlign: 'center'
         }}>
             <button onClick={onClose} style={{

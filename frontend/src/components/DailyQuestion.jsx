@@ -16,11 +16,15 @@ const QUESTIONS = [
 
 const DailyQuestion = () => {
     const [question, setQuestion] = useState("");
-    const [showAnswerInput, setShowAnswerInput] = useState(false);
     const [answer, setAnswer] = useState("");
     const [isAnswered, setIsAnswered] = useState(false);
+    const [selectedMood, setSelectedMood] = useState(null);
+    const [timeIcon, setTimeIcon] = useState("☀️");
 
     useEffect(() => {
+        const h = new Date().getHours();
+        setTimeIcon(h >= 6 && h < 18 ? "☀️" : "🌙");
+
         // Simple hash to pick a question based on the date
         const today = new Date();
         const start = new Date(today.getFullYear(), 0, 0);
@@ -42,55 +46,72 @@ const DailyQuestion = () => {
     const saveAnswer = () => {
         localStorage.setItem(`rc_daily_answer_${new Date().toDateString()}`, answer);
         setIsAnswered(true);
-        // showconfetti
     };
 
     return (
         <div className="pop-card" style={{
-            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95))', // Dark gradient bg
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', // Dark theme for contrast
             color: 'white',
             textAlign: 'center',
-            padding: '30px',
-            borderRadius: '24px',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            padding: '32px 24px',
+            borderRadius: '32px',
+            boxShadow: '0 20px 50px -10px rgba(15, 23, 42, 0.4)',
             maxWidth: '100%',
-            overflow: 'hidden',
             position: 'relative',
-            marginTop: '40px'
+            marginTop: '20px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            overflow: 'hidden'
         }}>
-            {/* Decorative Glow */}
+            {/* Ambient Glow */}
             <div style={{
-                position: 'absolute', top: '-50%', left: '50%', transform: 'translateX(-50%)',
-                width: '150px', height: '150px', background: 'rgba(99, 102, 241, 0.3)',
-                borderRadius: '50%', filter: 'blur(60px)', pointerEvents: 'none'
+                position: 'absolute', top: 0, right: 0, width: '200px', height: '200px',
+                background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%)',
+                pointerEvents: 'none'
             }} />
 
             <div style={{
-                fontSize: '0.8rem',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                opacity: 0.7,
-                marginBottom: '15px',
-                color: '#94a3b8'
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                marginBottom: '20px', color: '#94a3b8', fontSize: '0.85rem', fontWeight: '600',
+                letterSpacing: '1px', textTransform: 'uppercase'
             }}>
+                <span style={{ fontSize: '1.2rem' }}>{timeIcon}</span>
                 Daily Reflection
             </div>
 
             <h3 style={{
                 fontFamily: 'var(--font-serif)',
-                fontSize: '1.8rem',
-                marginBottom: '25px',
-                lineHeight: '1.4',
-                color: '#e2e8f0',
-                textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                fontSize: '1.6rem',
+                marginBottom: '30px',
+                lineHeight: '1.5',
+                color: '#f1f5f9',
             }}>
                 "{question}"
             </h3>
 
             {!isAnswered ? (
-                <div style={{ position: 'relative', zIndex: 1, maxWidth: '500px', margin: '0 auto' }}>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                    {/* Mood Selector (Micro) */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
+                        {['😔', '😐', '🙂', '🥰', '🔥'].map(emoji => (
+                            <button
+                                key={emoji}
+                                onClick={() => setSelectedMood(emoji)}
+                                style={{
+                                    background: selectedMood === emoji ? 'rgba(255,255,255,0.2)' : 'transparent',
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                    borderRadius: '50%',
+                                    width: '40px', height: '40px',
+                                    fontSize: '1.2rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s',
+                                    transform: selectedMood === emoji ? 'scale(1.1)' : 'scale(1)'
+                                }}
+                            >
+                                {emoji}
+                            </button>
+                        ))}
+                    </div>
+
                     <textarea
                         value={answer}
                         onChange={(e) => setAnswer(e.target.value)}
@@ -98,56 +119,69 @@ const DailyQuestion = () => {
                         style={{
                             width: '100%',
                             minHeight: '100px',
-                            padding: '15px',
-                            borderRadius: '16px',
-                            border: '1px solid rgba(255,255,255,0.2)',
+                            padding: '16px',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(255,255,255,0.15)',
                             background: 'rgba(255,255,255,0.05)',
                             color: 'white',
                             fontSize: '1rem',
                             fontFamily: 'inherit',
                             resize: 'none',
                             outline: 'none',
-                            marginBottom: '15px',
+                            marginBottom: '20px',
                             transition: 'border-color 0.2s',
-                            backdropFilter: 'blur(5px)'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#818cf8'}
-                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.2)'}
+                        onFocus={(e) => e.target.style.borderColor = 'rgba(99, 102, 241, 0.5)'}
+                        onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.15)'}
                     />
+
                     <button
                         onClick={saveAnswer}
                         disabled={!answer.trim()}
+                        className="modern-btn"
                         style={{
                             width: '100%',
-                            padding: '12px',
-                            borderRadius: '30px',
+                            padding: '14px',
+                            borderRadius: '24px',
                             border: 'none',
-                            background: !answer.trim() ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                            background: !answer.trim() ? 'rgba(255,255,255,0.1)' : 'var(--accent-lux-gradient)',
                             color: !answer.trim() ? 'rgba(255,255,255,0.3)' : 'white',
-                            fontWeight: 'bold',
+                            fontWeight: '700',
                             cursor: !answer.trim() ? 'not-allowed' : 'pointer',
                             fontSize: '1rem',
-                            transition: 'all 0.3s',
-                            boxShadow: !answer.trim() ? 'none' : '0 5px 20px rgba(168, 85, 247, 0.4)'
+                            boxShadow: !answer.trim() ? 'none' : '0 10px 25px -5px rgba(251, 113, 133, 0.5)'
                         }}
                     >
-                        Save for Today
+                        Save Memory
                     </button>
+                    <p style={{ marginTop: '15px', fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic' }}>
+                        Your words become tomorrow's memories.
+                    </p>
                 </div>
             ) : (
                 <div style={{
-                    padding: '20px',
+                    padding: '24px',
                     background: 'rgba(16, 185, 129, 0.1)',
-                    borderRadius: '16px',
+                    borderRadius: '24px',
                     border: '1px solid rgba(16, 185, 129, 0.2)',
-                    marginTop: '10px'
+                    animation: 'scaleIn 0.3s'
                 }}>
-                    <p style={{ fontStyle: 'italic', fontSize: '1.1rem', marginBottom: '10px', color: '#e2e8f0' }}>"{answer}"</p>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.7, color: '#6ee7b7', fontWeight: 'bold' }}>
-                        ✨ Saved for today
+                    <div style={{ fontSize: '2rem', marginBottom: '10px' }}>✨</div>
+                    <p style={{ fontStyle: 'italic', fontSize: '1.1rem', marginBottom: '15px', color: '#e2e8f0', lineHeight: 1.6 }}>
+                        "{answer}"
+                    </p>
+                    <div style={{ fontSize: '0.85rem', color: '#6ee7b7', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        Saved for today
                     </div>
                 </div>
             )}
+
+            <style>{`
+                @keyframes scaleIn {
+                    from { transform: scale(0.9); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+            `}</style>
         </div>
     );
 };

@@ -134,7 +134,7 @@ const ScrapbookView = ({ onClose }) => {
             background: 'white',
             zIndex: 2000,
             overflowY: 'auto',
-            padding: '40px'
+            padding: '40px 40px 120px 40px'
         }}>
             {/* Top Controls */}
             <div className="no-print" style={{ position: 'fixed', top: 20, right: 20, display: 'flex', gap: '10px', zIndex: 10 }}>

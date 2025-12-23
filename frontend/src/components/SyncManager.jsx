@@ -134,7 +134,7 @@ const SyncManager = ({ onClose }) => {
         <div style={{
             position: 'fixed', inset: 0,
             background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', // Deep Night
-            zIndex: 3000, overflowY: 'auto', padding: '20px',
+            zIndex: 3000, overflowY: 'auto', padding: '20px 20px 140px 20px',
             color: 'white', fontFamily: "'Inter', sans-serif"
         }}>
             {/* Background Atmosphere */}

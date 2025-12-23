@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const JourneyMap = ({ onClose }) => {
     const [milestones, setMilestones] = useState([]);
     const [newTitle, setNewTitle] = useState('');
     const [newDate, setNewDate] = useState('');
     const [newDesc, setNewDesc] = useState('');
+    const [isLaunching, setIsLaunching] = useState(false);
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
 
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem('rc_journey') || '[]');
@@ -13,67 +17,166 @@ const JourneyMap = ({ onClose }) => {
 
     const addMilestone = () => {
         if (!newTitle || !newDate) return;
+
+        setIsLaunching(true);
+
         const item = { id: Date.now(), title: newTitle, date: newDate, desc: newDesc };
         const updated = [...milestones, item].sort((a, b) => new Date(a.date) - new Date(b.date));
-        setMilestones(updated);
-        localStorage.setItem('rc_journey', JSON.stringify(updated));
-        setNewTitle(''); setNewDate(''); setNewDesc('');
+
+        // Slight delay for animation to play
+        setTimeout(() => {
+            setMilestones(updated);
+            localStorage.setItem('rc_journey', JSON.stringify(updated));
+            setNewTitle(''); setNewDate(''); setNewDesc('');
+            setIsLaunching(false);
+
+            // Success Feedback
+            // triggerConfetti(); // Confetti is already triggered below in original code, but we'll ensure it flows
+            triggerConfetti();
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }, 800);
     };
 
     const deleteItem = (id) => {
+        if (!window.confirm("Remove this memory?")) return;
         const updated = milestones.filter(m => m.id !== id);
         setMilestones(updated);
         localStorage.setItem('rc_journey', JSON.stringify(updated));
+    };
+
+    const triggerConfetti = () => {
+        const count = 200;
+        const defaults = { origin: { y: 0.9 }, spread: 90, startVelocity: 45 };
+
+        function fire(particleRatio, opts) {
+            confetti({ ...defaults, ...opts, particleCount: Math.floor(count * particleRatio) });
+        }
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
     };
 
     return (
         <div style={{
             position: 'fixed',
             top: 0, left: 0, width: '100%', height: '100%',
-            background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)', // Deep Night Blue
+            top: 0, left: 0, width: '100%', height: '100%',
+            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Reference Radial
             zIndex: 3000,
             overflowY: 'auto',
-            padding: '80px 20px 40px',
+            padding: '80px 20px 110px',
             color: 'white',
             backdropFilter: 'blur(20px)'
         }}>
+            {/* Grain/Vignette Overlay */}
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                background: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
+                pointerEvents: 'none', zIndex: 0, opacity: 0.4
+            }} />
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                background: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.6) 100%)',
+                pointerEvents: 'none', zIndex: 0
+            }} />
+
             {/* Background Atmosphere Blobs */}
-            <div style={{ position: 'fixed', top: '-10%', left: '-20%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
-            <div style={{ position: 'fixed', bottom: '-20%', right: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+            <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
+            <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
             <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+                {/* Success Toast */}
+                <AnimatePresence>
+                    {showSuccessToast && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                            style={{
+                                position: 'fixed', bottom: '100px', left: '50%', x: '-50%',
+                                background: 'rgba(255, 255, 255, 0.9)',
+                                color: '#064e3b',
+                                padding: '12px 24px', borderRadius: '50px',
+                                boxShadow: '0 10px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.5)',
+                                zIndex: 5000,
+                                fontWeight: '600',
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                        >
+                            <span>❤️</span> Another memory added
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
                 <button
                     onClick={onClose}
                     style={{
-                        position: 'fixed', top: '20px', right: '20px',
-                        fontSize: '1.5rem', background: 'rgba(255,255,255,0.1)',
-                        backdropFilter: 'blur(10px)', width: '45px', height: '45px',
+                        position: 'fixed', top: '24px', right: '24px',
+                        fontSize: '1.2rem', // Standardized
+                        background: 'rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(12px)', width: '44px', height: '44px', // Standardized Size 44px
                         borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', zIndex: 3001,
+                        border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', zIndex: 3001,
                         color: 'white',
-                        transition: 'transform 0.2s',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                        transition: 'all 0.2s ease',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                     }}
                     onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
                     onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                 >✕</button>
 
                 <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+
+                    <div style={{
+                        display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                        fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                    }}>
+                        Your Story
+                    </div>
                     <h2 style={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: '3.5rem',
-                        margin: '0 0 10px 0',
-                        background: 'linear-gradient(to right, #e2e8f0, #93c5fd)',
+                        fontFamily: 'var(--font-heading)',
+                        fontSize: '2.5rem',
+                        marginBottom: '10px',
+                        background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        textShadow: '0 0 30px rgba(147, 197, 253, 0.3)'
+                        textShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        letterSpacing: '-1px'
                     }}>Our Timeline</h2>
-                    <p style={{ fontSize: '1.1rem', color: '#cbd5e1', letterSpacing: '0.5px' }}>Every chapter of our story.</p>
+                    <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-serif)', maxWidth: '400px', margin: '0 auto' }}>Every chapter of our story.</p>
                 </div>
 
+                <style>{`
+                    .launch-anim { animation: launchRocket 0.8s cubic-bezier(0.11, 0, 0.5, 0) forwards; }
+                    @keyframes launchRocket {
+                        0% { transform: translateY(0) scale(1); }
+                        40% { transform: translateY(20px) scale(0.9); }
+                        100% { transform: translateY(-500px) scale(0.5); opacity: 0; }
+                    }
+                    .journey-input-group:focus-within label { color: #f472b6; }
+                `}</style>
+
                 <div className="journey-container" style={{ marginTop: '50px' }}>
-                    {/* Center Line */}
-                    <div className="journey-line" />
+                    {/* Center Line - Only show if there are milestones */}
+                    {milestones.length > 0 && <div className="journey-line" />}
+
+                    {milestones.length === 0 && (
+                        <div style={{
+                            textAlign: 'center', padding: '60px 20px', background: 'rgba(255,255,255,0.02)',
+                            borderRadius: '40px', border: '1px dashed rgba(255,255,255,0.1)', marginBottom: '40px'
+                        }}>
+                            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '15px' }}>📖</span>
+                            <p style={{ margin: 0, fontSize: '1rem', color: '#cbd5e1' }}>Your story begins here.<br />Add your first chapter.</p>
+                        </div>
+                    )}
 
                     {milestones.map((m, i) => (
                         <div key={m.id} className={`journey-item ${i % 2 === 0 ? 'right' : 'left'}`}>
@@ -82,138 +185,175 @@ const JourneyMap = ({ onClose }) => {
 
                             <div className="glass-card journey-card" style={{
                                 padding: '25px',
-                                textAlign: i % 2 === 0 ? 'right' : 'left',
+                                textAlign: 'left', // Keep text left for better readability even on right side usually, or stick to side
                                 background: 'rgba(255, 255, 255, 0.05)',
                                 backdropFilter: 'blur(10px)',
                                 border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '20px',
+                                borderRadius: '24px',
                                 boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
                             }}>
                                 <span style={{
-                                    fontSize: '0.8rem',
+                                    fontSize: '0.75rem',
                                     textTransform: 'uppercase',
-                                    letterSpacing: '1px',
-                                    color: '#93c5fd',
-                                    fontWeight: 'bold',
+                                    letterSpacing: '1.5px',
+                                    color: '#94a3b8', // Neutral slate instead of blue
+                                    fontWeight: '700',
                                     display: 'block',
-                                    marginBottom: '5px'
+                                    marginBottom: '8px',
+                                    fontFamily: 'var(--font-sans, sans-serif)'
                                 }}>
-                                    {new Date(m.date).toLocaleDateString()}
+                                    {new Date(m.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                                 </span>
-                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>{m.title}</h4>
-                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: '#cbd5e1', lineHeight: 1.6 }}>{m.desc}</p>}
-                                <button onClick={() => deleteItem(m.id)} style={{ color: '#f87171', opacity: 0.7, marginTop: '15px', fontSize: '0.75rem', background: 'none', border: 'none', cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '1px' }}>Delete</button>
+                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', fontFamily: 'var(--font-heading)' }}>{m.title}</h4>
+                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: '#cbd5e1', lineHeight: 1.6, fontFamily: 'var(--font-serif)' }}>{m.desc}</p>}
+                                <button onClick={() => deleteItem(m.id)} style={{
+                                    color: '#f87171', opacity: 0.6, marginTop: '15px', fontSize: '0.8rem',
+                                    background: 'none', border: 'none', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: '5px'
+                                }}>
+                                    <span>🗑️</span> Remove
+                                </button>
                             </div>
                         </div>
                     ))}
                 </div>
 
+                {/* Add New Chapter */}
                 <div className="glass-card" style={{
-                    marginTop: '80px',
+                    marginTop: '100px', // More vertical spacing
                     padding: '40px',
-                    textAlign: 'center',
-                    background: 'rgba(30, 41, 59, 0.6)',
-                    borderRadius: '30px',
+                    background: 'rgba(30, 41, 59, 0.7)',
+                    borderRadius: '40px',
                     border: '1px solid rgba(255,255,255,0.1)',
-                    backdropFilter: 'blur(15px)',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                    position: 'relative',
+                    overflow: 'hidden'
                 }}>
-                    <h4 style={{ marginBottom: '30px', fontSize: '1.5rem', color: 'white' }}>Add a New Chapter ✍️</h4>
-                    <div style={{ display: 'grid', gap: '20px' }}>
-                        <input
-                            placeholder="Title (e.g. First Date)"
-                            value={newTitle}
-                            onChange={e => setNewTitle(e.target.value)}
-                            className="glass-input"
-                            style={{
-                                width: '100%', padding: '16px',
-                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '16px', color: 'white', fontSize: '1rem', outline: 'none',
-                                backdropFilter: 'blur(5px)',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onFocus={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.5)';
-                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
-                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
-                            }}
-                            onBlur={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.3)';
-                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        />
-                        <input
-                            type="date"
-                            value={newDate}
-                            onChange={e => setNewDate(e.target.value)}
-                            className="glass-input"
-                            style={{
-                                width: '100%', padding: '16px',
-                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '16px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif',
-                                outline: 'none', backdropFilter: 'blur(5px)',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onFocus={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.5)';
-                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
-                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
-                            }}
-                            onBlur={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.3)';
-                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        />
-                        <textarea
-                            placeholder="What made this moment special?"
-                            value={newDesc}
-                            onChange={e => setNewDesc(e.target.value)}
-                            className="glass-input"
-                            style={{
-                                width: '100%', padding: '16px', minHeight: '120px',
-                                background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '16px', color: 'white', fontSize: '1rem', resize: 'vertical',
-                                outline: 'none', backdropFilter: 'blur(5px)',
-                                transition: 'all 0.3s ease',
-                                fontFamily: "'Inter', sans-serif"
-                            }}
-                            onFocus={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.5)';
-                                e.target.style.borderColor = 'rgba(236, 72, 153, 0.5)';
-                                e.target.style.boxShadow = '0 0 15px rgba(236, 72, 153, 0.2)';
-                            }}
-                            onBlur={e => {
-                                e.target.style.background = 'rgba(0,0,0,0.3)';
-                                e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                                e.target.style.boxShadow = 'none';
-                            }}
-                        />
+                    <h4 style={{ marginBottom: '30px', fontSize: '1.6rem', color: 'white', fontFamily: 'var(--font-heading)' }}>Add a New Chapter ✍️</h4>
+                    <div style={{ display: 'grid', gap: '20px' }} className={isLaunching ? 'launch-anim' : ''}>
+
+                        <div className="journey-input-group">
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>Moment Title</label>
+                            <input
+                                placeholder="e.g. The First Date"
+                                value={newTitle}
+                                onChange={e => setNewTitle(e.target.value)}
+                                style={{
+                                    width: '100%', padding: '16px',
+                                    background: 'rgba(0,0,0,0.2)',
+                                    border: '2px solid rgba(255,255,255,0.1)', // Stronger default border
+                                    borderRadius: '16px', color: 'white', fontSize: '1.1rem', fontWeight: '600', outline: 'none',
+                                    transition: 'all 0.3s ease'
+                                }}
+                                onFocus={e => {
+                                    e.target.style.background = 'rgba(255,255,255,0.05)';
+                                    e.target.style.borderColor = '#fb7185'; // Rose Gold Focus
+                                    e.target.style.boxShadow = '0 0 15px rgba(251, 113, 133, 0.3)';
+                                }}
+                                onBlur={e => {
+                                    e.target.style.background = 'rgba(0,0,0,0.2)';
+                                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                    e.target.style.boxShadow = 'none';
+                                }}
+                            />
+                        </div>
+
+                        <div className="journey-input-group">
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>When did it happen?</label>
+                            <div style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', pointerEvents: 'none', opacity: 0.8 }}>📅</span>
+                                <input
+                                    type="date"
+                                    value={newDate}
+                                    onChange={e => setNewDate(e.target.value)}
+                                    style={{
+                                        width: '100%', padding: '16px 16px 16px 50px', // Left padding for icon
+                                        background: 'rgba(0,0,0,0.2)', border: '2px solid transparent',
+                                        borderRadius: '16px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif',
+                                        outline: 'none', transition: 'all 0.3s ease'
+                                    }}
+                                    onFocus={e => {
+                                        e.target.style.background = 'rgba(255,255,255,0.05)';
+                                        e.target.style.borderColor = '#60a5fa'; // Blue Focus for date
+                                    }}
+                                    onBlur={e => {
+                                        e.target.style.background = 'rgba(0,0,0,0.2)';
+                                        e.target.style.borderColor = 'transparent';
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="journey-input-group">
+                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>Memory Details</label>
+                            <textarea
+                                placeholder="A moment you'll never forget..."
+                                value={newDesc}
+                                onChange={e => setNewDesc(e.target.value)}
+                                style={{
+                                    width: '100%', padding: '20px', minHeight: '140px', // Larger area
+                                    background: 'rgba(0,0,0,0.2)', border: '2px solid transparent',
+                                    borderRadius: '20px', color: 'white', fontSize: '1.05rem', resize: 'vertical',
+                                    outline: 'none', transition: 'all 0.3s ease',
+                                    fontFamily: "'Inter', sans-serif",
+                                    lineHeight: '1.6'
+                                }}
+                                onFocus={e => {
+                                    e.target.style.background = 'rgba(255,255,255,0.08)';
+                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                }}
+                                onBlur={e => {
+                                    e.target.style.background = 'rgba(0,0,0,0.2)';
+                                    e.target.style.borderColor = 'transparent';
+                                }}
+                            />
+                        </div>
+
+                        <style>{`
+                            @keyframes rocketWiggle {
+                                0% { transform: scale(1) rotate(0deg); }
+                                25% { transform: scale(0.95) rotate(-3deg); }
+                                50% { transform: scale(0.95) rotate(3deg); }
+                                75% { transform: scale(0.98) rotate(-2deg); }
+                                100% { transform: scale(1) rotate(0deg); }
+                            }
+                            .rocket-btn:active {
+                                animation: rocketWiggle 0.4s ease-in-out;
+                            }
+                        `}</style>
+
                         <button
+                            className="rocket-btn"
                             onClick={addMilestone}
+                            disabled={!newTitle || !newDate}
                             style={{
-                                width: '100%', padding: '14px',
-                                background: 'linear-gradient(135deg, #ec4899 0%, #d946ef 100%)', color: 'white',
-                                borderRadius: '30px', fontWeight: '700', fontSize: '1rem',
-                                border: 'none', cursor: 'pointer', marginTop: '10px',
-                                boxShadow: '0 8px 25px rgba(236, 72, 153, 0.4)',
+                                width: '100%', padding: '20px',
+                                background: (!newTitle || !newDate) ? 'rgba(255,255,255,0.08)' : 'var(--accent-lux-gradient)',
+                                color: (!newTitle || !newDate) ? 'rgba(255,255,255,0.4)' : 'white', // More visible disabled text
+                                borderRadius: '50px', fontWeight: '800', fontSize: '1.15rem',
+                                border: 'none', cursor: (!newTitle || !newDate) ? 'not-allowed' : 'pointer', marginTop: '15px',
+                                boxShadow: (!newTitle || !newDate) ? 'none' : '0 10px 40px rgba(236, 72, 153, 0.4)',
                                 letterSpacing: '1px', textTransform: 'uppercase',
-                                transition: 'all 0.2s',
+                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Smooth transition including glow
                                 position: 'relative', overflow: 'hidden'
                             }}
                             onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 15px 40px rgba(236, 72, 153, 0.6)';
+                                if (newTitle && newDate) {
+                                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                                    e.currentTarget.style.boxShadow = '0 20px 60px rgba(236, 72, 153, 0.7)'; // Intense glow
+                                }
                             }}
                             onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 10px 30px rgba(236, 72, 153, 0.4)';
+                                if (newTitle && newDate) {
+                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                                    e.currentTarget.style.boxShadow = '0 10px 40px rgba(236, 72, 153, 0.4)';
+                                }
                             }}
-                            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.98)'}
-                            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         >
-                            <span style={{ position: 'relative', zIndex: 1 }}>Add to Timeline 🚀</span>
+                            <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                Add to Timeline 🚀
+                            </span>
                         </button>
                     </div>
                 </div>

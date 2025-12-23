@@ -173,18 +173,30 @@ const AboutSection = ({ onClose }) => {
                 width: '100%',
                 height: '100%',
                 zIndex: 2000,
-                background: 'linear-gradient(135deg, #0f172a 0%, #172554 100%)', // Deep Night Blue
+                background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Reference Radial
                 backdropFilter: 'blur(20px)',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '24px',
+                padding: '24px 24px 110px 24px',
                 overflowY: 'auto',
                 animation: 'fadeIn 0.4s ease-out',
                 color: 'white'
             }}>
-            {/* Background Atmosphere Blobs */}
-            <div style={{ position: 'fixed', top: '-10%', right: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
-            <div style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
+            {/* Grain/Vignette Overlay */}
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                background: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.65\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\' opacity=\'0.05\'/%3E%3C/svg%3E")',
+                pointerEvents: 'none', zIndex: -1, opacity: 0.4
+            }} />
+            <div style={{
+                position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                background: 'radial-gradient(circle at 50% 50%, transparent 0%, rgba(0,0,0,0.6) 100%)',
+                pointerEvents: 'none', zIndex: -1
+            }} />
+
+            {/* Background Atmosphere Blobs - Adjusted Z-Index and Colors */}
+            <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
+            <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
 
             {/* Header */}
             <div style={{
@@ -194,14 +206,26 @@ const AboutSection = ({ onClose }) => {
                 marginBottom: '30px',
                 flexShrink: 0
             }}>
-                <h2 style={{
-                    fontSize: '2rem',
-                    margin: 0,
-                    background: 'linear-gradient(135deg, #F97316 0%, #EC4899 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 2px 4px rgba(249, 115, 22, 0.2))'
-                }}>Our Story</h2>
+                <div style={{ padding: '0 20px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>{/* Header Adjustments */}
+                    <div style={{
+                        display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
+                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                        fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
+                        color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                    }}>
+                        About Us
+                    </div>
+                    <h2 style={{
+                        fontSize: '2.5rem',
+                        margin: '0 0 10px 0',
+                        fontFamily: 'var(--font-heading)',
+                        background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.5))',
+                        letterSpacing: '-1px'
+                    }}>Our Story</h2>
+                </div>
 
                 <button
                     onClick={onClose}

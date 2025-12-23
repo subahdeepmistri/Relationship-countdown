@@ -24,7 +24,7 @@ import LegacyCapsule from './components/LegacyCapsule';
 import AboutSection from './components/AboutSection';
 
 import Navbar from './components/Navbar';
-import MoodPulse from './components/MoodPulse';
+
 import DailyQuestion from './components/DailyQuestion';
 
 import AnniversarySelection from './components/AnniversarySelection';
@@ -186,13 +186,16 @@ function App() {
     return map[type] || 'Us';
   };
 
-  // Easter Egg State
+  // Easter Egg & Modals State
   const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showFirstPhotoModal, setShowFirstPhotoModal] = useState(false);
+  const [useRealNames, setUseRealNames] = useState(false);
+
   const longPressTimer = React.useRef(null);
 
   const handleLongPressStart = () => {
     longPressTimer.current = setTimeout(() => {
-      setShowEasterEgg(true);
+      setShowFirstPhotoModal(true); // Changed to show First Photo modal on connector long press
       if (navigator.vibrate) navigator.vibrate(50);
     }, 800);
   };
@@ -240,6 +243,39 @@ function App() {
 
           <div style={{ marginTop: '40px', opacity: 0.5, fontSize: '0.9rem' }}>
             (Tap anywhere to close)
+          </div>
+        </div>
+      )}
+
+      {/* FIRST PHOTO MODAL */}
+      {showFirstPhotoModal && (
+        <div
+          onClick={() => setShowFirstPhotoModal(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+            zIndex: 3000, background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(20px)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', textAlign: 'center',
+            padding: '24px', animation: 'fadeIn 0.3s ease-out', color: 'var(--text-primary)'
+          }}>
+          <div style={{
+            width: '280px', padding: '20px', background: 'white',
+            borderRadius: '24px', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.15)',
+            transform: 'scale(1)', animation: 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}>
+            <p style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--accent-lux)', fontWeight: '700', marginBottom: '15px' }}>
+              First Memory
+            </p>
+            <div style={{ width: '100%', height: '200px', background: '#f1f5f9', borderRadius: '16px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {/* Placeholder or meaningful image if available */}
+              <span style={{ fontSize: '3rem' }}>📸</span>
+            </div>
+            <p style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', margin: '0 0 5px 0' }}>
+              "Where it all began..."
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#94a3b8' }}>
+              {new Date(relationship.startDate).toLocaleDateString(undefined, { dateStyle: 'long' })}
+            </p>
           </div>
         </div>
       )}
@@ -317,16 +353,24 @@ function App() {
 
           <div style={{ textAlign: 'center' }}>
 
-            {/* Couple Avatars Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-              <div style={{ position: 'relative', width: '160px', height: '90px' }}>
+            {/* Couple Avatars Header v2 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '25px', position: 'relative' }}>
+
+              {/* Animated Halo Background */}
+              <div className="animate-pulse-slow" style={{
+                position: 'absolute', width: '220px', height: '100px',
+                background: 'var(--accent-lux-gradient)', opacity: 0.15,
+                filter: 'blur(40px)', zIndex: 0, borderRadius: '50%'
+              }}></div>
+
+              <div style={{ position: 'relative', width: '210px', height: '88px', zIndex: 2 }}>
                 {/* Left Avatar */}
                 <div style={{
                   position: 'absolute', left: 0, top: 0,
-                  width: '85px', height: '85px', borderRadius: '50%',
+                  width: '88px', height: '88px', borderRadius: '50%',
                   border: '4px solid white', overflow: 'hidden',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)', zIndex: 1,
-                  background: '#f1f5f9'
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 5,
+                  background: '#f1f5f9', transition: 'transform 0.3s ease'
                 }}>
                   {profileImages.left ? (
                     <img src={profileImages.left} alt="P1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -338,10 +382,10 @@ function App() {
                 {/* Right Avatar */}
                 <div style={{
                   position: 'absolute', right: 0, top: 0,
-                  width: '85px', height: '85px', borderRadius: '50%',
+                  width: '88px', height: '88px', borderRadius: '50%',
                   border: '4px solid white', overflow: 'hidden',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)', zIndex: 1,
-                  background: '#f1f5f9'
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.1)', zIndex: 5,
+                  background: '#f1f5f9', transition: 'transform 0.3s ease'
                 }}>
                   {profileImages.right ? (
                     <img src={profileImages.right} alt="P2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -350,8 +394,9 @@ function App() {
                   )}
                 </div>
 
-                {/* Heart Connector */}
+                {/* Heart Connector v2 */}
                 <div
+                  className="animate-heartbeat"
                   title="Every beat is yours."
                   onDoubleClick={() => setShowEasterEgg(true)}
                   onTouchStart={handleLongPressStart}
@@ -361,11 +406,11 @@ function App() {
                   onMouseLeave={handleLongPressEnd}
                   style={{
                     position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-                    width: '34px', height: '34px', borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #F472B6 0%, #DB2777 100%)',
+                    width: '32px', height: '32px', borderRadius: '50%',
+                    background: 'var(--accent-lux-gradient)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 10, border: '3px solid white', fontSize: '1rem', color: 'white',
-                    boxShadow: '0 4px 10px rgba(219, 39, 119, 0.4)',
+                    zIndex: 10, border: '3px solid white', fontSize: '0.9rem', color: 'white',
+                    boxShadow: '0 4px 15px rgba(251, 113, 133, 0.4)',
                     cursor: 'pointer',
                     userSelect: 'none'
                   }}>
@@ -376,24 +421,32 @@ function App() {
 
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              padding: '6px 14px', background: 'rgba(255, 255, 255, 0.9)',
-              borderRadius: '20px', fontSize: '0.8rem', fontWeight: '700',
-              color: 'var(--accent-primary)', marginBottom: '8px',
-              border: '1px solid rgba(249, 115, 22, 0.1)', boxShadow: '0 2px 8px rgba(249, 115, 22, 0.1)'
+              padding: '6px 14px', background: 'rgba(255, 255, 255, 0.6)',
+              backdropFilter: 'blur(4px)',
+              borderRadius: '20px', fontSize: '0.75rem', fontWeight: '700',
+              color: 'var(--accent-lux)', marginBottom: '12px',
+              border: '1px solid rgba(251, 113, 133, 0.1)', letterSpacing: '0.05em'
             }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'currentColor' }}></span>
               EST. {new Date(relationship.startDate).getFullYear() || new Date().getFullYear()}
             </span>
-            <h1 style={{
-              margin: '0 0 5px 0', fontSize: '1.8rem', color: 'var(--text-primary)',
-              letterSpacing: '-1px', textShadow: '0 2px 10px rgba(0,0,0,0.05)'
-            }}>
-              {getTitle()}
-            </h1>
-            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', opacity: 0.85, fontWeight: '500' }}>
-              Some people count days.<br />
-              I count moments with you.
-            </p>
+
+            {/* Title Section (Click to toggle) */}
+            <div onClick={() => setUseRealNames(!useRealNames)} style={{ cursor: 'pointer' }}>
+              <h1 style={{
+                margin: '0 0 5px 0', fontSize: '2.2rem', color: 'var(--text-primary)',
+                letterSpacing: '-0.03em', textShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                fontFamily: 'var(--font-heading)'
+              }}>
+                {useRealNames
+                  ? `${relationship.partner1} & ${relationship.partner2}`
+                  : getTitle()
+                }
+              </h1>
+              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-secondary)', opacity: 0.9, fontWeight: '500', fontFamily: 'var(--font-serif)' }}>
+                Some people count days.<br />
+                I count moments with you.
+              </p>
+            </div>
           </div>
 
           {/* Settings Button */}
@@ -426,12 +479,7 @@ function App() {
 
           <NextMilestoneCard />
 
-          <div className="pop-card" style={{ padding: '24px', background: '#FFFFFF' }}>
-            <h3 style={{ fontSize: '1rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              ❤️ Daily Vibe
-            </h3>
-            <MoodPulse />
-          </div>
+
 
           <MessageCard />
           <LoveNotes />

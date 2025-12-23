@@ -99,40 +99,56 @@ const MessageCard = () => {
 
     return (
         <div className="pop-card" style={{
-            marginTop: '0rem',
+            marginTop: '20px',
             opacity: visible ? 1 : 0,
             transform: visible ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'opacity 1s ease, transform 1s ease',
+            transition: 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
             textAlign: 'center',
             background: '#F0F9FF',
-            border: '1px solid #BAE6FD',
-            minHeight: '120px',
+            border: '2px dashed #BAE6FD',
+            minHeight: '140px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '20px'
+            padding: '24px',
+            cursor: message.startsWith('⚠️') ? 'default' : 'pointer',
+            position: 'relative'
         }}>
-            <h3 style={{ fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1.5px', color: '#0284C7', marginBottom: '15px', fontWeight: '700' }}>
-                {settings.aiEnabled ? '✨ AI Daily Vibe' : 'Daily Update'}
+            {/* Lock Icon Overlay for "Private" feel */}
+            {settings.aiEnabled && !loading && !message.startsWith('⚠️') && (
+                <div style={{ position: 'absolute', top: '15px', right: '15px', opacity: 0.5 }}>
+                    🔒
+                </div>
+            )}
+
+            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '2px', color: '#0284C7', marginBottom: '15px', fontWeight: '700' }}>
+                {settings.aiEnabled ? '✨ AI Daily Insight' : 'Daily Love Note'}
             </h3>
 
             {loading ? (
-                <div style={{ animation: 'pulse 1.5s infinite', color: '#38BDF8', fontSize: '0.9rem' }}>
-                    Generating magic... ✨
+                <div style={{ animation: 'pulse 1.5s infinite', color: '#38BDF8', fontSize: '0.9rem', fontStyle: 'italic' }}>
+                    Writing something sweet... ✍️
                 </div>
             ) : (
-                <p style={{
-                    fontSize: '1.1rem',
-                    lineHeight: '1.5',
-                    fontFamily: 'var(--font-heading)',
-                    fontWeight: '600',
-                    color: message.startsWith('⚠️') ? '#EF4444' : '#0C4A6E',
-                    margin: 0,
-                    padding: '0 10px'
-                }}>
-                    {message}
-                </p>
+                <div style={{ position: 'relative', width: '100%' }}>
+                    <p style={{
+                        fontSize: '1.4rem',
+                        lineHeight: '1.5',
+                        fontFamily: 'var(--font-serif)',
+                        color: message.startsWith('⚠️') ? '#EF4444' : '#0C4A6E',
+                        margin: 0,
+                        padding: '0 10px',
+                        transform: message ? 'rotate(-1deg)' : 'none'
+                    }}>
+                        {message || "Someday, this will be full of us."}
+                    </p>
+                    {message && !message.startsWith('⚠️') && (
+                        <div style={{ marginTop: '15px', fontSize: '0.75rem', color: '#0EA5E9', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                            Tap to Keep Private
+                        </div>
+                    )}
+                </div>
             )}
 
             <style>{`

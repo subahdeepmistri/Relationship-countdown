@@ -85,7 +85,7 @@ const TimelineView = ({ onClose }) => {
             background: '#F1F5F9',
             zIndex: 5000,
             overflowY: 'auto',
-            padding: '20px'
+            padding: '20px 20px 140px 20px'
         }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>

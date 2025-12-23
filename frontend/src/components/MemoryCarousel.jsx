@@ -130,15 +130,40 @@ const MemoryCarousel = () => {
 
             {/* Gallery Grid */}
             {loading ? (
-                <div style={{ padding: '40px', textAlign: 'center', opacity: 0.5 }}>Loading memories...</div>
+                <div style={{ padding: '60px', textAlign: 'center', opacity: 0.5 }}>
+                    <div className="animate-pulse-slow" style={{ fontSize: '2rem', marginBottom: '10px' }}>⏳</div>
+                    Loading our story...
+                </div>
             ) : photos.length === 0 ? (
-                <div style={{
-                    padding: '60px 20px', textAlign: 'center',
-                    background: 'rgba(255,255,255,0.3)', borderRadius: 'var(--shape-radius)',
-                    border: '2px dashed rgba(0,0,0,0.1)'
-                }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📸</div>
-                    <p style={{ opacity: 0.7, fontSize: '1.1rem' }}>No memories saved yet.<br />Add a photo to your personal collection!</p>
+                <div
+                    onClick={() => fileInputRef.current.click()}
+                    style={{
+                        padding: '60px 20px', textAlign: 'center',
+                        background: 'rgba(255,255,255,0.4)', borderRadius: '32px',
+                        border: '2px dashed #CBD5E1', cursor: 'pointer',
+                        position: 'relative', overflow: 'hidden',
+                        transition: 'all 0.3s ease'
+                    }}>
+                    {/* Ghost Grid Background */}
+                    <div style={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
+                        backgroundSize: '20px 20px', opacity: 0.5, zIndex: 0
+                    }} />
+
+                    <div style={{ position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+                        <div className="animate-float" style={{ fontSize: '3.5rem', marginBottom: '15px' }}>📸</div>
+                        <h4 style={{ margin: '0 0 5px 0', fontSize: '1.2rem', color: 'var(--text-primary)' }}>Make this space yours</h4>
+                        <p style={{ opacity: 0.7, fontSize: '0.95rem', margin: 0 }}>Every photo is a piece of our story.<br />Tap to add your first one.</p>
+
+                        <div style={{
+                            marginTop: '25px', display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: 'white', padding: '10px 20px', borderRadius: '50px',
+                            boxShadow: '0 5px 15px rgba(0,0,0,0.05)', fontSize: '0.85rem', fontWeight: '600', color: 'var(--accent-lux)'
+                        }}>
+                            <span>+</span> Add First Photo
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="masonry-grid">
@@ -279,15 +304,16 @@ const MemoryCarousel = () => {
                 }
                 .memory-item:hover {
                     transform: translateY(-5px);
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
                 }
                 .memory-overlay {
                     position: absolute;
                     top: 0; left: 0; width: 100%; height: 100%;
-                    background: rgba(0,0,0,0.3);
-                    display: flex; alignItems: center; justifyContent: center;
+                    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+                    display: flex; alignItems: flex-end; justifyContent: center;
+                    padding-bottom: 20px;
                     opacity: 0;
-                    transition: opacity 0.2s;
+                    transition: opacity 0.3s ease;
                 }
                 .memory-item:hover .memory-overlay {
                     opacity: 1;
