@@ -1,54 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useCapsules } from '../hooks/useDataHooks';
 
 const TimeCapsuleManager = ({ onClose }) => {
-    const [capsules, setCapsules] = useState([]);
+    // Use centralized hook instead of direct localStorage
+    const {
+        capsules,
+        loading,
+        error,
+        addCapsule,
+        deleteCapsule: deleteCapsuleFromHook,
+        isUnlocked,
+        clearError
+    } = useCapsules();
+
     const [view, setView] = useState('list'); // list, create, view-capsule
     const [newContent, setNewContent] = useState('');
     const [unlockDate, setUnlockDate] = useState('');
     const [selectedCapsule, setSelectedCapsule] = useState(null);
     const [toastMsg, setToastMsg] = useState('');
 
-    useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('rc_capsules') || '[]');
-        setCapsules(saved);
-    }, []);
-
     const showToast = (msg) => {
         setToastMsg(msg);
         setTimeout(() => setToastMsg(''), 2000);
     };
 
+    // Show error from hook
+    React.useEffect(() => {
+        if (error) {
+            showToast(error);
+            clearError();
+        }
+    }, [error, clearError]);
+
     const saveCapsule = () => {
         if (!newContent || !unlockDate) return;
 
-        const newCapsule = {
-            id: Date.now(),
-            content: newContent,
-            unlockDate: new Date(unlockDate).getTime(),
-            createdAt: Date.now()
-        };
+        const result = addCapsule(newContent, unlockDate);
 
-        const updated = [...capsules, newCapsule];
-        setCapsules(updated);
-        localStorage.setItem('rc_capsules', JSON.stringify(updated));
-        setView('list');
-        setNewContent('');
-        setUnlockDate('');
-        showToast('Capsule Buried ⏳');
+        if (result.success) {
+            setView('list');
+            setNewContent('');
+            setUnlockDate('');
+            showToast('Capsule Buried ⏳');
+        }
     };
 
     const deleteCapsule = (id, e) => {
         if (e) e.stopPropagation();
         if (window.confirm('Delete this capsule permanently?')) {
-            const updated = capsules.filter(c => c.id !== id);
-            setCapsules(updated);
-            localStorage.setItem('rc_capsules', JSON.stringify(updated));
-            setView('list'); // if dragging or similar
-            showToast('Capsule Deleted 🗑️');
+            const result = deleteCapsuleFromHook(id);
+            if (result.success) {
+                setView('list');
+                showToast('Capsule Deleted 🗑️');
+            }
         }
     };
-
-    const isUnlocked = (date) => Date.now() >= date;
 
     const openCapsule = (cap) => {
         if (isUnlocked(cap.unlockDate)) {

@@ -63,7 +63,6 @@ const JourneyMap = ({ onClose }) => {
         <div style={{
             position: 'fixed',
             top: 0, left: 0, width: '100%', height: '100%',
-            top: 0, left: 0, width: '100%', height: '100%',
             background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Reference Radial
             zIndex: 3000,
             overflowY: 'auto',

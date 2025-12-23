@@ -1,49 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGoals } from '../hooks/useDataHooks';
 
 const FutureGoalsTimeline = ({ onClose }) => {
-    const [goals, setGoals] = useState([]);
+    // Use centralized hook instead of direct localStorage
+    const {
+        goals,
+        loading,
+        error,
+        addGoal: addGoalToHook,
+        toggleStatus: toggleStatusInHook,
+        deleteGoal,
+        clearError
+    } = useGoals();
+
     const [newTitle, setNewTitle] = useState('');
     const [newDate, setNewDate] = useState('');
-    const [goalToDelete, setGoalToDelete] = useState(null); // For delete modal
+    const [goalToDelete, setGoalToDelete] = useState(null);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
-
-    useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('rc_goals') || '[]');
-        setGoals(saved.sort((a, b) => new Date(a.date) - new Date(b.date)));
-    }, []);
 
     const addGoal = () => {
         if (!newTitle) return;
-        // Fix for iOS Safari date parsing if needed, but standard input gives YYYY-MM-DD which is fine
-        const newGoal = {
-            id: Date.now(),
-            title: newTitle,
-            date: newDate,
-            status: 'planned' // planned, achieved
-        };
-        const updated = [...goals, newGoal].sort((a, b) => new Date(a.date) - new Date(b.date));
-        setGoals(updated);
-        localStorage.setItem('rc_goals', JSON.stringify(updated));
-        setNewTitle('');
-        setNewDate('');
 
-        // Success Feedback
-        setShowSuccessToast(true);
-        triggerConfetti();
-        setTimeout(() => setShowSuccessToast(false), 3000);
+        const result = addGoalToHook(newTitle, newDate);
+
+        if (result.success) {
+            setNewTitle('');
+            setNewDate('');
+            setShowSuccessToast(true);
+            triggerConfetti();
+            setTimeout(() => setShowSuccessToast(false), 3000);
+        }
     };
 
     const toggleStatus = (id) => {
         const goal = goals.find(g => g.id === id);
-        const isCompleting = goal.status === 'planned';
+        const isCompleting = goal?.status === 'planned';
 
-        const updated = goals.map(g =>
-            g.id === id ? { ...g, status: isCompleting ? 'achieved' : 'planned' } : g
-        );
-        setGoals(updated);
-        localStorage.setItem('rc_goals', JSON.stringify(updated));
+        toggleStatusInHook(id);
 
         if (isCompleting) {
             triggerConfetti();
@@ -52,9 +47,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
 
     const confirmDelete = () => {
         if (goalToDelete) {
-            const updated = goals.filter(g => g.id !== goalToDelete);
-            setGoals(updated);
-            localStorage.setItem('rc_goals', JSON.stringify(updated));
+            deleteGoal(goalToDelete);
             setGoalToDelete(null);
         }
     };

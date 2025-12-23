@@ -171,7 +171,6 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
             longDistance: {
                 enabled: ldEnabled,
-                enabled: ldEnabled,
                 offset: ldOffset,
                 meet: ldMeet,
                 myLoc: ldMyLoc,
