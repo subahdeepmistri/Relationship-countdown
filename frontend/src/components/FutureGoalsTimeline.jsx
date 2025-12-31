@@ -19,6 +19,8 @@ const FutureGoalsTimeline = ({ onClose }) => {
     const [newDate, setNewDate] = useState('');
     const [goalToDelete, setGoalToDelete] = useState(null);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
+    const [expandedIds, setExpandedIds] = useState(new Set()); // For accordion collapse
+    const [showAddForm, setShowAddForm] = useState(false); // Collapsible form
 
     const addGoal = () => {
         if (!newTitle) return;
@@ -31,6 +33,9 @@ const FutureGoalsTimeline = ({ onClose }) => {
             setShowSuccessToast(true);
             triggerConfetti();
             setTimeout(() => setShowSuccessToast(false), 3000);
+
+            // Auto close form after adding
+            setTimeout(() => setShowAddForm(false), 1500);
         }
     };
 
@@ -43,6 +48,18 @@ const FutureGoalsTimeline = ({ onClose }) => {
         if (isCompleting) {
             triggerConfetti();
         }
+    };
+
+    const toggleExpand = (id) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
     };
 
     const confirmDelete = () => {
@@ -103,11 +120,11 @@ const FutureGoalsTimeline = ({ onClose }) => {
                 pointerEvents: 'none', zIndex: 0
             }} />
 
-            {/* Background Atmosphere Blobs - Matching Time Capsule */}
+            {/* Background Atmosphere Blobs */}
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
-            {/* Delete Confirmation Modal - Premium Dark Theme */}
+            {/* Delete Confirmation Modal */}
             {goalToDelete && (
                 <div
                     style={{
@@ -139,7 +156,6 @@ const FutureGoalsTimeline = ({ onClose }) => {
                         }}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* Warning Icon */}
                         <div style={{
                             width: '72px', height: '72px',
                             margin: '0 auto 20px',
@@ -209,15 +225,6 @@ const FutureGoalsTimeline = ({ onClose }) => {
                                 Release
                             </button>
                         </div>
-
-                        <p style={{
-                            marginTop: '18px',
-                            fontSize: '0.75rem',
-                            color: 'rgba(255,255,255,0.3)',
-                            fontStyle: 'italic'
-                        }}>
-                            Some dreams are meant to be revisited later
-                        </p>
                     </div>
                 </div>
             )}
@@ -255,7 +262,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                         fontSize: '1.2rem',
                         background: 'rgba(255,255,255,0.1)',
                         backdropFilter: 'blur(12px)',
-                        width: '48px', height: '48px', // Standardized 48px
+                        width: '48px', height: '48px',
                         borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         border: '1px solid rgba(255,255,255,0.15)',
@@ -268,101 +275,55 @@ const FutureGoalsTimeline = ({ onClose }) => {
                     onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
-                    onFocus={e => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
-                    onBlur={e => e.currentTarget.style.outline = 'none'}
                 >✕</button>
 
-                <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
+                <div style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
 
                     {/* Floating Sparkle Decorations */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '-15px',
-                        left: '18%',
-                        fontSize: '1.1rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        pointerEvents: 'none'
-                    }}>✨</div>
-                    <div style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '15%',
-                        fontSize: '0.9rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        animationDelay: '1s',
-                        pointerEvents: 'none'
-                    }}>⭐</div>
-                    <div style={{
-                        position: 'absolute',
-                        top: '45px',
-                        left: '10%',
-                        fontSize: '0.7rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        animationDelay: '2s',
-                        pointerEvents: 'none'
-                    }}>💫</div>
+                    <div style={{ position: 'absolute', top: '-15px', left: '18%', fontSize: '1.1rem', animation: 'sparkle 3s ease-in-out infinite', pointerEvents: 'none' }}>✨</div>
+                    <div style={{ position: 'absolute', top: '10px', right: '15%', fontSize: '0.9rem', animation: 'sparkle 3s ease-in-out infinite', animationDelay: '1s', pointerEvents: 'none' }}>⭐</div>
 
-                    {/* Premium Badge with Shimmer */}
+                    {/* Premium Badge */}
                     <div style={{
                         display: 'inline-block',
-                        padding: '8px 20px',
+                        padding: '6px 16px',
                         borderRadius: '30px',
                         background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(192, 132, 252, 0.15) 100%)',
                         border: '1px solid rgba(129, 140, 248, 0.3)',
-                        fontSize: '0.75rem',
-                        letterSpacing: '3px',
+                        fontSize: '0.7rem',
+                        letterSpacing: '2px',
                         textTransform: 'uppercase',
                         color: '#818cf8',
-                        marginBottom: '20px',
+                        marginBottom: '16px',
                         backdropFilter: 'blur(10px)',
-                        position: 'relative',
-                        overflow: 'hidden',
                         fontWeight: '600'
                     }}>
-                        {/* Shimmer overlay */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
-                            backgroundSize: '200% 100%',
-                            animation: 'shimmer-badge 3s ease-in-out infinite',
-                            pointerEvents: 'none'
-                        }} />
-                        <span style={{ position: 'relative', zIndex: 1 }}>🚀 Shared Horizon 🚀</span>
+                        <span>🚀 Shared Horizon</span>
                     </div>
 
-                    {/* Premium Title */}
                     <h2 style={{
-                        fontSize: '2.8rem',
+                        fontSize: '2.4rem',
                         fontFamily: 'var(--font-heading)',
-                        margin: '0 0 12px 0',
+                        margin: '0 0 10px 0',
                         background: 'linear-gradient(135deg, #fff 0%, #818cf8 50%, #c084fc 100%)',
                         backgroundSize: '200% 200%',
                         animation: 'gradient-shift 4s ease infinite',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        filter: 'drop-shadow(0 4px 20px rgba(129, 140, 248, 0.3))',
-                        letterSpacing: '-1px',
                         fontWeight: '700'
                     }}>Our Future</h2>
 
-                    {/* Subtitle */}
                     <p style={{
-                        fontSize: '1rem',
-                        color: 'rgba(255,255,255,0.5)',
+                        fontSize: '0.95rem',
+                        color: 'rgba(255,255,255,0.6)',
                         fontFamily: 'var(--font-serif)',
                         maxWidth: '400px',
                         margin: '0 auto',
                         fontStyle: 'italic'
-                    }}>Dreams we're building together, one by one</p>
+                    }}>Dreams we're building together</p>
                 </div>
 
-                <div style={{ position: 'relative', paddingLeft: '30px' }}>
-
-                    {/* Timeline Line Removed as per user request */}
+                <div style={{ position: 'relative', paddingBottom: '40px' }}>
 
                     {/* Loading State */}
                     {loading && (
@@ -379,297 +340,363 @@ const FutureGoalsTimeline = ({ onClose }) => {
                                 background: 'rgba(255,255,255,0.1)', margin: '0 auto 20px'
                             }} />
                             <div style={{ width: '60%', height: '20px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', margin: '0 auto 10px' }} />
-                            <div style={{ width: '40%', height: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '7px', margin: '0 auto' }} />
                         </div>
                     )}
 
                     {!loading && goals.length === 0 && (
                         <div style={{
                             textAlign: 'center',
-                            padding: '50px 30px',
+                            padding: '40px 24px',
                             background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-                            borderRadius: '32px',
+                            borderRadius: '24px',
                             border: '1px solid rgba(255,255,255,0.08)',
                             marginBottom: '40px',
-                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
                             position: 'relative',
                             overflow: 'hidden'
                         }}>
-                            {/* Decorative gradient orb */}
                             <div style={{
-                                position: 'absolute',
-                                top: '-30px',
-                                right: '-30px',
-                                width: '100px',
-                                height: '100px',
-                                background: 'radial-gradient(circle, rgba(129, 140, 248, 0.15) 0%, transparent 70%)',
-                                borderRadius: '50%',
-                                pointerEvents: 'none'
-                            }} />
-
-                            {/* Animated Rocket Icon */}
-                            <div style={{
-                                width: '80px',
-                                height: '80px',
-                                margin: '0 auto 20px',
-                                background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(192, 132, 252, 0.1) 100%)',
-                                borderRadius: '24px',
+                                width: '60px',
+                                height: '60px',
+                                margin: '0 auto 16px',
+                                background: 'rgba(129, 140, 248, 0.1)',
+                                borderRadius: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 border: '1px solid rgba(129, 140, 248, 0.2)',
-                                animation: 'float-gentle 4s ease-in-out infinite'
                             }}>
-                                <span style={{ fontSize: '2.5rem' }}>🚀</span>
+                                <span style={{ fontSize: '1.8rem' }}>🚀</span>
                             </div>
 
-                            <h3 style={{
-                                margin: '0 0 10px 0',
-                                fontSize: '1.3rem',
-                                color: 'white',
-                                fontWeight: '600',
-                                fontFamily: 'var(--font-heading)'
-                            }}>A Blank Canvas</h3>
-
-                            <p style={{
-                                margin: '0 0 20px 0',
-                                fontSize: '0.95rem',
-                                color: 'rgba(255,255,255,0.5)',
-                                lineHeight: 1.6
-                            }}>
-                                The future is yours to write.<br />
-                                Add a dream to start your journey.
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: 'white', fontWeight: '600' }}>A Blank Canvas</h3>
+                            <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+                                The future is yours to write. <br /> Add a dream to start.
                             </p>
-
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                fontSize: '0.8rem',
-                                color: 'rgba(255,255,255,0.3)'
-                            }}>
-                                <span>⬇️</span>
-                                <span>Scroll down to add a dream</span>
-                            </div>
                         </div>
                     )}
 
-                    {goals.map((goal, index) => (
-                        <div key={goal.id} style={{ marginBottom: '50px', position: 'relative' }}>
-                            {/* Timeline Dot */}
-                            <div style={{
-                                position: 'absolute', left: '-39px', top: '25px',
-                                width: '20px', height: '20px', borderRadius: '50%',
-                                background: goal.status === 'achieved' ? '#10B981' : '#1e293b',
-                                border: goal.status === 'achieved' ? '4px solid #10B981' : '3px solid #38bdf8',
-                                boxShadow: `0 0 25px ${goal.status === 'achieved' ? '#10B981' : '#38bdf8'}`,
-                                zIndex: 2,
-                                transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                animation: goal.status !== 'achieved' ? 'pulse-slow 3s infinite ease-in-out' : 'none'
-                            }} />
-
-                            <div style={{
-                                padding: '24px',
-                                background: goal.status === 'achieved'
-                                    ? 'linear-gradient(135deg, rgba(236, 252, 241, 0.95), rgba(209, 250, 229, 0.9))'
-                                    : 'rgba(255, 255, 255, 0.05)',
-                                color: goal.status === 'achieved' ? '#064e3b' : 'white',
-                                backdropFilter: 'blur(12px)',
-                                border: goal.status === 'achieved'
-                                    ? 'none'
-                                    : '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '30px',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                boxShadow: goal.status === 'achieved'
-                                    ? '0 20px 50px -10px rgba(16, 185, 129, 0.3)'
-                                    : '0 10px 30px rgba(0,0,0,0.2)',
-                                transform: goal.status === 'achieved' ? 'scale(1.02)' : 'scale(1)',
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                    <div style={{ flex: 1 }}>
-                                        {goal.status === 'achieved' && (
-                                            <div style={{
-                                                fontSize: '0.75rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px',
-                                                color: '#059669', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px'
-                                            }}>
-                                                <span>✨</span> Dream Come True
-                                            </div>
-                                        )}
-                                        {goal.status !== 'achieved' && (
-                                            <div style={{
-                                                fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px',
-                                                color: 'rgba(255,255,255,0.5)', marginBottom: '8px'
-                                            }}>
-                                                On our Horizon
-                                            </div>
-                                        )}
-
-                                        <h3 style={{
-                                            margin: '0 0 8px 0',
-                                            fontSize: '1.5rem',
-                                            color: goal.status === 'achieved' ? '#064e3b' : 'white',
-                                            fontWeight: '700',
-                                            fontFamily: 'var(--font-heading)',
-                                            lineHeight: '1.3'
-                                        }}>
-                                            {goal.title}
-                                        </h3>
-                                        {goal.date && (
-                                            <p style={{
-                                                fontSize: '0.95rem',
-                                                color: goal.status === 'achieved' ? '#10b981' : '#cbd5e1', // Neutral for future, Green for done
-                                                margin: 0,
-                                                fontWeight: '500',
-                                                display: 'flex', alignItems: 'center', gap: '6px',
-                                                fontFamily: 'var(--font-sans, sans-serif)'
-                                            }}>
-                                                📅 Target: {new Date(goal.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                                            </p>
-                                        )}
-                                    </div>
+                    {/* Accordion List of Goals */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '40px' }}>
+                        {goals.map((goal) => {
+                            const isExpanded = expandedIds.has(goal.id);
+                            return (
+                                <div key={goal.id} className="glass-card" style={{
+                                    padding: '0',
+                                    background: goal.status === 'achieved'
+                                        ? 'linear-gradient(135deg, rgba(236, 252, 241, 0.9), rgba(209, 250, 229, 0.8))'
+                                        : 'rgba(255, 255, 255, 0.06)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: goal.status === 'achieved' ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.3s ease'
+                                }}>
+                                    {/* Compact Header */}
                                     <button
-                                        onClick={() => setGoalToDelete(goal.id)}
+                                        onClick={() => toggleExpand(goal.id)}
                                         style={{
-                                            opacity: 0.3, fontSize: '1.1rem',
-                                            border: 'none', background: 'transparent',
-                                            cursor: 'pointer', color: goal.status === 'achieved' ? '#059669' : '#fda4af',
-                                            padding: '8px',
-                                            transition: 'all 0.3s',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                            width: '100%',
+                                            padding: '16px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '12px',
+                                            textAlign: 'left'
                                         }}
-                                        title="Let this dream go"
-                                        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.2)' }}
-                                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.3'; e.currentTarget.style.transform = 'scale(1)' }}
-                                    >🗑️</button>
+                                    >
+                                        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            {/* Status Dot */}
+                                            <div style={{
+                                                width: '12px', height: '12px', borderRadius: '50%',
+                                                background: goal.status === 'achieved' ? '#10B981' : '#38bdf8',
+                                                boxShadow: `0 0 10px ${goal.status === 'achieved' ? '#10B981' : '#38bdf8'}`,
+                                                flexShrink: 0
+                                            }} />
+
+                                            <div style={{ overflow: 'hidden' }}>
+                                                <h3 style={{
+                                                    margin: 0,
+                                                    fontSize: '1rem',
+                                                    color: goal.status === 'achieved' ? '#064e3b' : 'white',
+                                                    fontWeight: '600',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis'
+                                                }}>{goal.title}</h3>
+
+                                                {goal.date && (
+                                                    <p style={{
+                                                        fontSize: '0.75rem',
+                                                        color: goal.status === 'achieved' ? '#10b981' : 'rgba(255,255,255,0.5)',
+                                                        margin: '2px 0 0 0',
+                                                        fontWeight: '500'
+                                                    }}>
+                                                        Target: {new Date(goal.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Chevron Arrow */}
+                                        <div style={{
+                                            width: '28px', height: '28px',
+                                            borderRadius: '50%',
+                                            background: isExpanded
+                                                ? (goal.status === 'achieved' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(96, 165, 250, 0.2)')
+                                                : (goal.status === 'achieved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.08)'),
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            flexShrink: 0,
+                                            transition: 'all 0.3s ease',
+                                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        }}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                                                stroke={isExpanded
+                                                    ? (goal.status === 'achieved' ? '#059669' : '#60a5fa')
+                                                    : (goal.status === 'achieved' ? '#059669' : 'rgba(255,255,255,0.5)')}
+                                                strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="6 9 12 15 18 9" />
+                                            </svg>
+                                        </div>
+                                    </button>
+
+                                    {/* Expanded Content */}
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                style={{ overflow: 'hidden' }}
+                                            >
+                                                <div style={{
+                                                    padding: '0 16px 16px 16px',
+                                                    borderTop: goal.status === 'achieved'
+                                                        ? '1px solid rgba(16, 185, 129, 0.1)'
+                                                        : '1px solid rgba(255,255,255,0.06)'
+                                                }}>
+                                                    <button
+                                                        onClick={() => toggleStatus(goal.id)}
+                                                        style={{
+                                                            marginTop: '12px',
+                                                            width: '100%',
+                                                            padding: '12px',
+                                                            borderRadius: '12px',
+                                                            background: goal.status === 'achieved' ? '#10B981' : 'rgba(255,255,255,0.1)',
+                                                            color: 'white',
+                                                            border: 'none',
+                                                            fontWeight: '600',
+                                                            fontSize: '0.9rem',
+                                                            cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {goal.status === 'achieved' ? 'Completed! 🎉' : 'Mark as Completed'}
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => setGoalToDelete(goal.id)}
+                                                        style={{
+                                                            marginTop: '8px',
+                                                            width: '100%',
+                                                            padding: '10px',
+                                                            background: 'transparent',
+                                                            color: goal.status === 'achieved' ? '#047857' : '#f87171',
+                                                            border: 'none',
+                                                            fontSize: '0.8rem',
+                                                            cursor: 'pointer',
+                                                            opacity: 0.7,
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                                                        }}
+                                                    >
+                                                        <span>🗑️</span> Release Dream
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
+                            );
+                        })}
+                    </div>
 
-                                <button
-                                    onClick={() => toggleStatus(goal.id)}
-                                    style={{
-                                        marginTop: '25px',
-                                        width: '100%',
-                                        fontSize: '1rem',
-                                        padding: '16px 24px',
-                                        borderRadius: '20px',
-                                        background: goal.status === 'achieved' ? 'linear-gradient(135deg, #10B981, #34D399)' : 'rgba(255,255,255,0.08)',
-                                        color: 'white',
-                                        border: 'none',
-                                        fontWeight: '800',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-                                        letterSpacing: '0.5px',
-                                        boxShadow: goal.status === 'achieved'
-                                            ? '0 10px 40px rgba(16, 185, 129, 0.5)'
-                                            : 'none',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                                        opacity: goal.status === 'achieved' ? 1 : 0.8
-                                    }}
-                                    onMouseEnter={e => {
-                                        if (goal.status !== 'achieved') {
-                                            e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                                            e.currentTarget.style.opacity = '1';
-                                        }
-                                    }}
-                                    onMouseLeave={e => {
-                                        if (goal.status !== 'achieved') {
-                                            e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                                            e.currentTarget.style.opacity = '0.8';
-                                        }
-                                    }}
-                                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                                >
-                                    {goal.status === 'achieved' ? (
-                                        <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
-                                            We did it ❤️
-                                        </motion.div>
-                                    ) : (
-                                        <>We did it ❤️</>
-                                    )}
-                                </button>
+                    {/* Add New Dream Form - Collapsible */}
+                    <div className="glass-card" style={{
+                        marginTop: '20px',
+                        padding: '0',
+                        background: 'rgba(30, 41, 59, 0.7)',
+                        borderRadius: '20px',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                        position: 'relative',
+                        overflow: 'hidden'
+                    }}>
+                        {/* Toggle Header */}
+                        <button
+                            onClick={() => setShowAddForm(!showAddForm)}
+                            style={{
+                                width: '100%',
+                                padding: '16px 20px',
+                                background: showAddForm ? 'rgba(255,255,255,0.03)' : 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                transition: 'background 0.2s'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{
+                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    borderRadius: '50%',
+                                    width: '28px', height: '28px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '1rem',
+                                    boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)',
+                                    color: 'white'
+                                }}>+</span>
+                                <span style={{
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    fontFamily: 'var(--font-heading)'
+                                }}>Add New Dream</span>
                             </div>
-                        </div>
-                    ))}
+                            <div style={{
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                background: showAddForm ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                transition: 'all 0.3s ease',
+                                transform: showAddForm ? 'rotate(45deg)' : 'rotate(0deg)'
+                            }}>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke={showAddForm ? '#818cf8' : 'rgba(255,255,255,0.6)'}
+                                    strokeWidth="2.5"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                >
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                </svg>
+                            </div>
+                        </button>
 
-                    {/* Add Goal Form - Redesigned */}
-                    <div style={{ marginTop: '80px', position: 'relative', marginBottom: '80px' }}>{/* Increased spacing */}
-                        {/* Connecting Line Continuation Removed */}
+                        {/* Expandable Form Content */}
+                        <AnimatePresence>
+                            {showAddForm && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                    style={{ overflow: 'hidden' }}
+                                >
+                                    <div style={{
+                                        padding: '0 20px 20px 20px',
+                                        borderTop: '1px solid rgba(255,255,255,0.06)'
+                                    }}>
+                                        <div style={{ display: 'grid', gap: '14px', marginTop: '16px' }}>
 
-                        <div className="glass-card" style={{
-                            padding: '30px',
-                            background: 'rgba(30, 41, 59, 0.6)', // Deep slate glass
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            borderRadius: '32px',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                            backdropFilter: 'blur(15px)'
-                        }}>
-                            <h4 style={{ margin: '0 0 25px 0', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '12px', color: 'white', fontFamily: 'var(--font-heading)' }}>
-                                <span style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)' }}>+</span>
-                                Add New Dream
-                            </h4>
+                                            <div className="journey-input-group">
+                                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.75rem', color: '#94a3b8' }}>Dream Title</label>
+                                                <input
+                                                    placeholder="What's our next big adventure?"
+                                                    value={newTitle}
+                                                    onChange={e => setNewTitle(e.target.value)}
+                                                    style={{
+                                                        width: '100%', padding: '12px',
+                                                        background: 'rgba(0,0,0,0.2)',
+                                                        border: '1px solid rgba(255,255,255,0.1)',
+                                                        borderRadius: '12px', color: 'white', fontSize: '0.95rem', fontWeight: '500', outline: 'none',
+                                                        transition: 'all 0.3s ease'
+                                                    }}
+                                                    onFocus={e => {
+                                                        e.target.style.background = 'rgba(255,255,255,0.05)';
+                                                        e.target.style.borderColor = '#818cf8';
+                                                        e.target.style.boxShadow = '0 0 10px rgba(129, 140, 248, 0.2)';
+                                                    }}
+                                                    onBlur={e => {
+                                                        e.target.style.background = 'rgba(0,0,0,0.2)';
+                                                        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                        e.target.style.boxShadow = 'none';
+                                                    }}
+                                                />
+                                            </div>
 
-                            <input
-                                type="text"
-                                placeholder="What's our next big adventure?"
-                                value={newTitle}
-                                onChange={(e) => setNewTitle(e.target.value)}
-                                style={{
-                                    width: '100%', padding: '18px 20px', marginBottom: '15px',
-                                    borderRadius: '20px',
-                                    border: '2px solid transparent',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    color: 'white',
-                                    outline: 'none',
-                                    fontSize: '1rem',
-                                    transition: 'all 0.2s',
-                                    fontFamily: 'var(--font-serif)'
-                                }}
-                                onFocus={e => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.borderColor = 'rgba(129, 140, 248, 0.5)'; }}
-                                onBlur={e => { e.target.style.background = 'rgba(255,255,255,0.05)'; e.target.style.borderColor = 'transparent'; }}
-                            />
-                            <input
-                                type="date"
-                                value={newDate}
-                                min={new Date().toISOString().split('T')[0]}
-                                onChange={(e) => setNewDate(e.target.value)}
-                                style={{
-                                    width: '100%', padding: '18px 20px', marginBottom: '25px',
-                                    borderRadius: '20px',
-                                    border: '2px solid transparent',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    color: 'white',
-                                    outline: 'none',
-                                    fontFamily: 'var(--font-heading)',
-                                    fontSize: '1rem',
-                                    fontWeight: '600'
-                                }}
-                                onFocus={e => { e.target.style.background = 'rgba(255,255,255,0.1)'; e.target.style.borderColor = 'rgba(129, 140, 248, 0.5)'; }}
-                                onBlur={e => { e.target.style.background = 'rgba(255,255,255,0.05)'; e.target.style.borderColor = 'transparent'; }}
-                            />
+                                            <div className="journey-input-group">
+                                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.75rem', color: '#94a3b8' }}>Target Date (Optional)</label>
+                                                <input
+                                                    type="date"
+                                                    value={newDate}
+                                                    min={new Date().toISOString().split('T')[0]}
+                                                    onChange={e => setNewDate(e.target.value)}
+                                                    style={{
+                                                        width: '100%', padding: '12px',
+                                                        background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                                        borderRadius: '12px', color: 'white', fontSize: '0.9rem', fontFamily: 'sans-serif',
+                                                        outline: 'none', transition: 'all 0.3s ease'
+                                                    }}
+                                                    onFocus={e => {
+                                                        e.target.style.background = 'rgba(255,255,255,0.05)';
+                                                        e.target.style.borderColor = '#818cf8';
+                                                    }}
+                                                    onBlur={e => {
+                                                        e.target.style.background = 'rgba(0,0,0,0.2)';
+                                                        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                    }}
+                                                />
+                                            </div>
 
-                            <button
-                                onClick={addGoal}
-                                disabled={!newTitle.trim()}
-                                style={{
-                                    background: !newTitle.trim()
-                                        ? 'rgba(255,255,255,0.05)'
-                                        : 'var(--accent-lux-gradient)',
-                                    color: !newTitle.trim() ? 'rgba(255,255,255,0.2)' : 'white',
-                                    padding: '18px 20px', borderRadius: '50px', width: '100%', border: 'none',
-                                    fontWeight: '800',
-                                    cursor: !newTitle.trim() ? 'not-allowed' : 'pointer',
-                                    fontSize: '1.1rem',
-                                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                    boxShadow: !newTitle.trim() ? 'none' : '0 10px 30px rgba(251, 113, 133, 0.4)',
-                                    letterSpacing: '0.5px'
-                                }}
-                                onMouseDown={e => { if (newTitle.trim()) e.currentTarget.style.transform = 'scale(0.98)'; }}
-                                onMouseUp={e => { if (newTitle.trim()) e.currentTarget.style.transform = 'scale(1)'; }}
-                            >
-                                Add to Timeline 🚀
-                            </button>
-                        </div>
+                                            <button
+                                                onClick={addGoal}
+                                                disabled={!newTitle.trim()}
+                                                style={{
+                                                    width: '100%', padding: '14px',
+                                                    background: !newTitle.trim() ? 'rgba(255,255,255,0.08)' : 'var(--accent-lux-gradient)',
+                                                    color: !newTitle.trim() ? 'rgba(255,255,255,0.4)' : 'white',
+                                                    borderRadius: '14px', fontWeight: '700', fontSize: '0.95rem',
+                                                    border: 'none', cursor: !newTitle.trim() ? 'not-allowed' : 'pointer', marginTop: '4px',
+                                                    boxShadow: !newTitle.trim() ? 'none' : '0 6px 24px rgba(99, 102, 241, 0.3)',
+                                                    letterSpacing: '0.3px', textTransform: 'uppercase',
+                                                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                                }}
+                                                onMouseEnter={e => {
+                                                    if (newTitle.trim()) {
+                                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                                        e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.45)';
+                                                    }
+                                                }}
+                                                onMouseLeave={e => {
+                                                    if (newTitle.trim()) {
+                                                        e.currentTarget.style.transform = 'translateY(0)';
+                                                        e.currentTarget.style.boxShadow = '0 6px 24px rgba(99, 102, 241, 0.3)';
+                                                    }
+                                                }}
+                                            >
+                                                Add to Timeline 🚀
+                                            </button>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </div>

@@ -369,26 +369,26 @@ const VoiceDiary = ({ onClose }) => {
                     fontStyle: 'italic'
                 }}>Your future selves are waiting to hear this</p>
 
-                {/* Recorder UI */}
+                {/* Compact Recorder UI */}
                 <div className="glass-card" style={{
-                    padding: '50px 30px',
-                    background: isRecording ? 'rgba(30, 41, 59, 0.9)' : 'rgba(30, 41, 59, 0.6)',
-                    borderRadius: '40px',
-                    marginBottom: '50px',
+                    padding: '20px 24px',
+                    background: isRecording ? 'rgba(30, 41, 59, 0.95)' : 'rgba(30, 41, 59, 0.6)',
+                    borderRadius: '24px',
+                    marginBottom: '24px',
                     backdropFilter: 'blur(15px)',
-                    border: isRecording ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(255,255,255,0.1)',
-                    boxShadow: isRecording ? '0 0 50px rgba(239, 68, 68, 0.2)' : '0 20px 60px rgba(0,0,0,0.4)',
-                    transition: 'all 0.4s ease',
+                    border: isRecording ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                    boxShadow: isRecording ? '0 0 40px rgba(239, 68, 68, 0.15)' : '0 12px 40px rgba(0,0,0,0.3)',
+                    transition: 'all 0.3s ease',
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
-                    {/* Soft Waveform Animation (CSS only) */}
+                    {/* Subtle Waveform Animation (CSS only) */}
                     {isRecording && (
                         <div style={{
-                            position: 'absolute', top: '0', left: '0', width: '100%', height: '100%',
-                            opacity: 0.1, pointerEvents: 'none',
-                            background: 'repeating-linear-gradient(90deg, transparent, transparent 2px, #fff 2px, #fff 4px)',
-                            animation: 'waveform 20s linear infinite'
+                            position: 'absolute', top: '0', left: '0', width: '200%', height: '100%',
+                            opacity: 0.08, pointerEvents: 'none',
+                            background: 'repeating-linear-gradient(90deg, transparent, transparent 3px, #fff 3px, #fff 5px)',
+                            animation: 'waveform 15s linear infinite'
                         }} />
                     )}
                     <style>{`
@@ -397,79 +397,117 @@ const VoiceDiary = ({ onClose }) => {
                             100% { transform: translateX(-50%); } 
                         }
                         @keyframes ripple {
-                            0% { transform: scale(1); opacity: 0.6; }
-                            100% { transform: scale(2.5); opacity: 0; }
+                            0% { transform: scale(1); opacity: 0.5; }
+                            100% { transform: scale(2); opacity: 0; }
+                        }
+                        @keyframes pulse-ring {
+                            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+                            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
                         }
                      `}</style>
 
                     {saveSuccess && (
                         <div style={{
                             position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(5px)', zIndex: 10,
-                            animation: 'fadeIn 0.3s'
+                            background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)', zIndex: 10,
+                            animation: 'fadeIn 0.2s'
                         }}>
-                            <div style={{ fontSize: '4rem', animation: 'float 1s infinite' }}>❤️</div>
+                            <div style={{ fontSize: '2.5rem', animation: 'float 0.8s infinite' }}>❤️</div>
                         </div>
                     )}
 
+                    {/* Horizontal Layout */}
                     <div style={{
-                        fontSize: '4rem',
-                        fontFamily: 'monospace',
-                        marginBottom: '40px',
-                        color: isRecording ? '#ef4444' : 'white',
-                        textShadow: isRecording ? '0 0 30px rgba(239, 68, 68, 0.6)' : 'none',
-                        transition: 'all 0.3s',
-                        fontWeight: 'lighter'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '20px',
+                        position: 'relative',
+                        zIndex: 1
                     }}>
-                        {isRecording ? formatTime(recordingDuration) : '0:00'}
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                        {/* Hold to Record Button */}
-                        <div style={{ position: 'relative' }}>
-                            {/* Ripple Effect Ring */}
+                        {/* Mic Button */}
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
                             {isRecording && (
                                 <div style={{
                                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                                    borderRadius: '50%', background: 'rgba(239, 68, 68, 0.5)',
-                                    animation: 'ripple 1.5s infinite linear'
+                                    borderRadius: '50%', background: 'rgba(239, 68, 68, 0.4)',
+                                    animation: 'ripple 1.2s infinite ease-out'
                                 }} />
                             )}
-
                             <button
                                 onMouseDown={handlePressStart}
                                 onMouseUp={handlePressEnd}
                                 onMouseLeave={handlePressEnd}
-                                onTouchStart={(e) => { e.preventDefault(); handlePressStart(e); }} // Prevent default to avoid ghost click
+                                onTouchStart={(e) => { e.preventDefault(); handlePressStart(e); }}
                                 onTouchEnd={(e) => { e.preventDefault(); handlePressEnd(e); }}
                                 disabled={permState === 'denied'}
                                 style={{
-                                    width: '100px', height: '100px', borderRadius: '50%',
-                                    background: isRecording ? '#ef4444' : permState === 'denied' ? '#475569' : 'white',
+                                    width: '64px', height: '64px', borderRadius: '50%',
+                                    background: isRecording
+                                        ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                                        : permState === 'denied'
+                                            ? '#475569'
+                                            : 'linear-gradient(135deg, #fff 0%, #f1f5f9 100%)',
                                     color: isRecording ? 'white' : 'var(--bg-color)',
                                     border: 'none',
                                     boxShadow: isRecording
-                                        ? '0 0 0 6px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.6)'
-                                        : '0 15px 40px rgba(0,0,0,0.3), inset 0 -5px 10px rgba(0,0,0,0.1)',
-                                    fontSize: '2rem', cursor: permState === 'denied' ? 'not-allowed' : 'pointer',
+                                        ? '0 4px 20px rgba(239, 68, 68, 0.5)'
+                                        : '0 8px 24px rgba(0,0,0,0.25), inset 0 -2px 6px rgba(0,0,0,0.1)',
+                                    fontSize: '1.5rem',
+                                    cursor: permState === 'denied' ? 'not-allowed' : 'pointer',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                     transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                    transform: isRecording ? 'scale(1.1)' : 'scale(1)',
-                                    position: 'relative', zIndex: 2
+                                    transform: isRecording ? 'scale(1.05)' : 'scale(1)',
+                                    position: 'relative', zIndex: 2,
+                                    animation: isRecording ? 'pulse-ring 1.5s infinite' : 'none'
                                 }}
                             >
-                                {isRecording ? '⬛' : '🎙️'}
+                                {isRecording ? '⏹' : '🎙️'}
                             </button>
                         </div>
 
-                        <p style={{
-                            marginTop: '10px', fontSize: '0.9rem',
-                            color: isRecording ? '#fca5a5' : '#94a3b8',
-                            letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600',
-                            transition: 'color 0.3s'
-                        }}>
-                            {permState === 'denied' ? 'Microphone Access Denied' : isRecording ? 'Recording... Tap to Stop' : 'Tap to Record'}
-                        </p>
+                        {/* Timer & Status */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{
+                                fontSize: '2rem',
+                                fontFamily: 'monospace',
+                                fontWeight: '500',
+                                color: isRecording ? '#f87171' : 'white',
+                                textShadow: isRecording ? '0 0 20px rgba(239, 68, 68, 0.4)' : 'none',
+                                transition: 'all 0.3s',
+                                marginBottom: '4px',
+                                letterSpacing: '2px'
+                            }}>
+                                {isRecording ? formatTime(recordingDuration) : '0:00'}
+                            </div>
+                            <p style={{
+                                margin: 0,
+                                fontSize: '0.8rem',
+                                color: isRecording ? '#fca5a5' : 'rgba(255,255,255,0.5)',
+                                letterSpacing: '0.5px',
+                                transition: 'color 0.3s'
+                            }}>
+                                {permState === 'denied'
+                                    ? 'Microphone access denied'
+                                    : isRecording
+                                        ? 'Recording... tap to stop'
+                                        : entries.length === 0
+                                            ? 'Tap to capture your first thought'
+                                            : 'Tap to record a new message'}
+                            </p>
+                        </div>
+
+                        {/* Recording indicator dot */}
+                        {isRecording && (
+                            <div style={{
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                background: '#ef4444',
+                                animation: 'pulse 1s infinite',
+                                boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)',
+                                flexShrink: 0
+                            }} />
+                        )}
                     </div>
                 </div>
 
@@ -478,70 +516,34 @@ const VoiceDiary = ({ onClose }) => {
                     {entries.length === 0 && (
                         <div style={{
                             textAlign: 'center',
-                            padding: '50px 30px',
-                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
-                            borderRadius: '32px',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
-                            position: 'relative',
-                            overflow: 'hidden'
+                            padding: '32px 24px',
+                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%)',
+                            borderRadius: '20px',
+                            border: '1px solid rgba(255,255,255,0.06)',
+                            position: 'relative'
                         }}>
-                            {/* Decorative gradient orb */}
                             <div style={{
-                                position: 'absolute',
-                                top: '-30px',
-                                right: '-30px',
-                                width: '100px',
-                                height: '100px',
-                                background: 'radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%)',
-                                borderRadius: '50%',
-                                pointerEvents: 'none'
-                            }} />
-
-                            {/* Animated Cassette Icon */}
-                            <div style={{
-                                width: '80px',
-                                height: '80px',
-                                margin: '0 auto 20px',
-                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%)',
-                                borderRadius: '24px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                border: '1px solid rgba(239, 68, 68, 0.2)',
-                                animation: 'float-gentle 4s ease-in-out infinite'
+                                gap: '12px',
+                                marginBottom: '8px'
                             }}>
-                                <span style={{ fontSize: '2.5rem' }}>📼</span>
+                                <span style={{ fontSize: '1.5rem', opacity: 0.8 }}>📼</span>
+                                <span style={{
+                                    fontSize: '1rem',
+                                    color: 'rgba(255,255,255,0.7)',
+                                    fontWeight: '500'
+                                }}>Your voice capsules will appear here</span>
                             </div>
-
-                            <h3 style={{
-                                margin: '0 0 10px 0',
-                                fontSize: '1.3rem',
-                                color: 'white',
-                                fontWeight: '600'
-                            }}>No shared thoughts yet</h3>
-
                             <p style={{
-                                margin: '0 0 20px 0',
-                                fontSize: '0.95rem',
-                                color: 'rgba(255,255,255,0.5)',
-                                lineHeight: 1.6
+                                margin: 0,
+                                fontSize: '0.85rem',
+                                color: 'rgba(255,255,255,0.4)',
+                                fontStyle: 'italic'
                             }}>
-                                Break the silence.<br />
-                                Record your first voice message above.
+                                Record moments you want to remember forever
                             </p>
-
-                            <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                fontSize: '0.8rem',
-                                color: 'rgba(255,255,255,0.3)'
-                            }}>
-                                <span>⬆️</span>
-                                <span>Tap the mic to start</span>
-                            </div>
                         </div>
                     )}
 

@@ -10,6 +10,21 @@ const JourneyMap = ({ onClose }) => {
     const [isLaunching, setIsLaunching] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For delete confirmation modal
+    const [expandedIds, setExpandedIds] = useState(new Set()); // For accordion collapse
+
+    const toggleExpand = (id) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const [showAddForm, setShowAddForm] = useState(false); // Collapsible form
 
     useEffect(() => {
         const saved = JSON.parse(localStorage.getItem('rc_journey') || '[]');
@@ -436,184 +451,350 @@ const JourneyMap = ({ onClose }) => {
                         </div>
                     )}
 
-                    {milestones.map((m, i) => (
-                        <div key={m.id} className={`journey-item ${i % 2 === 0 ? 'right' : 'left'}`}>
-                            {/* Dot */}
-                            <div className="journey-dot" />
+                    {milestones.map((m, i) => {
+                        const isExpanded = expandedIds.has(m.id);
+                        return (
+                            <div key={m.id} className={`journey-item ${i % 2 === 0 ? 'right' : 'left'}`}>
+                                {/* Dot */}
+                                <div className="journey-dot" />
 
-                            <div className="glass-card journey-card" style={{
-                                padding: '25px',
-                                textAlign: 'left', // Keep text left for better readability even on right side usually, or stick to side
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                backdropFilter: 'blur(10px)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                borderRadius: '24px',
-                                boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-                            }}>
-                                <span style={{
-                                    fontSize: '0.75rem',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '1.5px',
-                                    color: '#94a3b8', // Neutral slate instead of blue
-                                    fontWeight: '700',
-                                    display: 'block',
-                                    marginBottom: '8px',
-                                    fontFamily: 'var(--font-sans, sans-serif)'
+                                <div className="glass-card journey-card" style={{
+                                    padding: '0',
+                                    textAlign: 'left',
+                                    background: 'rgba(255, 255, 255, 0.06)',
+                                    backdropFilter: 'blur(10px)',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                                    overflow: 'hidden',
+                                    transition: 'all 0.3s ease'
                                 }}>
-                                    {new Date(m.date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                                </span>
-                                <h4 style={{ margin: '0 0 10px 0', fontSize: '1.4rem', color: 'white', textShadow: '0 2px 4px rgba(0,0,0,0.3)', fontFamily: 'var(--font-heading)' }}>{m.title}</h4>
-                                {m.desc && <p style={{ fontSize: '0.95rem', margin: 0, color: '#cbd5e1', lineHeight: 1.6, fontFamily: 'var(--font-serif)' }}>{m.desc}</p>}
-                                <button onClick={() => requestDelete(m.id)} style={{
-                                    color: '#f87171', opacity: 0.6, marginTop: '15px', fontSize: '0.8rem',
-                                    background: 'none', border: 'none', cursor: 'pointer',
-                                    display: 'flex', alignItems: 'center', gap: '5px'
-                                }}>
-                                    <span>🗑️</span> Remove
-                                </button>
+                                    {/* Compact Header - Always Visible */}
+                                    <button
+                                        onClick={() => toggleExpand(m.id)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '14px 16px',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '12px',
+                                            textAlign: 'left'
+                                        }}
+                                    >
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <span style={{
+                                                fontSize: '0.65rem',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.5px',
+                                                color: '#60a5fa',
+                                                fontWeight: '600',
+                                                display: 'block',
+                                                marginBottom: '2px'
+                                            }}>
+                                                {new Date(m.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </span>
+                                            <h4 style={{
+                                                margin: 0,
+                                                fontSize: '1rem',
+                                                color: 'white',
+                                                fontFamily: 'var(--font-heading)',
+                                                fontWeight: '600',
+                                                whiteSpace: 'nowrap',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis'
+                                            }}>{m.title}</h4>
+                                        </div>
+
+                                        {/* Chevron Arrow */}
+                                        <div style={{
+                                            width: '28px',
+                                            height: '28px',
+                                            borderRadius: '50%',
+                                            background: isExpanded ? 'rgba(96, 165, 250, 0.2)' : 'rgba(255,255,255,0.08)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexShrink: 0,
+                                            transition: 'all 0.3s ease',
+                                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+                                        }}>
+                                            <svg
+                                                width="14"
+                                                height="14"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke={isExpanded ? '#60a5fa' : 'rgba(255,255,255,0.5)'}
+                                                strokeWidth="2.5"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            >
+                                                <polyline points="6 9 12 15 18 9" />
+                                            </svg>
+                                        </div>
+                                    </button>
+
+                                    {/* Expandable Content */}
+                                    <AnimatePresence>
+                                        {isExpanded && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                style={{ overflow: 'hidden' }}
+                                            >
+                                                <div style={{
+                                                    padding: '0 16px 14px 16px',
+                                                    borderTop: '1px solid rgba(255,255,255,0.06)'
+                                                }}>
+                                                    {m.desc && (
+                                                        <p style={{
+                                                            fontSize: '0.85rem',
+                                                            margin: '12px 0 0 0',
+                                                            color: 'rgba(255,255,255,0.7)',
+                                                            lineHeight: 1.5
+                                                        }}>{m.desc}</p>
+                                                    )}
+                                                    <button onClick={() => requestDelete(m.id)} style={{
+                                                        color: '#f87171',
+                                                        opacity: 0.6,
+                                                        marginTop: m.desc ? '10px' : '12px',
+                                                        fontSize: '0.7rem',
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '4px',
+                                                        padding: 0
+                                                    }}>
+                                                        <span>🗑️</span> Remove
+                                                    </button>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
-                {/* Add New Chapter */}
+                {/* Add New Chapter - Collapsible */}
                 <div className="glass-card" style={{
-                    marginTop: '100px', // More vertical spacing
-                    padding: '40px',
+                    marginTop: '40px',
+                    padding: '0',
                     background: 'rgba(30, 41, 59, 0.7)',
-                    borderRadius: '40px',
+                    borderRadius: '20px',
                     border: '1px solid rgba(255,255,255,0.1)',
                     backdropFilter: 'blur(20px)',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
                     position: 'relative',
                     overflow: 'hidden'
                 }}>
-                    <h4 style={{ marginBottom: '30px', fontSize: '1.6rem', color: 'white', fontFamily: 'var(--font-heading)' }}>Add a New Chapter ✍️</h4>
-                    <div style={{ display: 'grid', gap: '20px' }} className={isLaunching ? 'launch-anim' : ''}>
-
-                        <div className="journey-input-group">
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>Moment Title</label>
-                            <input
-                                placeholder="e.g. The First Date"
-                                value={newTitle}
-                                onChange={e => setNewTitle(e.target.value)}
-                                style={{
-                                    width: '100%', padding: '16px',
-                                    background: 'rgba(0,0,0,0.2)',
-                                    border: '2px solid rgba(255,255,255,0.1)', // Stronger default border
-                                    borderRadius: '16px', color: 'white', fontSize: '1.1rem', fontWeight: '600', outline: 'none',
-                                    transition: 'all 0.3s ease'
-                                }}
-                                onFocus={e => {
-                                    e.target.style.background = 'rgba(255,255,255,0.05)';
-                                    e.target.style.borderColor = '#fb7185'; // Rose Gold Focus
-                                    e.target.style.boxShadow = '0 0 15px rgba(251, 113, 133, 0.3)';
-                                }}
-                                onBlur={e => {
-                                    e.target.style.background = 'rgba(0,0,0,0.2)';
-                                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
-                                    e.target.style.boxShadow = 'none';
-                                }}
-                            />
+                    {/* Toggle Header */}
+                    <button
+                        onClick={() => setShowAddForm(!showAddForm)}
+                        style={{
+                            width: '100%',
+                            padding: '16px 20px',
+                            background: showAddForm ? 'rgba(255,255,255,0.03)' : 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            transition: 'background 0.2s'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '1.3rem' }}>✍️</span>
+                            <span style={{
+                                color: 'white',
+                                fontSize: '1.1rem',
+                                fontWeight: '600',
+                                fontFamily: 'var(--font-heading)'
+                            }}>Add a New Chapter</span>
                         </div>
-
-                        <div className="journey-input-group">
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>When did it happen?</label>
-                            <div style={{ position: 'relative' }}>
-                                <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontSize: '1.2rem', pointerEvents: 'none', opacity: 0.8 }}>📅</span>
-                                <input
-                                    type="date"
-                                    value={newDate}
-                                    onChange={e => setNewDate(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '16px 16px 16px 50px', // Left padding for icon
-                                        background: 'rgba(0,0,0,0.2)', border: '2px solid transparent',
-                                        borderRadius: '16px', color: 'white', fontSize: '1rem', fontFamily: 'sans-serif',
-                                        outline: 'none', transition: 'all 0.3s ease'
-                                    }}
-                                    onFocus={e => {
-                                        e.target.style.background = 'rgba(255,255,255,0.05)';
-                                        e.target.style.borderColor = '#60a5fa'; // Blue Focus for date
-                                    }}
-                                    onBlur={e => {
-                                        e.target.style.background = 'rgba(0,0,0,0.2)';
-                                        e.target.style.borderColor = 'transparent';
-                                    }}
-                                />
-                            </div>
+                        <div style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '50%',
+                            background: showAddForm ? 'rgba(236, 72, 153, 0.2)' : 'rgba(255,255,255,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.3s ease',
+                            transform: showAddForm ? 'rotate(45deg)' : 'rotate(0deg)'
+                        }}>
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke={showAddForm ? '#ec4899' : 'rgba(255,255,255,0.6)'}
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
                         </div>
+                    </button>
 
-                        <div className="journey-input-group">
-                            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#94a3b8', transition: 'color 0.3s' }}>Memory Details</label>
-                            <textarea
-                                placeholder="A moment you'll never forget..."
-                                value={newDesc}
-                                onChange={e => setNewDesc(e.target.value)}
-                                style={{
-                                    width: '100%', padding: '20px', minHeight: '140px', // Larger area
-                                    background: 'rgba(0,0,0,0.2)', border: '2px solid transparent',
-                                    borderRadius: '20px', color: 'white', fontSize: '1.05rem', resize: 'vertical',
-                                    outline: 'none', transition: 'all 0.3s ease',
-                                    fontFamily: "'Inter', sans-serif",
-                                    lineHeight: '1.6'
-                                }}
-                                onFocus={e => {
-                                    e.target.style.background = 'rgba(255,255,255,0.08)';
-                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                                }}
-                                onBlur={e => {
-                                    e.target.style.background = 'rgba(0,0,0,0.2)';
-                                    e.target.style.borderColor = 'transparent';
-                                }}
-                            />
-                        </div>
+                    {/* Expandable Form Content */}
+                    <AnimatePresence>
+                        {showAddForm && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                                style={{ overflow: 'hidden' }}
+                            >
+                                <div style={{
+                                    padding: '0 20px 20px 20px',
+                                    borderTop: '1px solid rgba(255,255,255,0.06)'
+                                }}>
+                                    <div style={{ display: 'grid', gap: '14px', marginTop: '16px' }} className={isLaunching ? 'launch-anim' : ''}>
 
-                        <style>{`
-                            @keyframes rocketWiggle {
-                                0% { transform: scale(1) rotate(0deg); }
-                                25% { transform: scale(0.95) rotate(-3deg); }
-                                50% { transform: scale(0.95) rotate(3deg); }
-                                75% { transform: scale(0.98) rotate(-2deg); }
-                                100% { transform: scale(1) rotate(0deg); }
-                            }
-                            .rocket-btn:active {
-                                animation: rocketWiggle 0.4s ease-in-out;
-                            }
-                        `}</style>
+                                        <div className="journey-input-group">
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.75rem', color: '#94a3b8', transition: 'color 0.3s' }}>Moment Title</label>
+                                            <input
+                                                placeholder="e.g. The First Date"
+                                                value={newTitle}
+                                                onChange={e => setNewTitle(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '12px',
+                                                    background: 'rgba(0,0,0,0.2)',
+                                                    border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '12px', color: 'white', fontSize: '0.95rem', fontWeight: '500', outline: 'none',
+                                                    transition: 'all 0.3s ease'
+                                                }}
+                                                onFocus={e => {
+                                                    e.target.style.background = 'rgba(255,255,255,0.05)';
+                                                    e.target.style.borderColor = '#fb7185';
+                                                    e.target.style.boxShadow = '0 0 10px rgba(251, 113, 133, 0.2)';
+                                                }}
+                                                onBlur={e => {
+                                                    e.target.style.background = 'rgba(0,0,0,0.2)';
+                                                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                    e.target.style.boxShadow = 'none';
+                                                }}
+                                            />
+                                        </div>
 
-                        <button
-                            className="rocket-btn"
-                            onClick={addMilestone}
-                            disabled={!newTitle || !newDate}
-                            style={{
-                                width: '100%', padding: '20px',
-                                background: (!newTitle || !newDate) ? 'rgba(255,255,255,0.08)' : 'var(--accent-lux-gradient)',
-                                color: (!newTitle || !newDate) ? 'rgba(255,255,255,0.4)' : 'white', // More visible disabled text
-                                borderRadius: '50px', fontWeight: '800', fontSize: '1.15rem',
-                                border: 'none', cursor: (!newTitle || !newDate) ? 'not-allowed' : 'pointer', marginTop: '15px',
-                                boxShadow: (!newTitle || !newDate) ? 'none' : '0 10px 40px rgba(236, 72, 153, 0.4)',
-                                letterSpacing: '1px', textTransform: 'uppercase',
-                                transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)', // Smooth transition including glow
-                                position: 'relative', overflow: 'hidden'
-                            }}
-                            onMouseEnter={e => {
-                                if (newTitle && newDate) {
-                                    e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-                                    e.currentTarget.style.boxShadow = '0 20px 60px rgba(236, 72, 153, 0.7)'; // Intense glow
-                                }
-                            }}
-                            onMouseLeave={e => {
-                                if (newTitle && newDate) {
-                                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                                    e.currentTarget.style.boxShadow = '0 10px 40px rgba(236, 72, 153, 0.4)';
-                                }
-                            }}
-                        >
-                            <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                                Add to Timeline 🚀
-                            </span>
-                        </button>
-                    </div>
+                                        <div className="journey-input-group">
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.75rem', color: '#94a3b8', transition: 'color 0.3s' }}>When did it happen?</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.9rem', pointerEvents: 'none', opacity: 0.7 }}>📅</span>
+                                                <input
+                                                    type="date"
+                                                    value={newDate}
+                                                    onChange={e => setNewDate(e.target.value)}
+                                                    style={{
+                                                        width: '100%', padding: '12px 12px 12px 38px',
+                                                        background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                                        borderRadius: '12px', color: 'white', fontSize: '0.9rem', fontFamily: 'sans-serif',
+                                                        outline: 'none', transition: 'all 0.3s ease'
+                                                    }}
+                                                    onFocus={e => {
+                                                        e.target.style.background = 'rgba(255,255,255,0.05)';
+                                                        e.target.style.borderColor = '#60a5fa';
+                                                    }}
+                                                    onBlur={e => {
+                                                        e.target.style.background = 'rgba(0,0,0,0.2)';
+                                                        e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="journey-input-group">
+                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.75rem', color: '#94a3b8', transition: 'color 0.3s' }}>Memory Details (optional)</label>
+                                            <textarea
+                                                placeholder="A moment you'll never forget..."
+                                                value={newDesc}
+                                                onChange={e => setNewDesc(e.target.value)}
+                                                style={{
+                                                    width: '100%', padding: '12px', minHeight: '70px',
+                                                    background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
+                                                    borderRadius: '12px', color: 'white', fontSize: '0.9rem', resize: 'vertical',
+                                                    outline: 'none', transition: 'all 0.3s ease',
+                                                    fontFamily: "'Inter', sans-serif",
+                                                    lineHeight: '1.5'
+                                                }}
+                                                onFocus={e => {
+                                                    e.target.style.background = 'rgba(255,255,255,0.05)';
+                                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                                }}
+                                                onBlur={e => {
+                                                    e.target.style.background = 'rgba(0,0,0,0.2)';
+                                                    e.target.style.borderColor = 'rgba(255,255,255,0.1)';
+                                                }}
+                                            />
+                                        </div>
+
+                                        <style>{`
+                                            @keyframes rocketWiggle {
+                                                0% { transform: scale(1) rotate(0deg); }
+                                                25% { transform: scale(0.95) rotate(-3deg); }
+                                                50% { transform: scale(0.95) rotate(3deg); }
+                                                75% { transform: scale(0.98) rotate(-2deg); }
+                                                100% { transform: scale(1) rotate(0deg); }
+                                            }
+                                            .rocket-btn:active {
+                                                animation: rocketWiggle 0.4s ease-in-out;
+                                            }
+                                        `}</style>
+
+                                        <button
+                                            className="rocket-btn"
+                                            onClick={() => {
+                                                addMilestone();
+                                                // Collapse form after adding
+                                                setTimeout(() => setShowAddForm(false), 1000);
+                                            }}
+                                            disabled={!newTitle || !newDate}
+                                            style={{
+                                                width: '100%', padding: '14px',
+                                                background: (!newTitle || !newDate) ? 'rgba(255,255,255,0.08)' : 'var(--accent-lux-gradient)',
+                                                color: (!newTitle || !newDate) ? 'rgba(255,255,255,0.4)' : 'white',
+                                                borderRadius: '14px', fontWeight: '700', fontSize: '0.95rem',
+                                                border: 'none', cursor: (!newTitle || !newDate) ? 'not-allowed' : 'pointer', marginTop: '4px',
+                                                boxShadow: (!newTitle || !newDate) ? 'none' : '0 6px 24px rgba(236, 72, 153, 0.3)',
+                                                letterSpacing: '0.3px', textTransform: 'uppercase',
+                                                transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                                position: 'relative', overflow: 'hidden'
+                                            }}
+                                            onMouseEnter={e => {
+                                                if (newTitle && newDate) {
+                                                    e.currentTarget.style.transform = 'translateY(-2px)';
+                                                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(236, 72, 153, 0.45)';
+                                                }
+                                            }}
+                                            onMouseLeave={e => {
+                                                if (newTitle && newDate) {
+                                                    e.currentTarget.style.transform = 'translateY(0)';
+                                                    e.currentTarget.style.boxShadow = '0 6px 24px rgba(236, 72, 153, 0.3)';
+                                                }
+                                            }}
+                                        >
+                                            <span style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                                Add to Timeline 🚀
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </div>

@@ -209,7 +209,7 @@ const AboutSection = ({ onClose }) => {
             {/* Header */}
             <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
+                justifyContent: 'center', // Changed from space-between for robust centering
                 alignItems: 'flex-start',
                 marginBottom: '30px',
                 flexShrink: 0,
@@ -219,7 +219,7 @@ const AboutSection = ({ onClose }) => {
                 <div style={{
                     position: 'absolute',
                     top: '-10px',
-                    left: '20%',
+                    left: '10%', // Adjusted
                     fontSize: '1.2rem',
                     animation: 'sparkle 3s ease-in-out infinite',
                     animationDelay: '0s',
@@ -228,7 +228,7 @@ const AboutSection = ({ onClose }) => {
                 <div style={{
                     position: 'absolute',
                     top: '10px',
-                    right: '25%',
+                    right: '15%', // Adjusted
                     fontSize: '0.9rem',
                     animation: 'sparkle 3s ease-in-out infinite',
                     animationDelay: '1s',
@@ -237,14 +237,14 @@ const AboutSection = ({ onClose }) => {
                 <div style={{
                     position: 'absolute',
                     top: '50px',
-                    left: '10%',
+                    left: '5%', // Adjusted
                     fontSize: '0.8rem',
                     animation: 'sparkle 3s ease-in-out infinite',
                     animationDelay: '2s',
                     pointerEvents: 'none'
                 }}>💫</div>
 
-                <div style={{ padding: '0 20px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box', textAlign: 'center', transform: 'translateX(-5px)' }}>
                     {/* Premium Badge with Shimmer */}
                     <div style={{
                         display: 'inline-block',
@@ -280,7 +280,7 @@ const AboutSection = ({ onClose }) => {
                     {/* Premium Title */}
                     <h2 style={{
                         fontSize: '2.8rem',
-                        margin: '0 0 8px 0',
+                        margin: '0 0 12px 0', // Reduced slightly from 16
                         fontFamily: 'var(--font-heading)',
                         background: 'linear-gradient(135deg, #fff 0%, #F472B6 50%, #F97316 100%)',
                         backgroundSize: '200% 200%',
@@ -294,8 +294,8 @@ const AboutSection = ({ onClose }) => {
 
                     {/* Subtitle */}
                     <p style={{
-                        fontSize: '0.9rem',
-                        color: 'rgba(255,255,255,0.5)',
+                        fontSize: '1.1rem',
+                        color: 'rgba(255,255,255,0.7)',
                         fontStyle: 'italic',
                         margin: 0,
                         letterSpacing: '0.5px'
@@ -346,7 +346,7 @@ const AboutSection = ({ onClose }) => {
                 <div style={{
                     textAlign: 'center',
                     marginBottom: '30px',
-                    marginTop: '10px',
+                    marginTop: '40px',
                     position: 'relative'
                 }}>
                     {/* Heart Container with Glow Rings */}
