@@ -1,6 +1,16 @@
+// Helper function to get correct ordinal suffix (1st, 2nd, 3rd, 4th, etc.)
+const getOrdinal = (n) => {
+    const s = ['th', 'st', 'nd', 'rd'];
+    const v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
+// Import storage adapter
+import { storage } from './storageAdapter';
+
 export const getStartDate = () => {
     // Priority: 1. rc_start_date (Simple string) 2. rc_events (Complex object)
-    const storedDate = localStorage.getItem('rc_start_date');
+    const storedDate = storage.get(storage.KEYS.START_DATE, null);
 
     const parseLocal = (dateStr) => {
         if (!dateStr) return null;
@@ -14,7 +24,7 @@ export const getStartDate = () => {
 
     if (storedDate) return parseLocal(storedDate);
 
-    const events = JSON.parse(localStorage.getItem('rc_events') || '[]');
+    const events = storage.get(storage.KEYS.EVENTS, []);
     const mainEvent = events.find(e => e.isMain) || events[0];
     if (mainEvent) return parseLocal(mainEvent.date);
 
@@ -90,7 +100,7 @@ export const getNextMilestone = () => {
     } else {
         return {
             type: 'anniversary',
-            title: `${years === 1 ? '1st' : years === 2 ? '2nd' : years + 'th'} Anniversary`,
+            title: `${getOrdinal(years)} Anniversary`,
             daysLeft: daysToAnniversary,
             date: nextAnniversary.toLocaleDateString(),
             icon: '🎉'

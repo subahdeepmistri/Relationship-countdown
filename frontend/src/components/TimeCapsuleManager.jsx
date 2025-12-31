@@ -18,6 +18,7 @@ const TimeCapsuleManager = ({ onClose }) => {
     const [unlockDate, setUnlockDate] = useState('');
     const [selectedCapsule, setSelectedCapsule] = useState(null);
     const [toastMsg, setToastMsg] = useState('');
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For themed delete modal
 
     const showToast = (msg) => {
         setToastMsg(msg);
@@ -45,15 +46,24 @@ const TimeCapsuleManager = ({ onClose }) => {
         }
     };
 
-    const deleteCapsule = (id, e) => {
+    const requestDeleteCapsule = (id, e) => {
         if (e) e.stopPropagation();
-        if (window.confirm('Delete this capsule permanently?')) {
-            const result = deleteCapsuleFromHook(id);
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDeleteCapsule = () => {
+        if (deleteConfirmId) {
+            const result = deleteCapsuleFromHook(deleteConfirmId);
             if (result.success) {
                 setView('list');
                 showToast('Capsule Deleted 🗑️');
             }
+            setDeleteConfirmId(null);
         }
+    };
+
+    const cancelDeleteCapsule = () => {
+        setDeleteConfirmId(null);
     };
 
     const openCapsule = (cap) => {
@@ -69,11 +79,17 @@ const TimeCapsuleManager = ({ onClose }) => {
     return (
         <div style={{
             position: 'fixed',
-            top: 0, left: 0, width: '100%', height: '100%',
-            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Deep Night w/ slight glow top
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            maxWidth: '100vw',
+            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)',
             zIndex: 3000,
             overflowY: 'auto',
-            padding: '80px 20px 110px',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            padding: '80px 16px 110px',
             color: 'white',
         }}>
             {/* Grain/Vignette Overlay */}
@@ -92,6 +108,112 @@ const TimeCapsuleManager = ({ onClose }) => {
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
+            {/* Delete Confirmation Modal - Premium Dark Theme */}
+            {deleteConfirmId && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0,
+                        width: '100%', height: '100%',
+                        background: 'rgba(0, 0, 0, 0.7)',
+                        backdropFilter: 'blur(8px)',
+                        zIndex: 10000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}
+                    onClick={cancelDeleteCapsule}
+                >
+                    <div
+                        style={{
+                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+                            backdropFilter: 'blur(20px)',
+                            borderRadius: '28px',
+                            padding: '32px 28px',
+                            maxWidth: '340px',
+                            width: '90%',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Warning Icon */}
+                        <div style={{
+                            width: '72px', height: '72px',
+                            margin: '0 auto 20px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid rgba(239, 68, 68, 0.3)'
+                        }}>
+                            <span style={{ fontSize: '2rem' }}>🗑️</span>
+                        </div>
+
+                        <h3 style={{
+                            color: 'white',
+                            fontSize: '1.4rem',
+                            fontWeight: '700',
+                            margin: '0 0 12px 0',
+                            fontFamily: 'var(--font-heading)'
+                        }}>
+                            Delete Time Capsule?
+                        </h3>
+
+                        <p style={{
+                            color: '#94a3b8',
+                            fontSize: '0.95rem',
+                            margin: '0 0 28px 0',
+                            lineHeight: '1.5'
+                        }}>
+                            This memory will be permanently erased. This action cannot be undone.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={cancelDeleteCapsule}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Keep It
+                            </button>
+                            <button
+                                onClick={confirmDeleteCapsule}
+                                style={{
+                                    flex: 1,
+                                    padding: '14px',
+                                    borderRadius: '16px',
+                                    border: 'none',
+                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                    color: 'white',
+                                    fontSize: '1rem',
+                                    fontWeight: '700',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {toastMsg && (
                 <div style={{
                     position: 'fixed', top: '100px', left: '50%', transform: 'translateX(-50%)',
@@ -107,20 +229,23 @@ const TimeCapsuleManager = ({ onClose }) => {
             <button
                 onClick={onClose}
                 className="no-print"
+                aria-label="Close Time Capsules"
                 style={{
                     position: 'fixed', top: '24px', right: '24px',
-                    fontSize: '1.2rem', background: 'rgba(255,255,255,0.05)',
+                    fontSize: '1.2rem', background: 'rgba(255,255,255,0.1)',
                     backdropFilter: 'blur(12px)', width: '48px', height: '48px',
                     borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', zIndex: 3001,
-                    color: 'rgba(255,255,255,0.8)',
+                    border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', zIndex: 3001,
+                    color: 'white',
                     transition: 'all 0.2s',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'white'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.color = 'rgba(255,255,255,0.8)'; }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                onFocus={e => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
+                onBlur={e => e.currentTarget.style.outline = 'none'}
             >✕</button>
 
             {view === 'create' && (
@@ -138,70 +263,212 @@ const TimeCapsuleManager = ({ onClose }) => {
 
             {view === 'view-capsule' && selectedCapsule && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 3002, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ViewCapsule cap={selectedCapsule} onBack={() => { setView('list'); setSelectedCapsule(null); }} onDelete={(id) => deleteCapsule(id)} />
+                    <ViewCapsule cap={selectedCapsule} onBack={() => { setView('list'); setSelectedCapsule(null); }} onDelete={(id) => requestDeleteCapsule(id)} />
                 </div>
             )}
 
             {view === 'list' && (
                 <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
                     <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
+
+                        {/* Floating Sparkle Decorations */}
                         <div style={{
-                            display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
-                            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                            fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
-                            color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                            position: 'absolute',
+                            top: '-15px',
+                            left: '18%',
+                            fontSize: '1.1rem',
+                            animation: 'sparkle 3s ease-in-out infinite',
+                            pointerEvents: 'none'
+                        }}>✨</div>
+                        <div style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '15%',
+                            fontSize: '0.9rem',
+                            animation: 'sparkle 3s ease-in-out infinite',
+                            animationDelay: '1s',
+                            pointerEvents: 'none'
+                        }}>⭐</div>
+                        <div style={{
+                            position: 'absolute',
+                            top: '45px',
+                            left: '10%',
+                            fontSize: '0.7rem',
+                            animation: 'sparkle 3s ease-in-out infinite',
+                            animationDelay: '2s',
+                            pointerEvents: 'none'
+                        }}>💫</div>
+
+                        {/* Premium Badge with Shimmer */}
+                        <div style={{
+                            display: 'inline-block',
+                            padding: '8px 20px',
+                            borderRadius: '30px',
+                            background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%)',
+                            border: '1px solid rgba(244, 114, 182, 0.3)',
+                            fontSize: '0.75rem',
+                            letterSpacing: '3px',
+                            textTransform: 'uppercase',
+                            color: '#F472B6',
+                            marginBottom: '20px',
+                            backdropFilter: 'blur(10px)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            fontWeight: '600'
                         }}>
-                            Eternal Storage
+                            {/* Shimmer overlay */}
+                            <div style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                                backgroundSize: '200% 100%',
+                                animation: 'shimmer-badge 3s ease-in-out infinite',
+                                pointerEvents: 'none'
+                            }} />
+                            <span style={{ position: 'relative', zIndex: 1 }}>💌 Eternal Storage 💌</span>
                         </div>
+
+                        {/* Premium Title */}
                         <h2 style={{
                             fontFamily: 'var(--font-heading)',
-                            fontSize: '2.5rem',
-                            marginBottom: '10px',
-                            background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+                            fontSize: '2.8rem',
+                            margin: '0 0 12px 0',
+                            background: 'linear-gradient(135deg, #fff 0%, #F472B6 50%, #F97316 100%)',
+                            backgroundSize: '200% 200%',
+                            animation: 'gradient-shift 4s ease infinite',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
-                            textShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                            letterSpacing: '-1px'
+                            filter: 'drop-shadow(0 4px 20px rgba(244, 114, 182, 0.3))',
+                            letterSpacing: '-1px',
+                            fontWeight: '700'
                         }}>Time Capsules</h2>
-                        <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-serif)', maxWidth: '400px', margin: '0 auto' }}>
-                            "Some moments are too precious to be forgotten, only waiting to be remembered."
-                        </p>
+
+                        {/* Subtitle */}
+                        <p style={{
+                            fontSize: '1rem',
+                            color: 'rgba(255,255,255,0.5)',
+                            fontFamily: 'var(--font-serif)',
+                            maxWidth: '400px',
+                            margin: '0 auto',
+                            fontStyle: 'italic'
+                        }}>Moments sealed in time, waiting to be discovered</p>
                     </div>
 
-                    {capsules.length === 0 && (
+                    {/* Loading State */}
+                    {loading && (
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                            gap: '20px',
+                            paddingBottom: '100px'
+                        }}>
+                            {[1, 2, 3, 4].map(i => (
+                                <div key={i} style={{
+                                    padding: '24px',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    borderRadius: '32px',
+                                    aspectRatio: '0.85',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    <div className="animate-pulse-slow" style={{
+                                        width: '48px', height: '48px', borderRadius: '50%',
+                                        background: 'rgba(255,255,255,0.08)', marginBottom: '15px'
+                                    }} />
+                                    <div style={{ width: '80%', height: '14px', background: 'rgba(255,255,255,0.08)', borderRadius: '7px', marginBottom: '8px' }} />
+                                    <div style={{ width: '50%', height: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {!loading && capsules.length === 0 && (
                         <div style={{
                             textAlign: 'center',
-                            padding: '60px 20px',
-                            background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '40px',
-                            border: '1px dashed rgba(255,255,255,0.1)',
-                            marginBottom: '40px'
+                            padding: '50px 30px',
+                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                            borderRadius: '32px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            marginBottom: '40px',
+                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}>
-                            <div className="animate-float" style={{ fontSize: '4rem', marginBottom: '20px', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.2))' }}>🏺</div>
-                            <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', color: 'white' }}>The Collection is Empty</h3>
-                            <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.5)', marginBottom: '30px', lineHeight: '1.6' }}>
+                            {/* Decorative gradient orb */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-30px',
+                                right: '-30px',
+                                width: '100px',
+                                height: '100px',
+                                background: 'radial-gradient(circle, rgba(244, 114, 182, 0.15) 0%, transparent 70%)',
+                                borderRadius: '50%',
+                                pointerEvents: 'none'
+                            }} />
+
+                            {/* Animated Capsule Icon */}
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '0 auto 20px',
+                                background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(249, 115, 22, 0.1) 100%)',
+                                borderRadius: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(244, 114, 182, 0.2)',
+                                animation: 'float-gentle 4s ease-in-out infinite'
+                            }}>
+                                <span style={{ fontSize: '2.5rem' }}>🏺</span>
+                            </div>
+
+                            <h3 style={{
+                                margin: '0 0 10px 0',
+                                fontSize: '1.3rem',
+                                color: 'white',
+                                fontWeight: '600'
+                            }}>The Collection is Empty</h3>
+
+                            <p style={{
+                                margin: '0 0 25px 0',
+                                fontSize: '0.95rem',
+                                color: 'rgba(255,255,255,0.5)',
+                                lineHeight: 1.6
+                            }}>
                                 Seal a memory today for a future you will cherish.<br />
                                 A letter, a promise, or a feeling.
                             </p>
+
                             <button
                                 onClick={() => setView('create')}
                                 style={{
                                     background: 'var(--accent-lux-gradient)',
                                     color: 'white',
-                                    padding: '16px 40px', borderRadius: '50px',
-                                    fontSize: '1.1rem', fontWeight: '600', border: 'none', cursor: 'pointer',
+                                    padding: '16px 40px',
+                                    borderRadius: '50px',
+                                    fontSize: '1.1rem',
+                                    fontWeight: '600',
+                                    border: 'none',
+                                    cursor: 'pointer',
                                     boxShadow: '0 10px 40px rgba(251, 113, 133, 0.4)',
-                                    transition: 'transform 0.2s'
+                                    transition: 'all 0.2s'
                                 }}
                                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
                                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                                onMouseEnter={e => e.currentTarget.style.boxShadow = '0 15px 50px rgba(251, 113, 133, 0.6)'}
+                                onMouseLeave={e => e.currentTarget.style.boxShadow = '0 10px 40px rgba(251, 113, 133, 0.4)'}
                             >
                                 + Seal First Memory
                             </button>
                         </div>
                     )}
 
-                    {capsules.length > 0 && (
+                    {!loading && capsules.length > 0 && (
                         <>
                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '20px', paddingBottom: '100px' }}>
                                 {capsules.map(cap => {
@@ -254,7 +521,7 @@ const TimeCapsuleManager = ({ onClose }) => {
 
                                             {unlocked && (
                                                 <button
-                                                    onClick={(e) => deleteCapsule(cap.id, e)}
+                                                    onClick={(e) => requestDeleteCapsule(cap.id, e)}
                                                     title="Delete Capsule"
                                                     style={{ position: 'absolute', top: '15px', right: '15px', background: 'rgba(0,0,0,0.05)', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', fontSize: '0.8rem', cursor: 'pointer', color: '#64748b' }}
                                                 >
@@ -399,7 +666,7 @@ const CreateView = ({ newContent, setNewContent, unlockDate, setUnlockDate, onSa
             style={{
                 width: '100%',
                 height: '140px',
-                marginBottom: '24px',
+                marginBottom: '8px',
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 padding: '18px',
@@ -426,7 +693,16 @@ const CreateView = ({ newContent, setNewContent, unlockDate, setUnlockDate, onSa
             placeholder="Dear Future Us..."
             value={newContent}
             onChange={(e) => setNewContent(e.target.value)}
+            maxLength={1000}
         />
+
+        {/* Character Counter */}
+        <div style={{
+            display: 'flex', justifyContent: 'flex-end', marginBottom: '20px',
+            fontSize: '0.75rem', color: newContent.length > 900 ? '#fbbf24' : 'rgba(255,255,255,0.4)'
+        }}>
+            {newContent.length} / 1000
+        </div>
 
         <label style={{ display: 'block', marginBottom: '28px', textAlign: 'left' }}>
             <span style={{
@@ -502,14 +778,16 @@ const CreateView = ({ newContent, setNewContent, unlockDate, setUnlockDate, onSa
             >Seal It 🔐</button>
         </div>
 
-        <p style={{
-            marginTop: '20px',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.3)',
-            fontStyle: 'italic'
+        {/* Privacy Badge */}
+        <div style={{
+            marginTop: '20px', display: 'flex', justifyContent: 'center',
+            alignItems: 'center', gap: '6px'
         }}>
-            Your words become tomorrow's treasure
-        </p>
+            <span style={{ fontSize: '0.9rem' }}>🔒</span>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>
+                Private & Stored Locally
+            </span>
+        </div>
     </div>
 );
 

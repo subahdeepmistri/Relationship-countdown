@@ -18,6 +18,8 @@ const LegacyCapsule = ({ onClose }) => {
     const [years, setYears] = useState(5);
     const [showConfirm, setShowConfirm] = useState(false);
     const [showPrivacy, setShowPrivacy] = useState(false);
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For themed delete modal
+    const [showResetConfirm, setShowResetConfirm] = useState(false); // For reset modal
 
     const handleSealClick = () => {
         if (!text.trim()) return;
@@ -36,27 +38,101 @@ const LegacyCapsule = ({ onClose }) => {
         }
     };
 
-    const deleteItem = (id) => {
-        if (window.confirm('Delete this legacy message permanently?')) {
-            deleteMessage(id);
+    const requestDeleteItem = (id) => {
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDeleteItem = () => {
+        if (deleteConfirmId) {
+            deleteMessage(deleteConfirmId);
+            setDeleteConfirmId(null);
         }
     };
 
     // Emergency Reset Feature
     const handleHardReset = () => {
-        if (window.confirm("⚠️ SYSTEM RESET: This will delete ALL legacy messages and fix any glitches. Are you sure?")) {
-            clearAll();
-            alert("System reset complete. Data cleared.");
-        }
+        setShowResetConfirm(true);
+    };
+
+    const confirmHardReset = () => {
+        clearAll();
+        setShowResetConfirm(false);
     };
 
     return (
         <div className="legacy-overlay">
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)',
+                    zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeleteConfirmId(null)}>
+                    <div style={{
+                        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+                        borderRadius: '24px', padding: '28px', maxWidth: '320px', width: '90%',
+                        textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🗑️</div>
+                        <h3 style={{ color: 'white', fontSize: '1.3rem', margin: '0 0 10px' }}>Delete Message?</h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px' }}>
+                            This sealed message will be permanently deleted.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button onClick={() => setDeleteConfirmId(null)} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)',
+                                color: 'white', cursor: 'pointer'
+                            }}>Cancel</button>
+                            <button onClick={confirmDeleteItem} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px', border: 'none',
+                                background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white',
+                                fontWeight: '600', cursor: 'pointer'
+                            }}>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reset Confirmation Modal */}
+            {showResetConfirm && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)',
+                    zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setShowResetConfirm(false)}>
+                    <div style={{
+                        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+                        borderRadius: '24px', padding: '28px', maxWidth: '320px', width: '90%',
+                        textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>⚠️</div>
+                        <h3 style={{ color: 'white', fontSize: '1.3rem', margin: '0 0 10px' }}>System Reset</h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '24px' }}>
+                            This will delete ALL legacy messages and cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button onClick={() => setShowResetConfirm(false)} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)',
+                                color: 'white', cursor: 'pointer'
+                            }}>Cancel</button>
+                            <button onClick={confirmHardReset} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px', border: 'none',
+                                background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white',
+                                fontWeight: '600', cursor: 'pointer'
+                            }}>Reset All</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Close Button */}
             <button
                 onClick={onClose}
                 className="legacy-close-btn"
                 title="Close"
+                aria-label="Close Legacy Capsule"
                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
             >
@@ -64,7 +140,7 @@ const LegacyCapsule = ({ onClose }) => {
             </button>
 
             {/* Header */}
-            <h2 className="legacy-title">Legacy Capsule ✨</h2>
+            <h2 className="legacy-title">Legacy Capsule</h2>
             <p className="legacy-subtitle">A message for your future selves.</p>
 
             <div className="legacy-container">
@@ -241,7 +317,7 @@ const LegacyCapsule = ({ onClose }) => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => deleteItem(m.id)}
+                                    onClick={() => requestDeleteItem(m.id)}
                                     className="delete-btn"
                                     title="Delete Message"
                                     aria-label="Delete this sealed message"

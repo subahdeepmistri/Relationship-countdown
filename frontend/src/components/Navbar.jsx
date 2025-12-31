@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Navbar = ({ onNavigate, activeView }) => {
     // Nav items configuration
     const navItems = useMemo(() => [
-        { id: 'capsules', label: 'Home', icon: Icons.Heart },
-        { id: 'goals', label: 'Future', icon: Icons.Rocket },
+        { id: 'capsules', label: 'Capsules', icon: Icons.Heart },
+        { id: 'goals', label: 'Dreams', icon: Icons.Rocket },
         { id: 'voice', label: 'Diary', icon: Icons.Mic },
         { id: 'journey', label: 'Journey', icon: Icons.Map },
         { id: 'about', label: 'About', icon: Icons.Info },
@@ -54,9 +54,6 @@ const Navbar = ({ onNavigate, activeView }) => {
 
 const NavItem = ({ item, isActive, onClick }) => {
     const [isHovered, setIsHovered] = React.useState(false);
-    // Simple long-press simulation for mobile could be complex, but hover works for desktop.
-    // For mobile "long press" usually triggers the 'title' tooltip natively or context menu.
-    // We will add a visual tooltip that appears on hover and touch start (briefly).
 
     return (
         <button
@@ -64,7 +61,9 @@ const NavItem = ({ item, isActive, onClick }) => {
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             onTouchStart={() => setIsHovered(true)}
-            onTouchEnd={() => setTimeout(() => setIsHovered(false), 1000)} // Hide after delay on touch
+            onTouchEnd={() => setTimeout(() => setIsHovered(false), 1000)}
+            aria-label={item.label}
+            aria-current={isActive ? 'page' : undefined}
             style={{
                 position: 'relative',
                 display: 'flex',
@@ -76,12 +75,14 @@ const NavItem = ({ item, isActive, onClick }) => {
                 cursor: 'pointer',
                 width: '100%',
                 height: '100%',
-                padding: '0',
+                padding: '4px 0',
                 WebkitTapHighlightColor: 'transparent',
                 outline: 'none'
             }}
+            onFocus={(e) => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
+            onBlur={(e) => e.currentTarget.style.outline = 'none'}
         >
-            {/* Custom Tooltip */}
+            {/* Custom Tooltip - only on desktop hover */}
             <AnimatePresence>
                 {isHovered && !isActive && (
                     <motion.div
@@ -110,7 +111,7 @@ const NavItem = ({ item, isActive, onClick }) => {
             <motion.div
                 whileTap={{ scale: 0.9 }}
                 style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '100%', height: '100%'
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', width: '100%'
                 }}
             >
                 {/* Active Indicator */}
@@ -119,7 +120,7 @@ const NavItem = ({ item, isActive, onClick }) => {
                         layoutId="active-nav-indicator"
                         style={{
                             position: 'absolute',
-                            top: '10px', // Adjusted to close gap above icon
+                            top: '0px',
                             width: '24px', height: '3px',
                             borderRadius: '2px',
                             background: 'var(--accent-lux)',
@@ -133,15 +134,29 @@ const NavItem = ({ item, isActive, onClick }) => {
                         y: isActive ? 1 : 0,
                         color: isActive ? 'var(--accent-lux)' : 'rgba(148, 163, 184, 0.6)',
                         scale: isActive ? 1.05 : 1,
-                        filter: isActive ? 'drop-shadow(0 0 8px rgba(251, 113, 133, 0.5))' : 'none' // Stronger active glow
+                        filter: isActive ? 'drop-shadow(0 0 8px rgba(251, 113, 133, 0.5))' : 'none'
                     }}
                     style={{
                         position: 'relative',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        marginTop: '4px'
                     }}
                 >
                     <item.icon isActive={isActive} />
                 </motion.div>
+
+                {/* Visible Label for Mobile */}
+                <span style={{
+                    fontSize: '0.6rem',
+                    fontWeight: '600',
+                    marginTop: '2px',
+                    color: isActive ? 'var(--accent-lux)' : 'rgba(148, 163, 184, 0.5)',
+                    letterSpacing: '0.3px',
+                    textTransform: 'uppercase',
+                    transition: 'color 0.2s'
+                }}>
+                    {item.label}
+                </span>
             </motion.div>
         </button>
     );

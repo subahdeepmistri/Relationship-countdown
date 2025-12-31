@@ -77,11 +77,17 @@ const FutureGoalsTimeline = ({ onClose }) => {
     return (
         <div style={{
             position: 'fixed',
-            top: 0, left: 0, width: '100%', height: '100%',
-            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Deep Night w/ slight glow top
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            maxWidth: '100vw',
+            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)',
             zIndex: 3000,
             overflowY: 'auto',
-            padding: '80px 20px 110px',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            padding: '80px 16px 110px',
             color: 'white',
             backdropFilter: 'blur(20px)'
         }}>
@@ -243,65 +249,209 @@ const FutureGoalsTimeline = ({ onClose }) => {
 
                 <button
                     onClick={onClose}
+                    aria-label="Close Dreams view"
                     style={{
                         position: 'fixed', top: '24px', right: '24px',
-                        fontSize: '1.2rem', // Slightly smaller icon relative to button
+                        fontSize: '1.2rem',
                         background: 'rgba(255,255,255,0.1)',
                         backdropFilter: 'blur(12px)',
-                        width: '44px', height: '44px', // Standardized Size
+                        width: '48px', height: '48px', // Standardized 48px
                         borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        border: '1px solid rgba(255,255,255,0.15)', // Subtle border
+                        border: '1px solid rgba(255,255,255,0.15)',
                         cursor: 'pointer', zIndex: 3001,
                         color: 'white',
                         transition: 'all 0.2s ease',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                     }}
                     onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
                     onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                    onFocus={e => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
+                    onBlur={e => e.currentTarget.style.outline = 'none'}
                 >✕</button>
 
-                <div style={{ textAlign: 'center', marginBottom: '50px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
+
+                    {/* Floating Sparkle Decorations */}
                     <div style={{
-                        display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
-                        color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                        position: 'absolute',
+                        top: '-15px',
+                        left: '18%',
+                        fontSize: '1.1rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        pointerEvents: 'none'
+                    }}>✨</div>
+                    <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '15%',
+                        fontSize: '0.9rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        animationDelay: '1s',
+                        pointerEvents: 'none'
+                    }}>⭐</div>
+                    <div style={{
+                        position: 'absolute',
+                        top: '45px',
+                        left: '10%',
+                        fontSize: '0.7rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        animationDelay: '2s',
+                        pointerEvents: 'none'
+                    }}>💫</div>
+
+                    {/* Premium Badge with Shimmer */}
+                    <div style={{
+                        display: 'inline-block',
+                        padding: '8px 20px',
+                        borderRadius: '30px',
+                        background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(192, 132, 252, 0.15) 100%)',
+                        border: '1px solid rgba(129, 140, 248, 0.3)',
+                        fontSize: '0.75rem',
+                        letterSpacing: '3px',
+                        textTransform: 'uppercase',
+                        color: '#818cf8',
+                        marginBottom: '20px',
+                        backdropFilter: 'blur(10px)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        fontWeight: '600'
                     }}>
-                        Shared Horizon
+                        {/* Shimmer overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmer-badge 3s ease-in-out infinite',
+                            pointerEvents: 'none'
+                        }} />
+                        <span style={{ position: 'relative', zIndex: 1 }}>🚀 Shared Horizon 🚀</span>
                     </div>
+
+                    {/* Premium Title */}
                     <h2 style={{
-                        fontSize: '2.5rem',
+                        fontSize: '2.8rem',
                         fontFamily: 'var(--font-heading)',
-                        marginBottom: '10px',
-                        background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+                        margin: '0 0 12px 0',
+                        background: 'linear-gradient(135deg, #fff 0%, #818cf8 50%, #c084fc 100%)',
+                        backgroundSize: '200% 200%',
+                        animation: 'gradient-shift 4s ease infinite',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        textShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        letterSpacing: '-1px'
+                        filter: 'drop-shadow(0 4px 20px rgba(129, 140, 248, 0.3))',
+                        letterSpacing: '-1px',
+                        fontWeight: '700'
                     }}>Our Future</h2>
-                    <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-serif)', maxWidth: '400px', margin: '0 auto' }}>Dreams we are building together.</p>
+
+                    {/* Subtitle */}
+                    <p style={{
+                        fontSize: '1rem',
+                        color: 'rgba(255,255,255,0.5)',
+                        fontFamily: 'var(--font-serif)',
+                        maxWidth: '400px',
+                        margin: '0 auto',
+                        fontStyle: 'italic'
+                    }}>Dreams we're building together, one by one</p>
                 </div>
 
                 <div style={{ position: 'relative', paddingLeft: '30px' }}>
 
                     {/* Timeline Line Removed as per user request */}
 
-                    {goals.length === 0 && (
+                    {/* Loading State */}
+                    {loading && (
                         <div style={{
                             padding: '40px',
                             background: 'rgba(255,255,255,0.02)',
                             borderRadius: '30px',
-                            border: '1px dashed rgba(255,255,255,0.1)',
-                            marginBottom: '40px'
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            marginBottom: '40px',
+                            textAlign: 'center'
                         }}>
-                            <span className="animate-pulse-slow" style={{ fontSize: '3rem', display: 'block', marginBottom: '20px', filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.2))' }}>✨</span>
-                            <h3 style={{ margin: '0 0 10px', fontSize: '1.4rem', color: 'white', fontFamily: 'var(--font-heading)' }}>A Blank Canvas</h3>
-                            <p style={{ opacity: 0.7, margin: 0, fontSize: '1rem', lineHeight: '1.6', color: '#cbd5e1' }}>
-                                The future is yours to write.<br />Add a dream to start your journey.
+                            <div className="animate-pulse-slow" style={{
+                                width: '60px', height: '60px', borderRadius: '50%',
+                                background: 'rgba(255,255,255,0.1)', margin: '0 auto 20px'
+                            }} />
+                            <div style={{ width: '60%', height: '20px', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', margin: '0 auto 10px' }} />
+                            <div style={{ width: '40%', height: '14px', background: 'rgba(255,255,255,0.05)', borderRadius: '7px', margin: '0 auto' }} />
+                        </div>
+                    )}
+
+                    {!loading && goals.length === 0 && (
+                        <div style={{
+                            textAlign: 'center',
+                            padding: '50px 30px',
+                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                            borderRadius: '32px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            marginBottom: '40px',
+                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
+                            position: 'relative',
+                            overflow: 'hidden'
+                        }}>
+                            {/* Decorative gradient orb */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-30px',
+                                right: '-30px',
+                                width: '100px',
+                                height: '100px',
+                                background: 'radial-gradient(circle, rgba(129, 140, 248, 0.15) 0%, transparent 70%)',
+                                borderRadius: '50%',
+                                pointerEvents: 'none'
+                            }} />
+
+                            {/* Animated Rocket Icon */}
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '0 auto 20px',
+                                background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, rgba(192, 132, 252, 0.1) 100%)',
+                                borderRadius: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(129, 140, 248, 0.2)',
+                                animation: 'float-gentle 4s ease-in-out infinite'
+                            }}>
+                                <span style={{ fontSize: '2.5rem' }}>🚀</span>
+                            </div>
+
+                            <h3 style={{
+                                margin: '0 0 10px 0',
+                                fontSize: '1.3rem',
+                                color: 'white',
+                                fontWeight: '600',
+                                fontFamily: 'var(--font-heading)'
+                            }}>A Blank Canvas</h3>
+
+                            <p style={{
+                                margin: '0 0 20px 0',
+                                fontSize: '0.95rem',
+                                color: 'rgba(255,255,255,0.5)',
+                                lineHeight: 1.6
+                            }}>
+                                The future is yours to write.<br />
+                                Add a dream to start your journey.
                             </p>
+
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                fontSize: '0.8rem',
+                                color: 'rgba(255,255,255,0.3)'
+                            }}>
+                                <span>⬇️</span>
+                                <span>Scroll down to add a dream</span>
+                            </div>
                         </div>
                     )}
 

@@ -74,11 +74,17 @@ const JourneyMap = ({ onClose }) => {
     return (
         <div style={{
             position: 'fixed',
-            top: 0, left: 0, width: '100%', height: '100%',
-            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Reference Radial
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            maxWidth: '100vw',
+            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)',
             zIndex: 3000,
             overflowY: 'auto',
-            padding: '80px 20px 110px',
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            padding: '80px 16px 110px',
             color: 'white',
             backdropFilter: 'blur(20px)'
         }}>
@@ -257,27 +263,92 @@ const JourneyMap = ({ onClose }) => {
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
                 >✕</button>
 
-                <div style={{ textAlign: 'center', marginBottom: '60px' }}>
+                <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
 
+                    {/* Floating Sparkle Decorations */}
                     <div style={{
-                        display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
-                        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                        fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
-                        color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                        position: 'absolute',
+                        top: '-15px',
+                        left: '15%',
+                        fontSize: '1.1rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        pointerEvents: 'none'
+                    }}>✨</div>
+                    <div style={{
+                        position: 'absolute',
+                        top: '5px',
+                        right: '20%',
+                        fontSize: '0.9rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        animationDelay: '1s',
+                        pointerEvents: 'none'
+                    }}>⭐</div>
+                    <div style={{
+                        position: 'absolute',
+                        top: '40px',
+                        left: '8%',
+                        fontSize: '0.7rem',
+                        animation: 'sparkle 3s ease-in-out infinite',
+                        animationDelay: '2s',
+                        pointerEvents: 'none'
+                    }}>💫</div>
+
+                    {/* Premium Badge with Shimmer */}
+                    <div style={{
+                        display: 'inline-block',
+                        padding: '8px 20px',
+                        borderRadius: '30px',
+                        background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%)',
+                        border: '1px solid rgba(96, 165, 250, 0.3)',
+                        fontSize: '0.75rem',
+                        letterSpacing: '3px',
+                        textTransform: 'uppercase',
+                        color: '#60a5fa',
+                        marginBottom: '20px',
+                        backdropFilter: 'blur(10px)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        fontWeight: '600'
                     }}>
-                        Your Story
+                        {/* Shimmer overlay */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                            backgroundSize: '200% 100%',
+                            animation: 'shimmer-badge 3s ease-in-out infinite',
+                            pointerEvents: 'none'
+                        }} />
+                        <span style={{ position: 'relative', zIndex: 1 }}>📖 Your Story 📖</span>
                     </div>
+
+                    {/* Premium Title */}
                     <h2 style={{
                         fontFamily: 'var(--font-heading)',
-                        fontSize: '2.5rem',
-                        marginBottom: '10px',
-                        background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+                        fontSize: '2.8rem',
+                        margin: '0 0 12px 0',
+                        background: 'linear-gradient(135deg, #fff 0%, #60a5fa 50%, #a78bfa 100%)',
+                        backgroundSize: '200% 200%',
+                        animation: 'gradient-shift 4s ease infinite',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        textShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        letterSpacing: '-1px'
+                        filter: 'drop-shadow(0 4px 20px rgba(96, 165, 250, 0.3))',
+                        letterSpacing: '-1px',
+                        fontWeight: '700'
                     }}>Our Timeline</h2>
-                    <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-serif)', maxWidth: '400px', margin: '0 auto' }}>Every chapter of our story.</p>
+
+                    {/* Subtitle */}
+                    <p style={{
+                        fontSize: '1rem',
+                        color: 'rgba(255,255,255,0.5)',
+                        fontFamily: 'var(--font-serif)',
+                        maxWidth: '400px',
+                        margin: '0 auto',
+                        fontStyle: 'italic'
+                    }}>Every chapter of our story, written in love</p>
                 </div>
 
                 <style>{`
@@ -296,11 +367,72 @@ const JourneyMap = ({ onClose }) => {
 
                     {milestones.length === 0 && (
                         <div style={{
-                            textAlign: 'center', padding: '60px 20px', background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '40px', border: '1px dashed rgba(255,255,255,0.1)', marginBottom: '40px'
+                            textAlign: 'center',
+                            padding: '50px 30px',
+                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                            borderRadius: '32px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            marginBottom: '40px',
+                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}>
-                            <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '15px' }}>📖</span>
-                            <p style={{ margin: 0, fontSize: '1rem', color: '#cbd5e1' }}>Your story begins here.<br />Add your first chapter.</p>
+                            {/* Decorative gradient orb */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-30px',
+                                right: '-30px',
+                                width: '100px',
+                                height: '100px',
+                                background: 'radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 70%)',
+                                borderRadius: '50%',
+                                pointerEvents: 'none'
+                            }} />
+
+                            {/* Animated Book Icon */}
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '0 auto 20px',
+                                background: 'linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)',
+                                borderRadius: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(96, 165, 250, 0.2)',
+                                animation: 'float-gentle 4s ease-in-out infinite'
+                            }}>
+                                <span style={{ fontSize: '2.5rem' }}>📖</span>
+                            </div>
+
+                            <h3 style={{
+                                margin: '0 0 10px 0',
+                                fontSize: '1.3rem',
+                                color: 'white',
+                                fontWeight: '600'
+                            }}>Your story begins here</h3>
+
+                            <p style={{
+                                margin: '0 0 20px 0',
+                                fontSize: '0.95rem',
+                                color: 'rgba(255,255,255,0.5)',
+                                lineHeight: 1.6
+                            }}>
+                                Every great love story has its chapters.<br />
+                                Add your first memorable moment below.
+                            </p>
+
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                fontSize: '0.8rem',
+                                color: 'rgba(255,255,255,0.3)'
+                            }}>
+                                <span>⬇️</span>
+                                <span>Scroll down to add a chapter</span>
+                            </div>
                         </div>
                     )}
 

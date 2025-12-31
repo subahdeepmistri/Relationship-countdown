@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 const TimelineView = ({ onClose }) => {
     const [events, setEvents] = useState([]);
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For themed delete modal
 
     // Calculate time since for a given date
     const getTimeSince = (dateStr) => {
@@ -56,21 +57,22 @@ const TimelineView = ({ onClose }) => {
             parsed = [...parsed, ...customEvents];
         }
 
-        // Sort by date desc (newest at top) or asc (oldest at top).
-        // Let's do descending (Newest first) for timeline feed feel, or Ascending for history?
-        // User requested "Show saved chapters immediately".
-        // Let's stick to Ascending (History flow).
+        // Sort by date ascending (History flow)
         parsed.sort((a, b) => new Date(a.date) - new Date(b.date));
         setEvents(parsed);
     };
 
-    const handleDelete = (id) => {
-        if (window.confirm("Remove this memory from your timeline?")) {
-            // Get current custom events (excluding main legacy one)
+    const requestDelete = (id) => {
+        setDeleteConfirmId(id);
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirmId) {
             const stored = JSON.parse(localStorage.getItem('rc_events') || '[]');
-            const updated = stored.filter(e => e.id !== id);
+            const updated = stored.filter(e => e.id !== deleteConfirmId);
             localStorage.setItem('rc_events', JSON.stringify(updated));
-            loadEvents(); // Reload/Refetch
+            loadEvents();
+            setDeleteConfirmId(null);
         }
     };
 
@@ -87,12 +89,51 @@ const TimelineView = ({ onClose }) => {
             overflowY: 'auto',
             padding: '20px 20px 140px 20px'
         }}>
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmId && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(8px)',
+                    zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }} onClick={() => setDeleteConfirmId(null)}>
+                    <div style={{
+                        background: 'white', borderRadius: '24px', padding: '28px',
+                        maxWidth: '320px', width: '90%', textAlign: 'center',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)'
+                    }} onClick={e => e.stopPropagation()}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>🗑️</div>
+                        <h3 style={{ color: '#1e293b', fontSize: '1.3rem', margin: '0 0 10px' }}>Remove Memory?</h3>
+                        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '24px' }}>
+                            This memory will be removed from your timeline.
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button onClick={() => setDeleteConfirmId(null)} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px',
+                                border: '1px solid #e2e8f0', background: 'white',
+                                color: '#1e293b', cursor: 'pointer', fontWeight: '500'
+                            }}>Cancel</button>
+                            <button onClick={confirmDelete} style={{
+                                flex: 1, padding: '12px', borderRadius: '12px', border: 'none',
+                                background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white',
+                                fontWeight: '600', cursor: 'pointer'
+                            }}>Remove</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', color: '#1e293b' }}>Our Story</h2>
-                <button onClick={onClose} style={{
-                    fontSize: '1.5rem', background: 'white', border: '1px solid #e2e8f0', borderRadius: '50%', width: '40px', height: '40px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>✕</button>
+                <button
+                    onClick={onClose}
+                    aria-label="Close Timeline"
+                    style={{
+                        fontSize: '1.2rem', background: 'white', border: '1px solid #e2e8f0',
+                        borderRadius: '50%', width: '48px', height: '48px', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                >✕</button>
             </div>
 
             {/* Next Milestone Card */}
@@ -137,7 +178,7 @@ const TimelineView = ({ onClose }) => {
                             <div className="pop-card" style={{ padding: '25px', background: 'white', borderRadius: '20px', position: 'relative' }}>
                                 {!ev.isMain && (
                                     <button
-                                        onClick={() => handleDelete(ev.id)}
+                                        onClick={() => requestDelete(ev.id)}
                                         style={{ position: 'absolute', top: '15px', right: '15px', opacity: 0.3, border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem' }}
                                     >
                                         ✕

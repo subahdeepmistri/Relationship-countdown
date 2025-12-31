@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { saveAudio, getAudio, deleteAudio } from '../utils/db'; // Make sure this path is correct
+import { saveAudio, getAudio, deleteAudio } from '../utils/db';
+import { storage } from '../utils/storageAdapter';
 
 const VoiceDiary = ({ onClose }) => {
     const [isPaused, setIsPaused] = useState(false);
@@ -22,16 +23,10 @@ const VoiceDiary = ({ onClose }) => {
     const audioRef = useRef(new Audio());
     const pressTimerRef = useRef(null); // To detect actual "hold" intent vs tap
 
-    // Load entries on mount
+    // Load entries on mount using storage adapter
     useEffect(() => {
-        const saved = localStorage.getItem('rc_voice_entries');
-        if (saved) {
-            try {
-                setEntries(JSON.parse(saved));
-            } catch (e) {
-                console.error("Failed to parse voice entries", e);
-            }
-        }
+        const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
+        setEntries(saved);
     }, []);
 
     // Heart burst effect reset
@@ -49,6 +44,12 @@ const VoiceDiary = ({ onClose }) => {
             // Also stop any active recording if component unmounts
             if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
                 mediaRecorderRef.current.stop();
+            }
+            // CRITICAL: Stop and clean up audio to prevent background playback
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.src = '';
+                audioRef.current.load(); // Force release of any audio resources
             }
         };
     }, []);
@@ -87,7 +88,7 @@ const VoiceDiary = ({ onClose }) => {
                 await saveAudio(id, blob);
                 const updated = [newEntry, ...entries];
                 setEntries(updated);
-                localStorage.setItem('rc_voice_entries', JSON.stringify(updated));
+                storage.set(storage.KEYS.VOICE_ENTRIES, updated);
                 stream.getTracks().forEach(track => track.stop());
 
                 setRecordingDuration(0);
@@ -212,7 +213,7 @@ const VoiceDiary = ({ onClose }) => {
         await deleteAudio(deleteConfirmId);
         const updated = entries.filter(e => e.id !== deleteConfirmId);
         setEntries(updated);
-        localStorage.setItem('rc_voice_entries', JSON.stringify(updated));
+        storage.set(storage.KEYS.VOICE_ENTRIES, updated);
         setDeleteConfirmId(null);
     };
 
@@ -229,12 +230,18 @@ const VoiceDiary = ({ onClose }) => {
     return (
         <div style={{
             position: 'fixed',
-            top: 0, left: 0, width: '100%', height: '100%',
-            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)', // Reference Radial
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            maxWidth: '100vw',
+            background: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)',
             zIndex: 3000,
             overflowY: 'auto',
-            padding: '80px 20px 110px 20px',
-            color: 'white', // Default text white
+            overflowX: 'hidden',
+            boxSizing: 'border-box',
+            padding: '80px 16px 110px 16px',
+            color: 'white',
             backdropFilter: 'blur(20px)'
         }}>
             {/* Grain/Vignette Overlay */}
@@ -256,42 +263,111 @@ const VoiceDiary = ({ onClose }) => {
             <button
                 onClick={onClose}
                 className="no-print"
+                aria-label="Close Voice Diary"
                 style={{
                     position: 'fixed', top: '24px', right: '24px',
-                    fontSize: '1.5rem', background: 'rgba(255,255,255,0.1)',
-                    backdropFilter: 'blur(10px)', width: '48px', height: '48px',
+                    fontSize: '1.2rem', background: 'rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(12px)', width: '48px', height: '48px',
                     borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', zIndex: 3001,
+                    border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer', zIndex: 3001,
                     color: 'white',
-                    transition: 'transform 0.2s',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
                 }}
                 onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
                 onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.2)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; }}
+                onFocus={e => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
+                onBlur={e => e.currentTarget.style.outline = 'none'}
             >✕</button>
 
             <div style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '40px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+
+                {/* Floating Sparkle Decorations */}
                 <div style={{
-                    display: 'inline-block', padding: '6px 16px', borderRadius: '30px',
-                    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    fontSize: '0.8rem', letterSpacing: '2px', textTransform: 'uppercase',
-                    color: 'rgba(255,255,255,0.6)', marginBottom: '15px', backdropFilter: 'blur(5px)'
+                    position: 'absolute',
+                    top: '-5px',
+                    left: '18%',
+                    fontSize: '1.1rem',
+                    animation: 'sparkle 3s ease-in-out infinite',
+                    pointerEvents: 'none'
+                }}>✨</div>
+                <div style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '15%',
+                    fontSize: '0.9rem',
+                    animation: 'sparkle 3s ease-in-out infinite',
+                    animationDelay: '1s',
+                    pointerEvents: 'none'
+                }}>⭐</div>
+                <div style={{
+                    position: 'absolute',
+                    top: '55px',
+                    left: '10%',
+                    fontSize: '0.7rem',
+                    animation: 'sparkle 3s ease-in-out infinite',
+                    animationDelay: '2s',
+                    pointerEvents: 'none'
+                }}>💫</div>
+
+                {/* Premium Badge with Shimmer */}
+                <div style={{
+                    display: 'inline-block',
+                    padding: '8px 20px',
+                    borderRadius: '30px',
+                    background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(244, 114, 182, 0.15) 100%)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    fontSize: '0.75rem',
+                    letterSpacing: '3px',
+                    textTransform: 'uppercase',
+                    color: '#f87171',
+                    marginBottom: '20px',
+                    backdropFilter: 'blur(10px)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    fontWeight: '600'
                 }}>
-                    Spoken Hearts
+                    {/* Shimmer overlay */}
+                    <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+                        backgroundSize: '200% 100%',
+                        animation: 'shimmer-badge 3s ease-in-out infinite',
+                        pointerEvents: 'none'
+                    }} />
+                    <span style={{ position: 'relative', zIndex: 1 }}>🎙️ Spoken Hearts 🎙️</span>
                 </div>
+
+                {/* Premium Title */}
                 <h2 style={{
                     fontFamily: 'var(--font-heading)',
-                    fontSize: '2.5rem',
-                    marginBottom: '10px',
-                    background: 'linear-gradient(135deg, #fff 0%, #cbd5e1 100%)',
+                    fontSize: '2.8rem',
+                    margin: '0 0 12px 0',
+                    background: 'linear-gradient(135deg, #fff 0%, #f87171 50%, #F472B6 100%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'gradient-shift 4s ease infinite',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    textShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                    letterSpacing: '-1px'
-                }}>Voice Capsules 🎙️</h2>
-                <p style={{ fontSize: '1.1rem', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-serif)', maxWidth: '400px', margin: '0 auto 50px' }}>
-                    Your future selves are waiting to hear this.
-                </p>
+                    filter: 'drop-shadow(0 4px 20px rgba(239, 68, 68, 0.3))',
+                    letterSpacing: '-1px',
+                    fontWeight: '700'
+                }}>Voice Capsules</h2>
+
+                {/* Subtitle */}
+                <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.5)',
+                    fontFamily: 'var(--font-serif)',
+                    maxWidth: '400px',
+                    margin: '0 auto 50px',
+                    fontStyle: 'italic'
+                }}>Your future selves are waiting to hear this</p>
 
                 {/* Recorder UI */}
                 <div className="glass-card" style={{
@@ -402,14 +478,70 @@ const VoiceDiary = ({ onClose }) => {
                     {entries.length === 0 && (
                         <div style={{
                             textAlign: 'center',
-                            opacity: 0.6,
-                            padding: '60px 20px',
-                            background: 'rgba(255,255,255,0.02)',
-                            borderRadius: '30px',
-                            border: '1px dashed rgba(255,255,255,0.1)'
+                            padding: '50px 30px',
+                            background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+                            borderRadius: '32px',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3)',
+                            position: 'relative',
+                            overflow: 'hidden'
                         }}>
-                            <span style={{ fontSize: '3rem', display: 'block', marginBottom: '15px' }}>📼</span>
-                            <p style={{ margin: 0, fontSize: '1rem', color: '#cbd5e1' }}>No shared thoughts yet.<br />Break the silence.</p>
+                            {/* Decorative gradient orb */}
+                            <div style={{
+                                position: 'absolute',
+                                top: '-30px',
+                                right: '-30px',
+                                width: '100px',
+                                height: '100px',
+                                background: 'radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 70%)',
+                                borderRadius: '50%',
+                                pointerEvents: 'none'
+                            }} />
+
+                            {/* Animated Cassette Icon */}
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                margin: '0 auto 20px',
+                                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(244, 114, 182, 0.1) 100%)',
+                                borderRadius: '24px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                border: '1px solid rgba(239, 68, 68, 0.2)',
+                                animation: 'float-gentle 4s ease-in-out infinite'
+                            }}>
+                                <span style={{ fontSize: '2.5rem' }}>📼</span>
+                            </div>
+
+                            <h3 style={{
+                                margin: '0 0 10px 0',
+                                fontSize: '1.3rem',
+                                color: 'white',
+                                fontWeight: '600'
+                            }}>No shared thoughts yet</h3>
+
+                            <p style={{
+                                margin: '0 0 20px 0',
+                                fontSize: '0.95rem',
+                                color: 'rgba(255,255,255,0.5)',
+                                lineHeight: 1.6
+                            }}>
+                                Break the silence.<br />
+                                Record your first voice message above.
+                            </p>
+
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                fontSize: '0.8rem',
+                                color: 'rgba(255,255,255,0.3)'
+                            }}>
+                                <span>⬆️</span>
+                                <span>Tap the mic to start</span>
+                            </div>
                         </div>
                     )}
 

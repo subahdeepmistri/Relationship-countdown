@@ -33,10 +33,26 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     const [toastMsg, setToastMsg] = useState('');
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    // Collapsible Sections State
+    const [expandedSections, setExpandedSections] = useState({
+        profile: true,
+        timeline: false,
+        notifications: false,
+        ai: false,
+        longDistance: false
+    });
+
+    const toggleSection = (section) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [section]: !prev[section]
+        }));
+    };
+
     // Initialize Buffer from Context when Opened
     useEffect(() => {
         if (isOpen) {
-            setToastMsg(''); // Clear any stale toast messages
+            setToastMsg('');
             setEnableNotifications(settings.notifications);
             setEnableAI(settings.aiEnabled);
             setApiKey(settings.aiKey);
@@ -52,6 +68,15 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             setLdMeet(settings.longDistance.meet);
             setLdMyLoc(settings.longDistance.myLoc);
             setLdPartnerLoc(settings.longDistance.partnerLoc);
+
+            // Expand sections that have content
+            setExpandedSections({
+                profile: true,
+                timeline: (relationship.events || []).length > 0,
+                notifications: settings.notifications,
+                ai: settings.aiEnabled,
+                longDistance: settings.longDistance.enabled
+            });
         }
     }, [isOpen, settings, relationship]);
 
@@ -289,27 +314,64 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                 maxWidth: '500px', width: '95%', height: '90%', display: 'flex', flexDirection: 'column',
                 position: 'relative', zIndex: 1
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px', padding: '0 10px' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', padding: '0 10px' }}>
                     <div>
                         <h2 style={{
-                            fontFamily: "'Inter', sans-serif", fontSize: '2.2rem', margin: '0 0 5px 0', fontWeight: '700',
+                            fontFamily: "'Inter', sans-serif", fontSize: '2rem', margin: '0 0 6px 0', fontWeight: '700',
                             color: 'white', background: 'linear-gradient(to right, #fff, #94a3b8)',
                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
                         }}>Settings</h2>
-                        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.95rem', fontWeight: '500' }}>Shape how your love is remembered.</p>
+                        <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem', fontWeight: '500' }}>Shape how your love is remembered.</p>
+
+                        {/* Quick Status Badges */}
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                            {enableNotifications && (
+                                <span style={{
+                                    padding: '4px 10px', fontSize: '0.7rem', borderRadius: '20px',
+                                    background: 'rgba(16, 185, 129, 0.2)', color: '#10B981',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)'
+                                }}>🔔 Reminders On</span>
+                            )}
+                            {enableAI && (
+                                <span style={{
+                                    padding: '4px 10px', fontSize: '0.7rem', borderRadius: '20px',
+                                    background: 'rgba(139, 92, 246, 0.2)', color: '#a78bfa',
+                                    border: '1px solid rgba(139, 92, 246, 0.3)'
+                                }}>🤖 AI Active</span>
+                            )}
+                            {ldEnabled && (
+                                <span style={{
+                                    padding: '4px 10px', fontSize: '0.7rem', borderRadius: '20px',
+                                    background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8',
+                                    border: '1px solid rgba(56, 189, 248, 0.3)'
+                                }}>🌍 Long Distance</span>
+                            )}
+                            {localEvents.length > 0 && (
+                                <span style={{
+                                    padding: '4px 10px', fontSize: '0.7rem', borderRadius: '20px',
+                                    background: 'rgba(244, 114, 182, 0.2)', color: '#f472b6',
+                                    border: '1px solid rgba(244, 114, 182, 0.3)'
+                                }}>📅 {localEvents.length} Event{localEvents.length > 1 ? 's' : ''}</span>
+                            )}
+                        </div>
                     </div>
 
                     <button
                         onClick={handleCloseRequest}
+                        aria-label="Close Settings"
                         style={{
-                            width: '44px', height: '44px', borderRadius: '50%',
+                            width: '48px', height: '48px', borderRadius: '50%',
                             background: 'rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)',
                             border: '1px solid rgba(255,255,255,0.15)', color: 'white', cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                            fontSize: '1.2rem', flexShrink: 0
                         }}
                         onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
                         onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                        onFocus={e => e.currentTarget.style.outline = '2px solid var(--accent-lux)'}
+                        onBlur={e => e.currentTarget.style.outline = 'none'}
                     >
                         ✕
                     </button>
@@ -317,255 +379,408 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
                 <div className="settings-content" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '5px', scrollBehavior: 'smooth' }}>
 
-                    {/* --- 1. PROFILE & DISPLAY --- */}
-                    <div className="settings-section" style={{
-                        marginBottom: '30px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '18px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                    {/* --- 1. PROFILE & NAMES --- */}
+                    <div className="settings-section-card" style={{
+                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)', borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden', transition: 'all 0.3s ease'
                     }}>
-                        <SectionHeader title="Profile & Display" icon={<Icons.User />} />
-                        <p style={{ margin: '-15px 0 15px 0', fontSize: '0.85rem', color: '#94a3b8', fontFamily: 'var(--font-serif)', lineHeight: '1.5' }}>How you appear in shared moments.</p>
-
                         <button
-                            onClick={onEditPhotos}
-                            className="edit-photos-btn"
+                            onClick={() => toggleSection('profile')}
+                            aria-expanded={expandedSections.profile}
                             style={{
-                                width: '100%', padding: '16px', background: 'rgba(255, 255, 255, 0.05)',
-                                border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', color: 'white',
-                                fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-                                cursor: 'pointer', transition: 'all 0.3s ease', marginBottom: '15px', position: 'relative', overflow: 'hidden'
+                                width: '100%', padding: '18px', background: 'transparent',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'space-between',
+                                color: 'white', textAlign: 'left'
                             }}
                         >
-                            <span className="camera-icon" style={{ fontSize: '1.2rem', display: 'flex', transition: 'transform 0.2s ease' }}>
-                                <Icons.Camera />
-                            </span>
-                            Edit Profile Photos
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '42px', height: '42px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(251, 113, 133, 0.2))',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#f472b6'
+                                }}>
+                                    <Icons.User />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Profile & Photos</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        {!expandedSections.profile ? 'Edit your profile images' : 'How you appear together'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                transform: expandedSections.profile ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s ease'
+                            }}>
+                                <Icons.Chevron />
+                            </div>
                         </button>
-                        <style>{`
-                            .edit-photos-btn:hover {
-                                background: rgba(255, 255, 255, 0.08) !important;
-                                box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-                                border-color: rgba(255, 255, 255, 0.2) !important;
-                            }
-                            .edit-photos-btn:active {
-                                transform: scale(0.98);
-                            }
-                            .edit-photos-btn:active .camera-icon {
-                                transform: rotate(-5deg) scale(1.1);
-                            }
-                        `}</style>
+
+                        {expandedSections.profile && (
+                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                                <button
+                                    onClick={onEditPhotos}
+                                    className="edit-photos-btn"
+                                    style={{
+                                        width: '100%', padding: '16px', background: 'rgba(255, 255, 255, 0.05)',
+                                        border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '14px', color: 'white',
+                                        fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                                        cursor: 'pointer', transition: 'all 0.3s ease'
+                                    }}
+                                >
+                                    <span style={{ display: 'flex' }}><Icons.Camera /></span>
+                                    Edit Profile Photos
+                                </button>
+                            </div>
+                        )}
                     </div>
+                    <style>{`
+                        .edit-photos-btn:hover {
+                            background: rgba(255, 255, 255, 0.08) !important;
+                            border-color: rgba(255, 255, 255, 0.2) !important;
+                        }
+                    `}</style>
 
 
-                    {/* --- 2. EXPERIENCE --- */}
-                    <div className="settings-section" style={{
-                        marginBottom: '30px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '18px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                    {/* --- 2. NOTIFICATIONS & AI --- */}
+                    <div className="settings-section-card" style={{
+                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)', borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden', transition: 'all 0.3s ease'
                     }}>
-                        <SectionHeader title="Experience" icon={<Icons.Sparkles />} />
+                        <button
+                            onClick={() => toggleSection('notifications')}
+                            aria-expanded={expandedSections.notifications}
+                            style={{
+                                width: '100%', padding: '18px', background: 'transparent',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'space-between',
+                                color: 'white', textAlign: 'left'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '42px', height: '42px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2))',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#10b981'
+                                }}>
+                                    <Icons.Bell />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Notifications & AI</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        {!expandedSections.notifications
+                                            ? `${enableNotifications ? 'Reminders active' : 'Reminders off'}${enableAI ? ' • AI enabled' : ''}`
+                                            : 'Configure reminders and AI messages'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                transform: expandedSections.notifications ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s ease'
+                            }}>
+                                <Icons.Chevron />
+                            </div>
+                        </button>
 
-                        <GlassToggle
-                            label="Anniversary Reminders"
-                            desc="Get notified on special dates"
-                            active={enableNotifications}
-                            onToggle={() => setEnableNotifications(!enableNotifications)}
-                            icon={<Icons.Bell />}
-                        />
-
-                        {/* The original file had AI section, keeping it but hidden if the user didn't ask to remove it explicitly in this turn. */}
-                        <GlassToggle
-                            label="AI Love Messages"
-                            desc={<span style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem' }}>Daily little reminders of love.</span>}
-                            active={enableAI}
-                            onToggle={() => setEnableAI(!enableAI)}
-                            icon={<Icons.Bot />}
-                        />
-                        {enableAI && (
-                            <div className="nested-settings">
-                                <input
-                                    type="password"
-                                    placeholder="Enter your OpenAI API Key"
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                    className="glass-input"
+                        {expandedSections.notifications && (
+                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                                <GlassToggle
+                                    label="Anniversary Reminders"
+                                    desc="Get notified on special dates"
+                                    active={enableNotifications}
+                                    onToggle={() => setEnableNotifications(!enableNotifications)}
+                                    icon={<Icons.Bell />}
                                 />
-                                <p style={{ fontSize: '0.75rem', opacity: 0.5, marginTop: '8px', color: '#94a3b8' }}>
-                                    Key is stored securely on your device. <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'underline' }}>Get Key</a>
-                                </p>
+
+                                <GlassToggle
+                                    label="AI Love Messages"
+                                    desc={<span style={{ fontFamily: 'var(--font-serif)', fontSize: '0.85rem' }}>Daily little reminders of love</span>}
+                                    active={enableAI}
+                                    onToggle={() => setEnableAI(!enableAI)}
+                                    icon={<Icons.Bot />}
+                                />
+                                {enableAI && (
+                                    <div className="nested-settings" style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <input
+                                            type="password"
+                                            placeholder="Enter your OpenAI API Key"
+                                            value={apiKey}
+                                            onChange={(e) => setApiKey(e.target.value)}
+                                            className="glass-input"
+                                            aria-label="OpenAI API Key"
+                                        />
+                                        <p style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '8px', color: '#94a3b8', lineHeight: '1.5' }}>
+                                            Used to generate personalized love messages.
+                                            Stored locally on your device (not encrypted). <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8', textDecoration: 'underline' }}>Get Key</a>
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
 
 
                     {/* --- 3. TIMELINE EVENTS --- */}
-                    <div className="settings-section" style={{
-                        marginBottom: '30px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '18px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                    <div className="settings-section-card" style={{
+                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)', borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden', transition: 'all 0.3s ease'
                     }}>
-                        <SectionHeader title="Timeline Events" icon={<Icons.Calendar />} />
-                        <p style={{ margin: '-15px 0 15px 0', fontSize: '0.9rem', color: '#94a3b8', fontFamily: 'var(--font-serif)', lineHeight: '1.5' }}>These dates shape your shared journey.</p>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {localEvents.map(event => (
-                                <div key={event.id} style={{
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '16px', background: 'rgba(255, 255, 255, 0.08)', // Stronger background
-                                    borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        <button
+                            onClick={() => toggleSection('timeline')}
+                            aria-expanded={expandedSections.timeline}
+                            style={{
+                                width: '100%', padding: '18px', background: 'transparent',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'space-between',
+                                color: 'white', textAlign: 'left'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '42px', height: '42px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(244, 114, 182, 0.2))',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#fb7185'
                                 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', color: 'white' }}>
-                                        <span style={{ fontSize: '1.4rem' }}>{event.emoji}</span>
-                                        <div>
-                                            <div style={{ fontWeight: '600', fontSize: '1rem', letterSpacing: '0.3px' }}>{event.title}</div>
-                                            <div style={{ fontSize: '0.85rem', opacity: 0.7, marginTop: '2px' }}>{event.date}</div>
-                                        </div>
+                                    <Icons.Calendar />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Timeline Events</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        {!expandedSections.timeline
+                                            ? `${localEvents.length} milestone${localEvents.length !== 1 ? 's' : ''} saved`
+                                            : 'Important dates in your story'}
                                     </div>
-                                    <button onClick={() => checkDeleteEvent(event.id)} style={{
-                                        background: 'rgba(255,255,255,0.05)', border: 'none', cursor: 'pointer',
-                                        width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        transition: 'all 0.2s'
-                                    }}
-                                        className="trash-btn">
-                                        <div style={{ color: '#ef4444' }}><Icons.Trash /></div>
+                                </div>
+                            </div>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                transform: expandedSections.timeline ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s ease'
+                            }}>
+                                <Icons.Chevron />
+                            </div>
+                        </button>
+
+                        {expandedSections.timeline && (
+                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                                {localEvents.length === 0 ? (
+                                    <div style={{
+                                        padding: '24px', textAlign: 'center', borderRadius: '12px',
+                                        background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)'
+                                    }}>
+                                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📅</div>
+                                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: 0 }}>
+                                            No events yet. Add your first milestone below!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                                        {localEvents.map(event => (
+                                            <div key={event.id} style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                                padding: '14px', background: 'rgba(255, 255, 255, 0.05)',
+                                                borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)'
+                                            }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', color: 'white' }}>
+                                                    <span style={{ fontSize: '1.3rem' }}>{event.emoji}</span>
+                                                    <div>
+                                                        <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>{event.title}</div>
+                                                        <div style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '2px' }}>{event.date}</div>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => checkDeleteEvent(event.id)} style={{
+                                                    background: 'rgba(239, 68, 68, 0.1)', border: 'none', cursor: 'pointer',
+                                                    width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    transition: 'all 0.2s', color: '#ef4444'
+                                                }} className="trash-btn">
+                                                    <Icons.Trash />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Add New Event */}
+                                <div style={{ background: 'rgba(0,0,0,0.15)', padding: '16px', borderRadius: '14px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '12px', fontWeight: '500' }}>Add New Event</div>
+                                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Event Title"
+                                            value={newEventTitle}
+                                            onChange={(e) => setNewEventTitle(e.target.value)}
+                                            className="glass-input"
+                                            style={{ flex: 1, padding: '12px', fontSize: '0.9rem' }}
+                                        />
+                                        <input
+                                            type="text"
+                                            value={newEventEmoji}
+                                            onChange={(e) => setNewEventEmoji(e.target.value)}
+                                            className="glass-input"
+                                            style={{ width: '50px', textAlign: 'center', padding: '12px' }}
+                                            maxLength="2"
+                                        />
+                                    </div>
+                                    <input
+                                        type="date"
+                                        value={newEventDate}
+                                        onChange={(e) => setNewEventDate(e.target.value)}
+                                        className="glass-input"
+                                        style={{ marginBottom: '10px', padding: '12px', fontSize: '0.9rem' }}
+                                    />
+                                    <button onClick={handleAddEvent} style={{
+                                        width: '100%', padding: '12px', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3))', color: 'white',
+                                        borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontWeight: '600',
+                                        transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                                    }} className="add-btn">
+                                        <span>+</span> Add Event
                                     </button>
                                 </div>
-                            ))}
-                        </div>
-                        <div style={{ marginTop: '20px', background: 'rgba(0,0,0,0.15)', padding: '20px', borderRadius: '20px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Event Title"
-                                    value={newEventTitle}
-                                    onChange={(e) => setNewEventTitle(e.target.value)}
-                                    className="glass-input secondary-input"
-                                    style={{ flex: 1 }}
-                                />
-                                <input
-                                    type="text"
-                                    value={newEventEmoji}
-                                    onChange={(e) => setNewEventEmoji(e.target.value)}
-                                    className="glass-input secondary-input"
-                                    style={{ width: '60px', textAlign: 'center' }}
-                                    maxLength="2"
-                                />
                             </div>
-                            <input
-                                type="date"
-                                value={newEventDate}
-                                onChange={(e) => setNewEventDate(e.target.value)}
-                                className="glass-input secondary-input"
-                                style={{ marginBottom: '15px' }}
-                            />
-                            <button onClick={handleAddEvent} style={{
-                                width: '100%', padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white',
-                                borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', fontWeight: '600',
-                                transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
-                            }}
-                                className="add-btn">
-                                <span>+</span> Add Event
-                            </button>
-                        </div>
-                        <style>{`
-                            .secondary-input { opacity: 0.7; transition: all 0.2s ease; }
-                            .secondary-input:focus { opacity: 1; background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.3); }
-                            .trash-btn:hover { background: rgba(239, 68, 68, 0.2) !important; transform: scale(1.05); }
-                            .add-btn:hover { background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.3) !important; }
-                        `}</style>
+                        )}
                     </div>
+                    <style>{`
+                        .trash-btn:hover { background: rgba(239, 68, 68, 0.2) !important; transform: scale(1.05); }
+                        .add-btn:hover { background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.4)) !important; }
+                    `}</style>
 
                     {/* --- 4. LONG DISTANCE --- */}
-                    <div className="settings-section" style={{
-                        marginBottom: '30px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '18px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)'
+                    <div className="settings-section-card" style={{
+                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)', borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden', transition: 'all 0.3s ease'
                     }}>
-                        <SectionHeader title="Long Distance Mode" icon={<Icons.Globe />} />
-                        <GlassToggle
-                            label="Enable Mode"
-                            desc="Show dual clocks & distance"
-                            active={ldEnabled}
-                            onToggle={() => setLdEnabled(!ldEnabled)}
-                            icon={<Icons.Map />}
-                        />
-                        {ldEnabled && (
-                            <div className="nested-settings">
-                                <p style={{ textAlign: 'center', color: '#fda4af', fontSize: '1rem', marginBottom: '15px', marginTop: '-5px', fontFamily: 'var(--font-serif)' }}>
-                                    “Miles apart. Still close.”
-                                </p>
+                        <button
+                            onClick={() => toggleSection('longDistance')}
+                            aria-expanded={expandedSections.longDistance}
+                            style={{
+                                width: '100%', padding: '18px', background: 'transparent',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'space-between',
+                                color: 'white', textAlign: 'left'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                 <div style={{
-                                    background: 'rgba(0,0,0,0.2)', padding: '15px', borderRadius: '16px', marginBottom: '15px',
-                                    display: 'flex', flexDirection: 'column', gap: '10px'
+                                    width: '42px', height: '42px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(34, 211, 238, 0.2))',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#38bdf8'
                                 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#94a3b8' }}>
-                                        <input
-                                            type="text"
-                                            placeholder="My City/Country"
-                                            value={ldMyLoc}
-                                            onChange={(e) => setLdMyLoc(e.target.value)}
-                                            className="glass-input"
-                                            style={{
-                                                width: '45%', padding: '6px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)',
-                                                border: 'none', color: '#94a3b8', textAlign: 'left', textTransform: 'capitalize'
-                                            }}
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Partner's City/Country"
-                                            value={ldPartnerLoc}
-                                            onChange={(e) => setLdPartnerLoc(e.target.value)}
-                                            className="glass-input"
-                                            style={{
-                                                width: '45%', padding: '6px', fontSize: '0.8rem', background: 'rgba(255,255,255,0.05)',
-                                                border: 'none', color: '#94a3b8', textAlign: 'right', textTransform: 'capitalize'
-                                            }}
-                                        />
+                                    <Icons.Globe />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Long Distance Mode</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        {!expandedSections.longDistance
+                                            ? (ldEnabled ? 'Active • Dual clocks enabled' : 'Disabled')
+                                            : 'Timezones & countdown to meeting'}
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: 'white' }}>
-                                        <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                        <span style={{ color: '#38BDF8' }}>{getPartnerTime()}</span>
-                                    </div>
+                                </div>
+                            </div>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                transform: expandedSections.longDistance ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s ease'
+                            }}>
+                                <Icons.Chevron />
+                            </div>
+                        </button>
 
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                                        <button onClick={() => setLdOffset(String((parseFloat(ldOffset || 0) - 1)))} style={{
-                                            width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)',
-                                            background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}>−</button>
+                        {expandedSections.longDistance && (
+                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                                <GlassToggle
+                                    label="Enable Long Distance Mode"
+                                    desc="Show dual clocks & distance"
+                                    active={ldEnabled}
+                                    onToggle={() => setLdEnabled(!ldEnabled)}
+                                    icon={<Icons.Map />}
+                                />
+                                {ldEnabled && (
+                                    <div style={{ marginTop: '10px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                        <p style={{ textAlign: 'center', color: '#fda4af', fontSize: '0.9rem', marginBottom: '15px', fontFamily: 'var(--font-serif)', fontStyle: 'italic' }}>
+                                            "Miles apart. Still close."
+                                        </p>
+                                        <div style={{
+                                            background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '14px', marginBottom: '12px'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+                                                <input
+                                                    type="text"
+                                                    placeholder="My City"
+                                                    value={ldMyLoc}
+                                                    onChange={(e) => setLdMyLoc(e.target.value)}
+                                                    className="glass-input"
+                                                    style={{ flex: 1, padding: '10px', fontSize: '0.85rem', textAlign: 'center' }}
+                                                />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Partner's City"
+                                                    value={ldPartnerLoc}
+                                                    onChange={(e) => setLdPartnerLoc(e.target.value)}
+                                                    className="glass-input"
+                                                    style={{ flex: 1, padding: '10px', fontSize: '0.85rem', textAlign: 'center' }}
+                                                />
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold', fontSize: '1.3rem', color: 'white', padding: '10px 0' }}>
+                                                <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span style={{ color: '#38BDF8' }}>{getPartnerTime()}</span>
+                                            </div>
 
-                                        <div style={{ flex: 1, textAlign: 'center' }}>
-                                            <label style={{ fontSize: '0.8rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Time Difference</label>
-                                            <input
-                                                type="number"
-                                                value={ldOffset}
-                                                onChange={(e) => setLdOffset(e.target.value)}
-                                                className="glass-input"
-                                                style={{ textAlign: 'center', padding: '8px' }}
-                                                placeholder="e.g. -5"
-                                            />
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                                                <button onClick={() => setLdOffset(String((parseFloat(ldOffset || 0) - 1)))} style={{
+                                                    width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)',
+                                                    background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
+                                                }}>−</button>
+                                                <div style={{ flex: 1, textAlign: 'center' }}>
+                                                    <label style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'block', marginBottom: '4px' }}>Time Difference (hours)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={ldOffset}
+                                                        onChange={(e) => setLdOffset(e.target.value)}
+                                                        className="glass-input"
+                                                        style={{ textAlign: 'center', padding: '10px' }}
+                                                        placeholder="e.g. -5"
+                                                    />
+                                                </div>
+                                                <button onClick={() => setLdOffset(String((parseFloat(ldOffset || 0) + 1)))} style={{
+                                                    width: '36px', height: '36px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)',
+                                                    background: 'rgba(255,255,255,0.05)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem'
+                                                }}>+</button>
+                                            </div>
                                         </div>
 
-                                        <button onClick={() => setLdOffset(String((parseFloat(ldOffset || 0) + 1)))} style={{
-                                            width: '32px', height: '32px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)',
-                                            background: 'transparent', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                        }}>+</button>
+                                        <div style={{ background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px' }}>
+                                            <div style={{ fontSize: '0.85rem', color: '#e2e8f0', marginBottom: '6px', fontWeight: '500' }}>Next Meeting Date</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px' }}>Something to look forward to 💕</div>
+                                            <input type="date" value={ldMeet} onChange={(e) => setLdMeet(e.target.value)} className="glass-input" style={{ padding: '12px' }} />
+                                        </div>
                                     </div>
-                                    <p style={{ fontSize: '0.85rem', color: '#64748b', textAlign: 'center', margin: '5px 0 0 0', lineHeight: '1.4' }}>
-                                        Adjust until both clocks feel right.
-                                    </p>
-                                </div>
-
-
-                                <label style={{ display: 'block', color: '#e2e8f0', fontSize: '0.9rem' }}>
-                                    <div style={{ marginBottom: '5px' }}>Next Meeting Date</div>
-                                    <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginBottom: '8px', fontFamily: 'var(--font-serif)' }}>Something to look forward to.</div>
-                                    <input type="date" value={ldMeet} onChange={(e) => setLdMeet(e.target.value)} className="glass-input" style={{ fontFamily: 'sans-serif' }} />
-                                </label>
+                                )}
                             </div>
-                        )
-                        }
-                    </div >
+                        )}
+                    </div>
 
 
 
@@ -639,7 +854,8 @@ const Icons = {
     Trash: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
     X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
     Info: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
-    Map: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+    Map: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
+    Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
 };
 
 const SectionHeader = ({ title, icon }) => (
