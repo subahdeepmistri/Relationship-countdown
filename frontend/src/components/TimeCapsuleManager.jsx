@@ -271,33 +271,6 @@ const TimeCapsuleManager = ({ onClose }) => {
                 <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%', position: 'relative', zIndex: 1 }}>
                     <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
 
-                        {/* Floating Sparkle Decorations */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '-15px',
-                            left: '18%',
-                            fontSize: '1.1rem',
-                            animation: 'sparkle 3s ease-in-out infinite',
-                            pointerEvents: 'none'
-                        }}>✨</div>
-                        <div style={{
-                            position: 'absolute',
-                            top: '10px',
-                            right: '15%',
-                            fontSize: '0.9rem',
-                            animation: 'sparkle 3s ease-in-out infinite',
-                            animationDelay: '1s',
-                            pointerEvents: 'none'
-                        }}>⭐</div>
-                        <div style={{
-                            position: 'absolute',
-                            top: '45px',
-                            left: '10%',
-                            fontSize: '0.7rem',
-                            animation: 'sparkle 3s ease-in-out infinite',
-                            animationDelay: '2s',
-                            pointerEvents: 'none'
-                        }}>💫</div>
 
                         {/* Premium Badge with Shimmer */}
                         <div style={{

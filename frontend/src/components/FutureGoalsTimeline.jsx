@@ -279,9 +279,6 @@ const FutureGoalsTimeline = ({ onClose }) => {
 
                 <div style={{ textAlign: 'center', marginBottom: '40px', position: 'relative' }}>
 
-                    {/* Floating Sparkle Decorations */}
-                    <div style={{ position: 'absolute', top: '-15px', left: '18%', fontSize: '1.1rem', animation: 'sparkle 3s ease-in-out infinite', pointerEvents: 'none' }}>✨</div>
-                    <div style={{ position: 'absolute', top: '10px', right: '15%', fontSize: '0.9rem', animation: 'sparkle 3s ease-in-out infinite', animationDelay: '1s', pointerEvents: 'none' }}>⭐</div>
 
                     {/* Premium Badge */}
                     <div style={{

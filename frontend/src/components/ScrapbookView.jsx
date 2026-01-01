@@ -16,6 +16,19 @@ const ScrapbookView = ({ onClose }) => {
     const touchStart = useRef(null);
     const touchEnd = useRef(null);
 
+    // Filter State
+    const [yearFilter, setYearFilter] = useState('All');
+
+    // Derived Years
+    const years = ['All', ...new Set(photos.map(p => {
+        try { return p.date.split(' ').pop().match(/\d{4}/)?.[0] || 'Unknown'; }
+        catch { return 'Unknown'; }
+    }))].sort().reverse();
+
+    const filteredPhotos = yearFilter === 'All'
+        ? photos
+        : photos.filter(p => p.date.includes(yearFilter));
+
     useEffect(() => {
         loadCustomPhotos();
     }, []);
@@ -137,10 +150,24 @@ const ScrapbookView = ({ onClose }) => {
             padding: '40px 40px 120px 40px'
         }}>
             {/* Top Controls */}
-            <div className="no-print" style={{ position: 'fixed', top: 20, right: 20, display: 'flex', gap: '10px', zIndex: 10 }}>
+            <div className="no-print" style={{
+                position: 'fixed', top: 0, left: 0, width: '100%',
+                padding: '20px', background: 'rgba(255,255,255,0.9)',
+                backdropFilter: 'blur(10px)', zIndex: 10,
+                display: 'flex', justifyContent: 'flex-end', gap: '10px',
+                borderBottom: '1px solid #eee'
+            }}>
+                <select
+                    value={yearFilter}
+                    onChange={(e) => setYearFilter(e.target.value)}
+                    style={{ padding: '10px', borderRadius: '5px', border: '1px solid #ccc' }}
+                >
+                    {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+
                 <button
                     onClick={handleImportClick}
-                    style={{ padding: '10px 20px', background: 'var(--accent-color)', color: 'white', borderRadius: '5px', border: 'none', cursor: 'pointer' }}
+                    style={{ padding: '10px 20px', background: '#E11D48', color: 'white', borderRadius: '5px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
                 >
                     + Import Photo
                 </button>
@@ -151,15 +178,17 @@ const ScrapbookView = ({ onClose }) => {
                     accept="image/*"
                     onChange={handleFileChange}
                 />
-                <button onClick={() => window.print()} style={{ padding: '10px 20px', background: 'black', color: 'white', borderRadius: '5px', cursor: 'pointer' }}>Print / Save PDF</button>
+                <button onClick={() => window.print()} style={{ padding: '10px 20px', background: 'black', color: 'white', borderRadius: '5px', cursor: 'pointer' }}>Print / PDF</button>
                 <button onClick={onClose} style={{ padding: '10px 20px', background: '#ccc', borderRadius: '5px', cursor: 'pointer' }}>Close</button>
             </div>
 
-            <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center', color: '#333' }}>
-                <h1 style={{ fontFamily: 'serif', fontSize: '3rem', marginBottom: '10px' }}>Our Story</h1>
+            <div style={{ maxWidth: '800px', margin: '80px auto 0', textAlign: 'center', color: '#333' }}>
+                <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '3rem', marginBottom: '10px' }}>Our Story</h1>
                 <p style={{ fontStyle: 'italic', marginBottom: '50px' }}>A collection of beautiful moments. (Tap photo to view)</p>
 
-                {photos.map((photo, index) => (
+                {filteredPhotos.length === 0 && <p>No photos found for {yearFilter}.</p>}
+
+                {filteredPhotos.map((photo, index) => (
                     <div key={photo.id} style={{ marginBottom: '100px', pageBreakInside: 'avoid', position: 'relative' }}>
                         <div
                             onClick={() => setLightboxIndex(index)} // Trigger Lightbox
@@ -200,7 +229,7 @@ const ScrapbookView = ({ onClose }) => {
                                 ✕
                             </button>
                         </div>
-                        <h3 style={{ marginTop: '20px', fontFamily: 'serif', fontWeight: 'normal' }}>{photo.caption}</h3>
+                        <h3 style={{ marginTop: '20px', fontFamily: 'var(--font-heading)', fontWeight: 'normal' }}>{photo.caption}</h3>
                         <span style={{ color: '#888', fontSize: '0.9rem' }}>{photo.date}</span>
                     </div>
                 ))}
@@ -244,7 +273,7 @@ const ScrapbookView = ({ onClose }) => {
                     />
 
                     <div style={{ color: 'white', marginTop: '20px', textAlign: 'center' }}>
-                        <h2 style={{ fontFamily: 'serif', margin: 0 }}>{photos[lightboxIndex].caption}</h2>
+                        <h2 style={{ fontFamily: 'var(--font-serif)', margin: 0 }}>{photos[lightboxIndex].caption}</h2>
                         <p style={{ opacity: 0.7 }}>{photos[lightboxIndex].date}</p>
                         <p style={{ fontSize: '0.8rem', opacity: 0.5, marginTop: '10px' }}>Swipe left/right to browse</p>
                     </div>

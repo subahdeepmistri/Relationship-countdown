@@ -38,7 +38,17 @@ const LoveNotes = () => {
                 {!isEditing && (
                     <button
                         onClick={() => setIsEditing(true)}
-                        style={{ fontSize: '0.8rem', color: '#B45309', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none' }}
+                        style={{
+                            fontSize: '0.8rem',
+                            color: '#B45309',
+                            textDecoration: 'underline',
+                            cursor: 'pointer',
+                            background: 'none',
+                            border: 'none',
+                            padding: '10px', // Expand touch area
+                            margin: '-10px' // Negative margin to offset padding visually
+                        }}
+                        aria-label="Edit Love Note"
                     >
                         Edit
                     </button>

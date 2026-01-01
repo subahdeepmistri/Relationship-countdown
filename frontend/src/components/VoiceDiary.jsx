@@ -284,33 +284,6 @@ const VoiceDiary = ({ onClose }) => {
 
             <div style={{ maxWidth: '600px', margin: '0 auto', paddingTop: '40px', textAlign: 'center', position: 'relative', zIndex: 1 }}>
 
-                {/* Floating Sparkle Decorations */}
-                <div style={{
-                    position: 'absolute',
-                    top: '-5px',
-                    left: '18%',
-                    fontSize: '1.1rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    pointerEvents: 'none'
-                }}>✨</div>
-                <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    right: '15%',
-                    fontSize: '0.9rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    animationDelay: '1s',
-                    pointerEvents: 'none'
-                }}>⭐</div>
-                <div style={{
-                    position: 'absolute',
-                    top: '55px',
-                    left: '10%',
-                    fontSize: '0.7rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    animationDelay: '2s',
-                    pointerEvents: 'none'
-                }}>💫</div>
 
                 {/* Premium Badge with Shimmer */}
                 <div style={{

@@ -183,13 +183,18 @@ const AboutSection = ({ onClose }) => {
                 backdropFilter: 'blur(20px)',
                 display: 'flex',
                 flexDirection: 'column',
+                alignItems: 'center',
                 padding: '24px 16px 110px 16px',
                 overflowY: 'auto',
                 overflowX: 'hidden',
                 boxSizing: 'border-box',
                 animation: 'fadeIn 0.4s ease-out',
-                color: 'white'
-            }}>
+                color: 'white',
+                WebkitOverflowScrolling: 'touch',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+            }}
+            className="about-section-overlay">
             {/* Grain/Vignette Overlay */}
             <div style={{
                 position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -206,150 +211,112 @@ const AboutSection = ({ onClose }) => {
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: -1 }} />
 
-            {/* Header */}
+            {/* Close Button - Fixed Position */}
+            <button
+                onClick={onClose}
+                aria-label="Close About Section"
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    right: '20px',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.8)',
+                    transition: 'all 0.2s ease',
+                    backdropFilter: 'blur(10px)',
+                    zIndex: 10
+                }}
+                onMouseEnter={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                    e.currentTarget.style.color = 'white';
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={e => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+                    e.currentTarget.style.transform = 'scale(1)';
+                }}
+            >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            {/* Header - Clean and Centered */}
             <div style={{
                 display: 'flex',
-                justifyContent: 'center', // Changed from space-between for robust centering
-                alignItems: 'flex-start',
-                marginBottom: '30px',
-                flexShrink: 0,
-                position: 'relative'
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                marginBottom: '20px',
+                paddingTop: '10px',
+                width: '100%'
             }}>
-                {/* Floating Sparkle Decorations */}
+                {/* Premium Badge */}
                 <div style={{
-                    position: 'absolute',
-                    top: '-10px',
-                    left: '10%', // Adjusted
-                    fontSize: '1.2rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    animationDelay: '0s',
-                    pointerEvents: 'none'
-                }}>✨</div>
-                <div style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '15%', // Adjusted
-                    fontSize: '0.9rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    animationDelay: '1s',
-                    pointerEvents: 'none'
-                }}>⭐</div>
-                <div style={{
-                    position: 'absolute',
-                    top: '50px',
-                    left: '5%', // Adjusted
-                    fontSize: '0.8rem',
-                    animation: 'sparkle 3s ease-in-out infinite',
-                    animationDelay: '2s',
-                    pointerEvents: 'none'
-                }}>💫</div>
-
-                <div style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box', textAlign: 'center', transform: 'translateX(-5px)' }}>
-                    {/* Premium Badge with Shimmer */}
-                    <div style={{
-                        display: 'inline-block',
-                        padding: '8px 20px',
-                        borderRadius: '30px',
-                        background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%)',
-                        border: '1px solid rgba(244, 114, 182, 0.3)',
-                        fontSize: '0.75rem',
-                        letterSpacing: '3px',
-                        textTransform: 'uppercase',
-                        color: '#F472B6',
-                        marginBottom: '20px',
-                        backdropFilter: 'blur(10px)',
-                        position: 'relative',
-                        overflow: 'hidden',
-                        fontWeight: '600'
-                    }}>
-                        {/* Shimmer overlay */}
-                        <div style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
-                            backgroundSize: '200% 100%',
-                            animation: 'shimmer-badge 3s ease-in-out infinite',
-                            pointerEvents: 'none'
-                        }} />
-                        <span style={{ position: 'relative', zIndex: 1 }}>✦ About Us ✦</span>
-                    </div>
-
-                    {/* Premium Title */}
-                    <h2 style={{
-                        fontSize: '2.8rem',
-                        margin: '0 0 12px 0', // Reduced slightly from 16
-                        fontFamily: 'var(--font-heading)',
-                        background: 'linear-gradient(135deg, #fff 0%, #F472B6 50%, #F97316 100%)',
-                        backgroundSize: '200% 200%',
-                        animation: 'gradient-shift 4s ease infinite',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        filter: 'drop-shadow(0 4px 20px rgba(244, 114, 182, 0.3))',
-                        letterSpacing: '-1px',
-                        fontWeight: '700'
-                    }}>Our Story</h2>
-
-                    {/* Subtitle */}
-                    <p style={{
-                        fontSize: '1.1rem',
-                        color: 'rgba(255,255,255,0.7)',
-                        fontStyle: 'italic',
-                        margin: 0,
-                        letterSpacing: '0.5px'
-                    }}>A love written in code</p>
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px 24px',
+                    borderRadius: '30px',
+                    background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.15) 0%, rgba(249, 115, 22, 0.15) 100%)',
+                    border: '1px solid rgba(244, 114, 182, 0.3)',
+                    fontSize: '0.7rem',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    color: '#F472B6',
+                    marginBottom: '16px',
+                    fontWeight: '600'
+                }}>
+                    ✦ About Us ✦
                 </div>
 
-                {/* Close Button - Enhanced */}
-                <button
-                    onClick={onClose}
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        background: 'rgba(255, 255, 255, 0.08)',
-                        border: '1px solid rgba(255,255,255,0.15)',
-                        borderRadius: '50%',
-                        width: '44px',
-                        height: '44px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        color: 'rgba(255,255,255,0.7)',
-                        transition: 'all 0.3s ease',
-                        backdropFilter: 'blur(10px)'
-                    }}
-                    onMouseEnter={e => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.transform = 'rotate(90deg)';
-                    }}
-                    onMouseLeave={e => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
-                        e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
-                        e.currentTarget.style.transform = 'rotate(0deg)';
-                    }}
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                {/* Title */}
+                <h2 style={{
+                    fontSize: '2.5rem',
+                    margin: '0 0 8px 0',
+                    fontFamily: 'var(--font-heading)',
+                    background: 'linear-gradient(135deg, #fff 0%, #F472B6 50%, #F97316 100%)',
+                    backgroundSize: '200% 200%',
+                    animation: 'gradient-shift 4s ease infinite',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 4px 15px rgba(244, 114, 182, 0.3))',
+                    letterSpacing: '-0.5px',
+                    fontWeight: '700'
+                }}>Our Story</h2>
+
+                {/* Subtitle */}
+                <p style={{
+                    fontSize: '1rem',
+                    color: 'rgba(255,255,255,0.6)',
+                    fontStyle: 'italic',
+                    margin: 0,
+                    letterSpacing: '0.5px'
+                }}>A love written in code</p>
             </div>
 
+            {/* Main Content Container */}
             <div style={{ maxWidth: '600px', margin: '0 auto', width: '100%' }}>
 
-                {/* Intro - Premium Heart Section */}
+                {/* Heart Section - Properly Centered */}
                 <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     textAlign: 'center',
                     marginBottom: '30px',
-                    marginTop: '40px',
-                    position: 'relative'
+                    width: '100%'
                 }}>
-                    {/* Heart Container with Glow Rings */}
+                    {/* Heart Container */}
                     <div
                         title="Every beat leads back to you."
                         onDoubleClick={handleHeartInteraction}
@@ -360,9 +327,9 @@ const AboutSection = ({ onClose }) => {
                         onTouchEnd={handleEnd}
                         style={{
                             position: 'relative',
-                            width: '110px',
-                            height: '110px',
-                            margin: '0 auto 15px',
+                            width: '100px',
+                            height: '100px',
+                            marginBottom: '16px',
                             cursor: 'pointer',
                             userSelect: 'none',
                             WebkitUserSelect: 'none',
@@ -372,57 +339,29 @@ const AboutSection = ({ onClose }) => {
                             justifyContent: 'center'
                         }}>
 
-                        {/* Outer Glow Ring */}
+                        {/* Glow Ring */}
                         <div style={{
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            width: '90px',
-                            height: '90px',
+                            width: '80px',
+                            height: '80px',
                             borderRadius: '50%',
                             border: '2px solid rgba(244, 114, 182, 0.3)',
                             animation: 'ring-expand 2s ease-out infinite'
                         }} />
 
-                        {/* Middle Glow Ring */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            width: '70px',
-                            height: '70px',
-                            borderRadius: '50%',
-                            border: '2px solid rgba(244, 114, 182, 0.4)',
-                            animation: 'ring-expand 2s ease-out infinite',
-                            animationDelay: '0.5s'
-                        }} />
-
-                        {/* Inner Glow Ring */}
-                        <div style={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            width: '55px',
-                            height: '55px',
-                            borderRadius: '50%',
-                            border: '2px solid rgba(244, 114, 182, 0.5)',
-                            animation: 'ring-expand 2s ease-out infinite',
-                            animationDelay: '1s'
-                        }} />
-
-                        {/* Animated SVG Heart */}
+                        {/* Heart Icon */}
                         <div style={{
                             position: 'absolute',
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
                             animation: 'heart-beat 1.5s ease-in-out infinite',
-                            filter: 'drop-shadow(0 0 20px rgba(244, 114, 182, 0.6))',
-                            width: '50px',
-                            height: '50px',
+                            filter: 'drop-shadow(0 0 15px rgba(244, 114, 182, 0.5))',
+                            width: '45px',
+                            height: '45px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center'
@@ -430,7 +369,7 @@ const AboutSection = ({ onClose }) => {
                             <svg
                                 width="100%"
                                 height="100%"
-                                viewBox="1 2 22 22"
+                                viewBox="0 0 24 24"
                                 fill="none"
                                 xmlns="http://www.w3.org/2000/svg"
                                 style={{ display: 'block' }}

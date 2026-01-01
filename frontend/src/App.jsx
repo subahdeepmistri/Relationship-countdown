@@ -322,7 +322,7 @@ function App() {
         <div className="blob" style={{ bottom: '10%', right: '-10%', width: '400px', height: '400px', background: '#FECACA' }}></div>
       </div>
 
-      <div className="app-container" style={{ paddingBottom: '150px' }}>
+      <div className="app-container" style={{ paddingBottom: '200px' }}>
         <header style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', padding: '0 10px'
         }}>
@@ -429,6 +429,16 @@ function App() {
             }}>
               EST. {new Date(relationship.startDate).getFullYear() || new Date().getFullYear()}
             </span>
+
+            {/* GREETING UPDATE */}
+            <div style={{ marginBottom: '4px', fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500', opacity: 0.8 }}>
+              {(() => {
+                const h = new Date().getHours();
+                if (h < 12) return 'Good Morning,';
+                if (h < 18) return 'Good Afternoon,';
+                return 'Good Evening,';
+              })()} {relationship.partner1 || 'Love'}
+            </div>
 
             {/* Title Section (Click to toggle) */}
             <div onClick={() => setUseRealNames(!useRealNames)} style={{ cursor: 'pointer' }}>

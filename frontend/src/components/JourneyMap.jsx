@@ -280,33 +280,6 @@ const JourneyMap = ({ onClose }) => {
 
                 <div style={{ textAlign: 'center', marginBottom: '50px', position: 'relative' }}>
 
-                    {/* Floating Sparkle Decorations */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '-15px',
-                        left: '15%',
-                        fontSize: '1.1rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        pointerEvents: 'none'
-                    }}>✨</div>
-                    <div style={{
-                        position: 'absolute',
-                        top: '5px',
-                        right: '20%',
-                        fontSize: '0.9rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        animationDelay: '1s',
-                        pointerEvents: 'none'
-                    }}>⭐</div>
-                    <div style={{
-                        position: 'absolute',
-                        top: '40px',
-                        left: '8%',
-                        fontSize: '0.7rem',
-                        animation: 'sparkle 3s ease-in-out infinite',
-                        animationDelay: '2s',
-                        pointerEvents: 'none'
-                    }}>💫</div>
 
                     {/* Premium Badge with Shimmer */}
                     <div style={{

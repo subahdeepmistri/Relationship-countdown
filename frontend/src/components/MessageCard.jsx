@@ -144,7 +144,19 @@ const MessageCard = () => {
                         {message || "Someday, this will be full of us."}
                     </p>
                     {message && !message.startsWith('⚠️') && (
-                        <div style={{ marginTop: '15px', fontSize: '0.75rem', color: '#0EA5E9', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                        <div
+                            style={{
+                                marginTop: '15px',
+                                padding: '12px', // Increased touch area
+                                fontSize: '0.75rem',
+                                color: '#0EA5E9',
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                cursor: 'pointer',
+                                display: 'inline-block' // Ensure padding works
+                            }}
+                            title="Toggle Privacy"
+                        >
                             Tap to Keep Private
                         </div>
                     )}
