@@ -60,7 +60,7 @@ const DistanceClock = ({ partnerOffset, meetingDate, myLoc, partnerLoc }) => {
                 textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-secondary)',
                 marginBottom: '15px', fontStyle: 'italic'
             }}>
-                Across time zones, same heartbeat ❤️
+                Across time zones, same heartbeat 💖
             </div>
 
             {meetingDiff !== null && (
@@ -75,7 +75,7 @@ const DistanceClock = ({ partnerOffset, meetingDate, myLoc, partnerLoc }) => {
                     fontSize: '0.9rem'
                 }}>
                     {meetingDiff === 0 ? (
-                        <strong>Together at last! ❤️</strong>
+                        <strong>Together at last! 💖</strong>
                     ) : (
                         <span>Only <strong>{meetingDiff}</strong> days until we meet</span>
                     )}

@@ -11,7 +11,7 @@ const NotificationSelection = ({ onComplete, onBack, profileImages }) => {
                 try {
                     const permission = await Notification.requestPermission();
                     if (permission === 'granted') {
-                        new Notification("Setup Complete! 🎉", {
+                        new Notification("Setup Complete! 🥳", {
                             body: "You'll see notifications like this.",
                             icon: '/icon-192x192.png'
                         });
@@ -78,7 +78,7 @@ const NotificationSelection = ({ onComplete, onBack, profileImages }) => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 boxShadow: '0 4px 10px rgba(0,0,0,0.05)', position: 'relative', margin: '0 auto 10px'
                             }}>
-                                <span style={{ fontSize: '2rem', color: '#FF8A80' }}>❤️</span>
+                                <span style={{ fontSize: '2rem', color: '#FF8A80' }}>💖</span>
                                 <div style={{
                                     position: 'absolute', top: '-5px', right: '-5px',
                                     background: '#FF3D00', color: 'white',
@@ -103,7 +103,7 @@ const NotificationSelection = ({ onComplete, onBack, profileImages }) => {
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 boxShadow: '0 4px 10px rgba(0,0,0,0.05)', position: 'relative', margin: '0 auto 10px'
                             }}>
-                                <span style={{ fontSize: '2rem', color: '#FF8A80' }}>❤️</span>
+                                <span style={{ fontSize: '2rem', color: '#FF8A80' }}>💖</span>
                             </div>
                             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', cursor: 'pointer' }}>
                                 <input

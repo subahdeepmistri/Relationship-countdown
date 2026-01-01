@@ -214,7 +214,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             Notification.requestPermission();
         }
 
-        setToastMsg('Settings saved. Love updated ❤️');
+        setToastMsg('Settings saved. Love updated 💖');
         setTimeout(() => {
             onClose();
             setIsSaved(false); // Reset for next time
@@ -277,7 +277,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                         border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', maxWidth: '320px',
                         boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
                     }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '15px' }}>⚠️</div>
+                        <div style={{ fontSize: '3rem', marginBottom: '15px' }}>⚡</div>
                         <h3 style={{ color: 'white', marginBottom: '10px', fontSize: '1.2rem' }}>You have unsaved changes</h3>
                         <p style={{ color: '#94a3b8', marginBottom: '25px', lineHeight: '1.5' }}>Do you want to keep editing or discard them?</p>
                         <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
@@ -773,7 +773,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
                                         <div style={{ background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px' }}>
                                             <div style={{ fontSize: '0.85rem', color: '#e2e8f0', marginBottom: '6px', fontWeight: '500' }}>Next Meeting Date</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px' }}>Something to look forward to 💕</div>
+                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px' }}>Something to look forward to 💗</div>
                                             <input type="date" value={ldMeet} onChange={(e) => setLdMeet(e.target.value)} className="glass-input" style={{ padding: '12px' }} />
                                         </div>
                                     </div>

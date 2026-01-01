@@ -507,7 +507,7 @@ const TimeCapsuleManager = ({ onClose }) => {
                                                 filter: unlocked ? 'drop-shadow(0 4px 10px rgba(0,0,0,0.1))' : 'grayscale(1) opacity(0.7)',
                                                 transition: 'all 0.3s'
                                             }} className={!unlocked ? 'animate-pulse-slow' : ''}>
-                                                {unlocked ? '📜' : '🔒'}
+                                                {unlocked ? '📃' : '🔒'}
                                             </div>
 
                                             <div style={{ fontSize: '0.95rem', fontWeight: unlocked ? '800' : '600', marginBottom: '8px', letterSpacing: '-0.02em', color: unlocked ? '#1e293b' : 'rgba(255,255,255,0.9)' }}>
@@ -775,7 +775,7 @@ const ViewCapsule = ({ cap, onBack, onDelete }) => (
                 background: 'linear-gradient(90deg, #38bdf8 0%, #818cf8 100%)'
             }} />
 
-            <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📜</div>
+            <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📃</div>
             <h2 style={{ fontSize: '2rem', marginBottom: '5px', color: '#1e293b', fontFamily: 'var(--font-heading)' }}>Memory Unlocked</h2>
             <p style={{ color: '#64748b', marginBottom: '30px', fontSize: '0.9rem', fontWeight: '500' }}>
                 Sealed on {new Date(cap.createdAt).toLocaleDateString(undefined, { dateStyle: 'long' })}

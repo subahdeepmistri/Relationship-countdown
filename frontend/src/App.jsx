@@ -70,7 +70,7 @@ function App() {
       const updates = {
         startDate: sharedDate,
         // Also normalize events
-        events: [{ id: 'shared-start', title: 'The Beginning', date: sharedDate, emoji: '❤️', isMain: true }]
+        events: [{ id: 'shared-start', title: 'The Beginning', date: sharedDate, emoji: '💖', isMain: true }]
       };
 
       const p1 = params.get('p1') || params.get('name1');
@@ -179,7 +179,7 @@ function App() {
 
   const getTitle = () => {
     if (relationship.nickname) return relationship.nickname;
-    if (relationship.partner1 && relationship.partner2) return `${relationship.partner1} ❤️ ${relationship.partner2}`;
+    if (relationship.partner1 && relationship.partner2) return `${relationship.partner1} 💖 ${relationship.partner2}`;
 
     const type = settings.anniversaryType || 'couple';
     const map = { 'couple': 'Us', 'birthday': 'B-Day', 'wedding': 'Vows', 'general': 'Time', 'puppy': 'Puppy', 'kitten': 'Kitty' };
@@ -223,7 +223,7 @@ function App() {
             padding: '24px', animation: 'fadeIn 0.8s ease-out', color: 'white'
           }}>
 
-          <div style={{ fontSize: '4rem', marginBottom: '20px', animation: 'pulse 2s infinite' }}>❤️</div>
+          <div style={{ fontSize: '4rem', marginBottom: '20px', animation: 'pulse 2s infinite' }}>💖</div>
 
           <h2 style={{
             fontFamily: 'var(--font-serif)', fontSize: '2rem', marginBottom: '16px',
@@ -414,7 +414,7 @@ function App() {
                     cursor: 'pointer',
                     userSelect: 'none'
                   }}>
-                  ❤️
+                  💖
                 </div>
               </div>
             </div>
@@ -538,7 +538,7 @@ function App() {
           background: 'rgba(255,255,255,0.5)', padding: '5px 15px', borderRadius: '20px',
           marginBottom: '100px'
         }}>
-          <span title="Secret Night Mode Active">🌙</span>
+          <span title="Secret Night Mode Active">🌛</span>
           <p style={{ margin: 0, fontWeight: '500' }}>The night is ours.</p>
         </div>
       )}

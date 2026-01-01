@@ -20,7 +20,7 @@ const WelcomeScreen = ({ onComplete }) => {
             localStorage.setItem('rc_setup_complete', 'true');
 
             // Create initial event
-            const newEvent = { id: 'init-start', title: 'The Beginning', date: date, emoji: '❤️', isMain: true };
+            const newEvent = { id: 'init-start', title: 'The Beginning', date: date, emoji: '💖', isMain: true };
             localStorage.setItem('rc_events', JSON.stringify([newEvent]));
 
             onComplete();

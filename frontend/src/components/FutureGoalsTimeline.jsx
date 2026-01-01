@@ -166,7 +166,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                             justifyContent: 'center',
                             border: '2px solid rgba(251, 191, 36, 0.3)'
                         }}>
-                            <span style={{ fontSize: '2rem' }}>🌙</span>
+                            <span style={{ fontSize: '2rem' }}>🌛</span>
                         </div>
 
                         <h3 style={{
@@ -249,7 +249,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                                 backdropFilter: 'blur(10px)'
                             }}
                         >
-                            <span>❤️</span> Another memory added
+                            <span>💖</span> Another memory added
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -494,7 +494,7 @@ const FutureGoalsTimeline = ({ onClose }) => {
                                                             transition: 'all 0.2s'
                                                         }}
                                                     >
-                                                        {goal.status === 'achieved' ? 'Completed! 🎉' : 'Mark as Completed'}
+                                                        {goal.status === 'achieved' ? 'Completed! 🥳' : 'Mark as Completed'}
                                                     </button>
 
                                                     <button

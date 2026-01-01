@@ -26,7 +26,7 @@ const DailyQuestion = () => {
 
     useEffect(() => {
         const h = new Date().getHours();
-        setTimeIcon(h >= 6 && h < 18 ? "☀️" : "🌙");
+        setTimeIcon(h >= 6 && h < 18 ? "☀️" : "🌛");
 
         // Simple hash to pick a question based on the date
         const today = new Date();

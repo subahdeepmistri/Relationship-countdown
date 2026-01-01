@@ -70,7 +70,7 @@ const MessageCard = () => {
                 } catch (error) {
                     console.error("AI Generation Failed:", error);
                     // If AI was explicitly enabled, show the error so the user knows
-                    setMessage(`⚠️ ${error.message}`);
+                    setMessage(`⚡ ${error.message}`);
                 } finally {
                     setLoading(false);
                     setVisible(true);
@@ -87,7 +87,7 @@ const MessageCard = () => {
 
     const setStaticMessage = (days) => {
         const templates = [
-            `Today you completed ${days} days together ❤️`,
+            `Today you completed ${days} days together 💖`,
             `Day ${days}: Still choosing each other.`,
             `Another day stronger together (Day ${days})`,
             `${days} days of love and counting ✨`,
@@ -112,11 +112,11 @@ const MessageCard = () => {
             justifyContent: 'center',
             alignItems: 'center',
             padding: '24px',
-            cursor: message.startsWith('⚠️') ? 'default' : 'pointer',
+            cursor: message.startsWith('⚡') ? 'default' : 'pointer',
             position: 'relative'
         }}>
             {/* Lock Icon Overlay for "Private" feel */}
-            {settings.aiEnabled && !loading && !message.startsWith('⚠️') && (
+            {settings.aiEnabled && !loading && !message.startsWith('⚡') && (
                 <div style={{ position: 'absolute', top: '15px', right: '15px', opacity: 0.5 }}>
                     🔒
                 </div>
@@ -136,14 +136,14 @@ const MessageCard = () => {
                         fontSize: '1.4rem',
                         lineHeight: '1.5',
                         fontFamily: 'var(--font-serif)',
-                        color: message.startsWith('⚠️') ? '#EF4444' : '#0C4A6E',
+                        color: message.startsWith('⚡') ? '#EF4444' : '#0C4A6E',
                         margin: 0,
                         padding: '0 10px',
                         transform: message ? 'rotate(-1deg)' : 'none'
                     }}>
                         {message || "Someday, this will be full of us."}
                     </p>
-                    {message && !message.startsWith('⚠️') && (
+                    {message && !message.startsWith('⚡') && (
                         <div
                             style={{
                                 marginTop: '15px',

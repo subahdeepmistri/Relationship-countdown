@@ -44,7 +44,7 @@ const AnniversaryOverlay = () => {
                 {/* Voice Message Section */}
                 <VoiceMessagePlayer />
 
-                <div style={{ fontSize: '2rem', marginTop: '30px' }}>❤️</div>
+                <div style={{ fontSize: '2rem', marginTop: '30px' }}>💖</div>
             </div>
             <style>{`
         @keyframes popIn {

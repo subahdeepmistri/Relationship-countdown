@@ -385,7 +385,7 @@ const VoiceDiary = ({ onClose }) => {
                             background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(6px)', zIndex: 10,
                             animation: 'fadeIn 0.2s'
                         }}>
-                            <div style={{ fontSize: '2.5rem', animation: 'float 0.8s infinite' }}>❤️</div>
+                            <div style={{ fontSize: '2.5rem', animation: 'float 0.8s infinite' }}>💖</div>
                         </div>
                     )}
 

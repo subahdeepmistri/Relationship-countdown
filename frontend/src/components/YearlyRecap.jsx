@@ -145,7 +145,7 @@ const YearlyRecap = ({ onClose }) => {
                 <StatCard
                     value={stats.totalDays.toLocaleString()}
                     label="Days of Love"
-                    icon="💕"
+                    icon="💗"
                     gradient="linear-gradient(135deg, rgba(251, 113, 133, 0.15) 0%, rgba(251, 113, 133, 0.05) 100%)"
                     accentColor="#fda4af"
                     delay="0.1s"
@@ -220,7 +220,7 @@ const YearlyRecap = ({ onClose }) => {
                         color: '#94a3b8',
                         fontSize: '0.9rem',
                         fontStyle: 'italic'
-                    }}>— With all my love ❤️</div>
+                    }}>— With all my love 💖</div>
                 </div>
 
                 {/* Save Button */}

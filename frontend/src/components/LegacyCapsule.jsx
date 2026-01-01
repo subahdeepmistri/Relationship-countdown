@@ -186,7 +186,7 @@ const OrbItem = ({ msg, index, onClick }) => {
                     : 'inset 2px 2px 5px rgba(255,255,255,0.1)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-                {isReady ? '🔓' : '🔒'}
+                {isReady ? '🔏' : '🔒'}
             </div>
             {/* Year Label */}
             <div style={{
@@ -348,7 +348,7 @@ const OrbDetailView = ({ orb, onClose, onDelete }) => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '3rem', marginBottom: '40px'
             }}>
-                {isUnlocked ? '🔓' : '🔒'}
+                {isUnlocked ? '🔏' : '🔒'}
             </div>
 
             {isUnlocked ? (

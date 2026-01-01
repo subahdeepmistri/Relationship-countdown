@@ -4,7 +4,7 @@ const AnniversarySelection = ({ onSelect }) => {
     const [selectedId, setSelectedId] = useState('couple');
 
     const types = [
-        { id: 'couple', label: 'Couple', icon: '👩‍❤️‍👨', bg: '#FFEBEE', border: '#FF5252' }, // Red tint
+        { id: 'couple', label: 'Couple', icon: '👩‍💖‍👨', bg: '#FFEBEE', border: '#FF5252' }, // Red tint
         { id: 'birthday', label: 'Birthday', icon: '🎂', bg: '#F3E5F5', border: '#E1BEE7' }, // Purple tint
         { id: 'wedding', label: 'Wedding Anniversary', icon: '💍', bg: '#FFFDE7', border: '#FFF59D' }, // Yellow tint
         { id: 'general', label: 'General Anniversaries', icon: '📅', bg: '#E3F2FD', border: '#BBDEFB' }, // Blue tint

@@ -55,7 +55,7 @@ export const RelationshipProvider = ({ children }) => {
                     id: 'legacy-init',
                     title: 'The Beginning',
                     date: legacyDate,
-                    emoji: '❤️',
+                    emoji: '💖',
                     isMain: true
                 }];
                 // We don't just set state, we write to storage to fix it permanently

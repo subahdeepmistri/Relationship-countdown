@@ -162,7 +162,7 @@ const JourneyMap = ({ onClose }) => {
                             justifyContent: 'center',
                             border: '2px solid rgba(239, 68, 68, 0.3)'
                         }}>
-                            <span style={{ fontSize: '2rem' }}>📜</span>
+                            <span style={{ fontSize: '2rem' }}>📃</span>
                         </div>
 
                         <h3 style={{
@@ -254,7 +254,7 @@ const JourneyMap = ({ onClose }) => {
                                 backdropFilter: 'blur(10px)'
                             }}
                         >
-                            <span>❤️</span> Another memory added
+                            <span>💖</span> Another memory added
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -310,7 +310,7 @@ const JourneyMap = ({ onClose }) => {
                             animation: 'shimmer-badge 3s ease-in-out infinite',
                             pointerEvents: 'none'
                         }} />
-                        <span style={{ position: 'relative', zIndex: 1 }}>📖 Your Story 📖</span>
+                        <span style={{ position: 'relative', zIndex: 1 }}>📔 Your Story 📔</span>
                     </div>
 
                     {/* Premium Title */}
@@ -390,7 +390,7 @@ const JourneyMap = ({ onClose }) => {
                                 border: '1px solid rgba(96, 165, 250, 0.2)',
                                 animation: 'float-gentle 4s ease-in-out infinite'
                             }}>
-                                <span style={{ fontSize: '2.5rem' }}>📖</span>
+                                <span style={{ fontSize: '2.5rem' }}>📔</span>
                             </div>
 
                             <h3 style={{

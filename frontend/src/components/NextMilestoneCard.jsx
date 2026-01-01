@@ -135,7 +135,7 @@ const NextMilestoneCard = () => {
                     }} onClick={e => e.stopPropagation()}>
 
                         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                            <div style={{ fontSize: '4rem', marginBottom: '10px' }}>{milestone.daysLeft <= 7 ? '🎉' : '⏳'}</div>
+                            <div style={{ fontSize: '4rem', marginBottom: '10px' }}>{milestone.daysLeft <= 7 ? '🥳' : '⏳'}</div>
                             <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.8rem', margin: '0 0 5px', color: 'var(--text-primary)' }}>
                                 {milestone.daysLeft <= 0 ? "It's Today!" : "Chapter Loading..."}
                             </h3>

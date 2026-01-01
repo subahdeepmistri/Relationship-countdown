@@ -90,7 +90,7 @@ const MilestoneCelebration = () => {
                 border: '1px solid #E0E7FF',
                 maxWidth: '90%'
             }}>
-                <div style={{ fontSize: '4rem', marginBottom: '10px' }}>🎉</div>
+                <div style={{ fontSize: '4rem', marginBottom: '10px' }}>🥳</div>
                 <h2 style={{
                     fontSize: '2rem',
                     color: '#4338ca',

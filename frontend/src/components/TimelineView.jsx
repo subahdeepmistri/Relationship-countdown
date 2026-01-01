@@ -49,7 +49,7 @@ const TimelineView = ({ onClose }) => {
         // Add main start date as an event if not present in custom events
         const legacyDate = localStorage.getItem('rc_start_date');
         if (legacyDate) {
-            parsed.push({ id: 'legacy', title: 'The Beginning', date: legacyDate, emoji: '❤️', isMain: true });
+            parsed.push({ id: 'legacy', title: 'The Beginning', date: legacyDate, emoji: '💖', isMain: true });
         }
 
         if (stored) {

@@ -212,7 +212,7 @@ const SyncManager = ({ onClose }) => {
                             background: 'rgba(239, 68, 68, 0.15)', borderRadius: '50%',
                             display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}>
-                            <span style={{ fontSize: '2rem' }}>⚠️</span>
+                            <span style={{ fontSize: '2rem' }}>⚡</span>
                         </div>
                         <h3 style={{ color: 'white', marginBottom: '12px', fontSize: '1.3rem', fontWeight: '700' }}>
                             Replace All Data?
@@ -297,7 +297,7 @@ const SyncManager = ({ onClose }) => {
                             <span>💭</span> {dataSummary.memories} Memories
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                            <span>🎤</span> {dataSummary.voice} Voice Notes
+                            <span>🎧</span> {dataSummary.voice} Voice Notes
                         </div>
                     </div>
                 </div>

@@ -257,7 +257,7 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                             />
                         </div>
                         <label className="upload-btn">
-                            <span className="camera-icon">📷</span> Change Photo
+                            <span className="camera-icon">📸</span> Change Photo
                             <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 1)} />
                         </label>
                         <input
@@ -298,7 +298,7 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                                 cursor: 'pointer',
                                 userSelect: 'none',
                                 transition: 'transform 0.2s'
-                            }}>❤️</div>
+                            }}>💖</div>
 
                         {/* "Together" Text */}
                         <div style={{
@@ -350,7 +350,7 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                             />
                         </div>
                         <label className="upload-btn">
-                            <span className="camera-icon">📷</span> Change Photo
+                            <span className="camera-icon">📸</span> Change Photo
                             <input type="file" accept="image/*" hidden onChange={(e) => handleFileChange(e, 2)} />
                         </label>
                         <input
@@ -485,7 +485,7 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                             boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
                         }}
                     >
-                        <span>Profile updated ❤️</span>
+                        <span>Profile updated 💖</span>
                     </motion.div>
                 )}
             </AnimatePresence>
