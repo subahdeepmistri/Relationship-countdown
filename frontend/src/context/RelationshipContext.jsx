@@ -74,10 +74,31 @@ export const RelationshipProvider = ({ children }) => {
     }, []);
 
     // --- MULTI-TAB SYNC ---
+    // Only sync on changes to relationship/settings keys, NOT feature data like capsules/goals
     useEffect(() => {
+        const SYNC_KEYS = [
+            storage.KEYS.PARTNER_1,
+            storage.KEYS.PARTNER_2,
+            storage.KEYS.NICKNAME,
+            storage.KEYS.START_DATE,
+            storage.KEYS.EVENTS,
+            storage.KEYS.NOTIFICATIONS,
+            storage.KEYS.AI_ENABLED,
+            storage.KEYS.AI_KEY,
+            storage.KEYS.LOCK_ENABLED,
+            storage.KEYS.SETUP_COMPLETE,
+            storage.KEYS.PHOTOS_SET,
+            storage.KEYS.ANNIVERSARY_TYPE,
+            storage.KEYS.LD_ENABLED,
+            storage.KEYS.LD_OFFSET,
+            storage.KEYS.LD_MEET,
+            storage.KEYS.LD_MY_LOC,
+            storage.KEYS.LD_PARTNER_LOC
+        ];
+
         const handleStorageChange = (e) => {
-            // If any critical key changes in another tab, reload state
-            if (Object.values(storage.KEYS).includes(e.key)) {
+            // Only sync if the key is a relationship/settings key (not feature data)
+            if (SYNC_KEYS.includes(e.key)) {
                 console.log('🔄 Syncing state from another tab...');
                 setState(loadStateFromStorage());
             }

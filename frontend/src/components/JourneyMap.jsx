@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useJourney } from '../hooks/useDataHooks';
+import { ConfirmModal, Toast } from './shared';
 
 const JourneyMap = ({ onClose }) => {
-    const [milestones, setMilestones] = useState([]);
+    // Use centralized hook instead of direct localStorage
+    const {
+        milestones,
+        loading,
+        error,
+        addMilestone: addMilestoneToHook,
+        deleteMilestone: deleteMilestoneFromHook,
+        clearError
+    } = useJourney();
+
     const [newTitle, setNewTitle] = useState('');
     const [newDate, setNewDate] = useState('');
     const [newDesc, setNewDesc] = useState('');
@@ -11,6 +22,15 @@ const JourneyMap = ({ onClose }) => {
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For delete confirmation modal
     const [expandedIds, setExpandedIds] = useState(new Set()); // For accordion collapse
+    const [showAddForm, setShowAddForm] = useState(false); // Collapsible form
+
+    // Show error from hook
+    React.useEffect(() => {
+        if (error) {
+            console.error('Journey error:', error);
+            clearError();
+        }
+    }, [error, clearError]);
 
     const toggleExpand = (id) => {
         setExpandedIds(prev => {
@@ -24,33 +44,25 @@ const JourneyMap = ({ onClose }) => {
         });
     };
 
-    const [showAddForm, setShowAddForm] = useState(false); // Collapsible form
-
-    useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('rc_journey') || '[]');
-        setMilestones(saved.sort((a, b) => new Date(a.date) - new Date(b.date)));
-    }, []);
-
-    const addMilestone = () => {
+    const handleAddMilestone = () => {
         if (!newTitle || !newDate) return;
 
         setIsLaunching(true);
 
-        const item = { id: Date.now(), title: newTitle, date: newDate, desc: newDesc };
-        const updated = [...milestones, item].sort((a, b) => new Date(a.date) - new Date(b.date));
-
         // Slight delay for animation to play
         setTimeout(() => {
-            setMilestones(updated);
-            localStorage.setItem('rc_journey', JSON.stringify(updated));
-            setNewTitle(''); setNewDate(''); setNewDesc('');
-            setIsLaunching(false);
+            const result = addMilestoneToHook(newTitle, newDate, newDesc);
 
-            // Success Feedback
-            // triggerConfetti(); // Confetti is already triggered below in original code, but we'll ensure it flows
-            triggerConfetti();
-            setShowSuccessToast(true);
-            setTimeout(() => setShowSuccessToast(false), 3000);
+            if (result.success) {
+                setNewTitle('');
+                setNewDate('');
+                setNewDesc('');
+                triggerConfetti();
+                setShowSuccessToast(true);
+                setTimeout(() => setShowSuccessToast(false), 3000);
+            }
+
+            setIsLaunching(false);
         }, 800);
     };
 
@@ -62,9 +74,7 @@ const JourneyMap = ({ onClose }) => {
     // Perform the actual delete
     const confirmDelete = () => {
         if (!deleteConfirmId) return;
-        const updated = milestones.filter(m => m.id !== deleteConfirmId);
-        setMilestones(updated);
-        localStorage.setItem('rc_journey', JSON.stringify(updated));
+        deleteMilestoneFromHook(deleteConfirmId);
         setDeleteConfirmId(null);
     };
 
@@ -119,145 +129,27 @@ const JourneyMap = ({ onClose }) => {
             <div className="animate-pulse-slow" style={{ position: 'fixed', top: '-10%', right: '-20%', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(251, 113, 133, 0.08) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
             <div className="animate-float" style={{ position: 'fixed', bottom: '-10%', left: '-10%', width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%', pointerEvents: 'none', zIndex: 0 }} />
 
-            {/* Delete Confirmation Modal - Premium Dark Theme */}
-            {deleteConfirmId && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0, left: 0,
-                        width: '100%', height: '100%',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        backdropFilter: 'blur(8px)',
-                        zIndex: 10000,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        animation: 'fadeIn 0.2s ease-out'
-                    }}
-                    onClick={cancelDelete}
-                >
-                    <div
-                        style={{
-                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-                            backdropFilter: 'blur(20px)',
-                            borderRadius: '28px',
-                            padding: '32px 28px',
-                            maxWidth: '340px',
-                            width: '90%',
-                            textAlign: 'center',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Icon */}
-                        <div style={{
-                            width: '72px', height: '72px',
-                            margin: '0 auto 20px',
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '2px solid rgba(239, 68, 68, 0.3)'
-                        }}>
-                            <span style={{ fontSize: '2rem' }}>📃</span>
-                        </div>
-
-                        <h3 style={{
-                            color: 'white',
-                            fontSize: '1.4rem',
-                            fontWeight: '700',
-                            margin: '0 0 12px 0',
-                            fontFamily: 'var(--font-heading)'
-                        }}>
-                            Erase This Chapter?
-                        </h3>
-
-                        <p style={{
-                            color: '#94a3b8',
-                            fontSize: '0.95rem',
-                            margin: '0 0 28px 0',
-                            lineHeight: '1.5'
-                        }}>
-                            This moment will be removed from your story. Are you sure you want to let it go?
-                        </p>
-
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button
-                                onClick={cancelDelete}
-                                style={{
-                                    flex: 1,
-                                    padding: '14px',
-                                    borderRadius: '16px',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Keep It
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                style={{
-                                    flex: 1,
-                                    padding: '14px',
-                                    borderRadius: '16px',
-                                    border: 'none',
-                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontWeight: '700',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Remove
-                            </button>
-                        </div>
-
-                        <p style={{
-                            marginTop: '18px',
-                            fontSize: '0.75rem',
-                            color: 'rgba(255,255,255,0.3)',
-                            fontStyle: 'italic'
-                        }}>
-                            Every chapter matters, even the quiet ones
-                        </p>
-                    </div>
-                </div>
-            )}
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={deleteConfirmId !== null}
+                title="Erase This Chapter?"
+                message="This moment will be removed from your story. Are you sure you want to let it go?"
+                icon="📃"
+                confirmText="Remove"
+                cancelText="Keep It"
+                variant="danger"
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
 
             <div style={{ maxWidth: '600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
                 {/* Success Toast */}
-                <AnimatePresence>
-                    {showSuccessToast && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                            style={{
-                                position: 'fixed', bottom: '100px', left: '50%', x: '-50%',
-                                background: 'rgba(255, 255, 255, 0.9)',
-                                color: '#064e3b',
-                                padding: '12px 24px', borderRadius: '50px',
-                                boxShadow: '0 10px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.5)',
-                                zIndex: 5000,
-                                fontWeight: '600',
-                                display: 'flex', alignItems: 'center', gap: '8px',
-                                backdropFilter: 'blur(10px)'
-                            }}
-                        >
-                            <span>💖</span> Another memory added
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                <Toast
+                    isVisible={showSuccessToast}
+                    message="Another memory added"
+                    variant="success"
+                    position="bottom"
+                />
 
                 <button
                     onClick={onClose}
@@ -730,7 +622,7 @@ const JourneyMap = ({ onClose }) => {
                                         <button
                                             className="rocket-btn"
                                             onClick={() => {
-                                                addMilestone();
+                                                handleAddMilestone();
                                                 // Collapse form after adding
                                                 setTimeout(() => setShowAddForm(false), 1000);
                                             }}

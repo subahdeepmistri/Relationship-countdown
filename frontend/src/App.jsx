@@ -55,7 +55,13 @@ function App() {
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
 
-  // WAZM Hook for calculations
+  // Easter Egg & Modals State (must be declared before early returns)
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [showFirstPhotoModal, setShowFirstPhotoModal] = useState(false);
+  const [useRealNames, setUseRealNames] = useState(false);
+  const longPressTimer = React.useRef(null);
+
+  // WASM Hook for calculations
   const { getAnniversaryCountdown } = useWasm();
 
   // --- EFFECTS ---
@@ -145,15 +151,12 @@ function App() {
 
   // 2. Onboarding Flow
   if (!relationship.startDate) {
-    return <WelcomeScreen onComplete={() => window.location.reload()} />;
-    // Note: WelcomeScreen likely reloads internally or we can fix it too. 
-    // Ideally it should call updateRelationship and we re-render. 
-    // But for now, let's leave WelcomeScreen as is or it might break if it expects reload.
-    // Actually, if WelcomeScreen updates LS, Context won't know unless we hook it up.
-    // But Context loads from LS on mount. Updates to LS *after* mount won't auto-update Context
-    // unless we use the 'storage' event or the Context setters.
-    // *Critical*: The WelcomeScreen must be refactored to use Context setters, OR we allow the reload there.
-    // User said "Rewrite from scratch". Checking WelcomeScreen next would be smart.
+    return (
+      <WelcomeScreen
+        updateRelationship={updateRelationship}
+        updateSettings={updateSettings}
+      />
+    );
   }
 
   if (!settings.photosSet) {
@@ -185,13 +188,6 @@ function App() {
     const map = { 'couple': 'Us', 'birthday': 'B-Day', 'wedding': 'Vows', 'general': 'Time', 'puppy': 'Puppy', 'kitten': 'Kitty' };
     return map[type] || 'Us';
   };
-
-  // Easter Egg & Modals State
-  const [showEasterEgg, setShowEasterEgg] = useState(false);
-  const [showFirstPhotoModal, setShowFirstPhotoModal] = useState(false);
-  const [useRealNames, setUseRealNames] = useState(false);
-
-  const longPressTimer = React.useRef(null);
 
   const handleLongPressStart = () => {
     longPressTimer.current = setTimeout(() => {

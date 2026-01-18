@@ -1,14 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { saveAudio, getAudio, deleteAudio } from '../utils/db';
-import { storage } from '../utils/storageAdapter';
+import { useVoiceDiary } from '../hooks/useDataHooks';
+import { ConfirmModal } from './shared';
 
 const VoiceDiary = ({ onClose }) => {
+    // Use centralized hook for voice entry metadata
+    const {
+        entries,
+        loading,
+        error,
+        addEntry: addEntryToHook,
+        deleteEntry: deleteEntryFromHook,
+        clearError
+    } = useVoiceDiary();
+
     const [isPaused, setIsPaused] = useState(false);
     const [playbackProgress, setPlaybackProgress] = useState(0); // 0-100
     const [playbackTime, setPlaybackTime] = useState(0);
 
-    // Missing State
-    const [entries, setEntries] = useState([]);
+    // Recording State
     const [isRecording, setIsRecording] = useState(false);
     const [recordingDuration, setRecordingDuration] = useState(0);
     const [permState, setPermState] = useState('prompt'); // 'prompt', 'granted', 'denied'
@@ -16,18 +26,20 @@ const VoiceDiary = ({ onClose }) => {
     const [saveSuccess, setSaveSuccess] = useState(false); // For heart burst feedback
     const [deleteConfirmId, setDeleteConfirmId] = useState(null); // For delete confirmation modal
 
-    // Missing Refs
+    // Refs
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
     const audioRef = useRef(new Audio());
     const pressTimerRef = useRef(null); // To detect actual "hold" intent vs tap
 
-    // Load entries on mount using storage adapter
+    // Show error from hook
     useEffect(() => {
-        const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
-        setEntries(saved);
-    }, []);
+        if (error) {
+            console.error('VoiceDiary error:', error);
+            clearError();
+        }
+    }, [error, clearError]);
 
     // Heart burst effect reset
     useEffect(() => {
@@ -72,23 +84,22 @@ const VoiceDiary = ({ onClose }) => {
 
             mediaRecorderRef.current.onstop = async () => {
                 const blob = new Blob(chunksRef.current, { type: mimeType });
-                // If recording was super short (< 1s), discard it (accidental tap)
-                if (chunksRef.current.reduce((acc, chunk) => acc + chunk.size, 0) < 1000) { // Rough size check, or better check duration
-                    // check handled in handleMouseUp roughly, but here we can just save
+                // If recording was super short (<1s), discard it (accidental tap)
+                if (chunksRef.current.reduce((acc, chunk) => acc + chunk.size, 0) < 1000) {
+                    // Too short, discard
+                    stream.getTracks().forEach(track => track.stop());
+                    setRecordingDuration(0);
+                    return;
                 }
 
                 const id = Date.now();
-                const newEntry = {
-                    id,
-                    date: new Date().toISOString(),
-                    title: `Capsule ${new Date().toLocaleDateString()}`,
-                    duration: recordingDuration
-                };
 
+                // Save blob to IndexedDB
                 await saveAudio(id, blob);
-                const updated = [newEntry, ...entries];
-                setEntries(updated);
-                storage.set(storage.KEYS.VOICE_ENTRIES, updated);
+
+                // Save metadata via hook
+                addEntryToHook(id, recordingDuration);
+
                 stream.getTracks().forEach(track => track.stop());
 
                 setRecordingDuration(0);
@@ -210,10 +221,12 @@ const VoiceDiary = ({ onClose }) => {
             setPlaybackTime(0);
         }
 
+        // Delete blob from IndexedDB
         await deleteAudio(deleteConfirmId);
-        const updated = entries.filter(e => e.id !== deleteConfirmId);
-        setEntries(updated);
-        storage.set(storage.KEYS.VOICE_ENTRIES, updated);
+
+        // Delete metadata via hook
+        deleteEntryFromHook(deleteConfirmId);
+
         setDeleteConfirmId(null);
     };
 
@@ -583,109 +596,17 @@ const VoiceDiary = ({ onClose }) => {
             </div>
 
             {/* Delete Confirmation Modal */}
-            {deleteConfirmId && (
-                <div
-                    style={{
-                        position: 'fixed',
-                        top: 0, left: 0, width: '100%', height: '100%',
-                        background: 'rgba(0, 0, 0, 0.7)',
-                        backdropFilter: 'blur(8px)',
-                        zIndex: 10000,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        animation: 'fadeIn 0.2s ease-out'
-                    }}
-                    onClick={cancelDelete}
-                >
-                    <div
-                        style={{
-                            background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-                            backdropFilter: 'blur(20px)',
-                            borderRadius: '28px',
-                            padding: '32px 28px',
-                            maxWidth: '340px',
-                            width: '90%',
-                            textAlign: 'center',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                            animation: 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Warning Icon */}
-                        <div style={{
-                            width: '72px', height: '72px',
-                            margin: '0 auto 20px',
-                            background: 'rgba(239, 68, 68, 0.15)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            border: '2px solid rgba(239, 68, 68, 0.3)'
-                        }}>
-                            <span style={{ fontSize: '2rem' }}>🗑️</span>
-                        </div>
-
-                        <h3 style={{
-                            color: 'white',
-                            fontSize: '1.4rem',
-                            fontWeight: '700',
-                            margin: '0 0 12px 0',
-                            fontFamily: 'var(--font-heading)'
-                        }}>
-                            Delete Voice Note?
-                        </h3>
-
-                        <p style={{
-                            color: '#94a3b8',
-                            fontSize: '0.95rem',
-                            margin: '0 0 28px 0',
-                            lineHeight: '1.5'
-                        }}>
-                            This memory will be permanently erased from your diary. This action cannot be undone.
-                        </p>
-
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button
-                                onClick={cancelDelete}
-                                style={{
-                                    flex: 1,
-                                    padding: '14px',
-                                    borderRadius: '16px',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    background: 'rgba(255, 255, 255, 0.05)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontWeight: '600',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Keep It
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                style={{
-                                    flex: 1,
-                                    padding: '14px',
-                                    borderRadius: '16px',
-                                    border: 'none',
-                                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                                    color: 'white',
-                                    fontSize: '1rem',
-                                    fontWeight: '700',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={deleteConfirmId !== null}
+                title="Delete Voice Note?"
+                message="This memory will be permanently erased from your diary. This action cannot be undone."
+                icon="🗑️"
+                confirmText="Delete"
+                cancelText="Keep It"
+                variant="danger"
+                onConfirm={confirmDelete}
+                onCancel={cancelDelete}
+            />
         </div>
     );
 };

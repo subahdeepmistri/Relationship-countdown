@@ -1,29 +1,45 @@
 import React, { useState } from 'react';
 
-const WelcomeScreen = ({ onComplete }) => {
+/**
+ * WelcomeScreen - Onboarding flow for new users
+ * 
+ * @param {function} updateRelationship - Context setter for relationship data
+ * @param {function} updateSettings - Context setter for app settings
+ */
+const WelcomeScreen = ({ updateRelationship, updateSettings }) => {
     const [step, setStep] = useState(1);
     const [names, setNames] = useState({ p1: '', p2: '' });
     const [date, setDate] = useState('');
     const [type, setType] = useState('couple');
 
     const handleNext = () => {
-        if (step === 1 && names.p1 && names.p2) setStep(2);
-        else if (step === 2 && date) {
-            // Save everything
-            localStorage.setItem('rc_partner1', names.p1);
-            localStorage.setItem('rc_partner2', names.p2);
-            localStorage.setItem('rc_start_date', date);
-            localStorage.setItem('rc_anniversary_type', type);
-            // We can skip the granular steps now
-            localStorage.setItem('rc_photos_set', 'true'); // Simplify for now or let them add later
-            localStorage.setItem('rc_consent_agreed', 'true');
-            localStorage.setItem('rc_setup_complete', 'true');
-
+        if (step === 1 && names.p1 && names.p2) {
+            setStep(2);
+        } else if (step === 2 && date) {
             // Create initial event
-            const newEvent = { id: 'init-start', title: 'The Beginning', date: date, emoji: '💖', isMain: true };
-            localStorage.setItem('rc_events', JSON.stringify([newEvent]));
+            const newEvent = {
+                id: 'init-start',
+                title: 'The Beginning',
+                date: date,
+                emoji: '💖',
+                isMain: true
+            };
 
-            onComplete();
+            // Update Context state (which also persists to localStorage)
+            updateRelationship({
+                partner1: names.p1.trim(),
+                partner2: names.p2.trim(),
+                startDate: date,
+                events: [newEvent]
+            });
+
+            updateSettings({
+                anniversaryType: type,
+                photosSet: true,    // Simplified - can add photos later
+                setupComplete: true
+            });
+
+            // No reload needed - React will re-render with the new state!
         }
     };
 

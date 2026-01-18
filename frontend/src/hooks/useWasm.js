@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // FAILSAFE: MOCK DATA FOR DEVELOPMENT (Since Rust is missing)
 const MOCK_START_DATE = new Date("2023-01-24T00:00:00"); // Updated to User Date
@@ -8,7 +8,7 @@ export function useWasm() {
   const [isLoaded, setIsLoaded] = useState(true); // Mock loaded immediately
 
   // Mock function to replace Rust's get_relationship_stats
-  const getRelationshipStats = () => {
+  const getRelationshipStats = useCallback(() => {
     const now = new Date();
     const diff = now - MOCK_START_DATE;
 
@@ -23,9 +23,9 @@ export function useWasm() {
       minutes: minutes % 60,
       seconds: seconds % 60,
     };
-  };
+  }, []);
 
-  const getAnniversaryCountdown = () => {
+  const getAnniversaryCountdown = useCallback(() => {
     const now = new Date();
     // Dynamic Date from Setup Wizard
     const storedDate = localStorage.getItem('rc_start_date') || '2023-01-24';
@@ -70,9 +70,9 @@ export function useWasm() {
       days_remaining: daysLeft,
       is_today: isToday
     };
-  };
+  }, []);
 
-  const getDailyLoveMessage = async () => {
+  const getDailyLoveMessage = useCallback(async () => {
     const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
     const cached = localStorage.getItem(`rc_message_${today}`);
 
@@ -129,7 +129,7 @@ export function useWasm() {
     // Only cache if we want consistency for the day even on reload
     localStorage.setItem(`rc_message_${today}`, msg);
     return msg;
-  };
+  }, []);
 
   return {
     isLoaded,

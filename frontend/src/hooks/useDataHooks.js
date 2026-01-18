@@ -382,3 +382,177 @@ export const useAppStats = () => {
 
     return { stats, loading };
 };
+
+// ============================================
+// useJourney - Journey Milestones Management
+// ============================================
+export const useJourney = () => {
+    const [milestones, setMilestones] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Load milestones on mount (sorted by date)
+    useEffect(() => {
+        try {
+            const saved = storage.get(storage.KEYS.JOURNEY, []);
+            const sorted = Array.isArray(saved)
+                ? saved.sort((a, b) => new Date(a.date) - new Date(b.date))
+                : [];
+            setMilestones(sorted);
+            setLoading(false);
+        } catch (err) {
+            console.error('useJourney: Load failed', err);
+            setError('Failed to load milestones');
+            setMilestones([]);
+            setLoading(false);
+        }
+    }, []);
+
+    // Add a new milestone
+    const addMilestone = useCallback((title, date, desc = '') => {
+        try {
+            const newMilestone = {
+                id: Date.now(),
+                title: title.trim(),
+                date,
+                desc: desc.trim(),
+                createdAt: Date.now()
+            };
+
+            setMilestones(prev => {
+                const updated = [...prev, newMilestone].sort(
+                    (a, b) => new Date(a.date) - new Date(b.date)
+                );
+
+                const result = storage.set(storage.KEYS.JOURNEY, updated);
+                if (!result.success) {
+                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
+                        ? 'Storage full! Delete some milestones first.'
+                        : 'Failed to save milestone.');
+                    return prev;
+                }
+
+                return updated;
+            });
+
+            return { success: true, milestone: newMilestone };
+        } catch (err) {
+            console.error('useJourney: Add failed', err);
+            setError('Failed to create milestone');
+            return { success: false };
+        }
+    }, []);
+
+    // Delete a milestone
+    const deleteMilestone = useCallback((id) => {
+        try {
+            setMilestones(prev => {
+                const updated = prev.filter(m => m.id !== id);
+                storage.set(storage.KEYS.JOURNEY, updated);
+                return updated;
+            });
+            return { success: true };
+        } catch (err) {
+            console.error('useJourney: Delete failed', err);
+            setError('Failed to delete milestone');
+            return { success: false };
+        }
+    }, []);
+
+    const clearError = useCallback(() => setError(null), []);
+
+    return {
+        milestones,
+        loading,
+        error,
+        clearError,
+        addMilestone,
+        deleteMilestone,
+        count: milestones.length
+    };
+};
+
+// ============================================
+// useVoiceDiary - Voice Entry Metadata Management
+// ============================================
+// Note: Audio blobs are stored in IndexedDB via db.js
+// This hook manages ONLY the metadata (entries list)
+export const useVoiceDiary = () => {
+    const [entries, setEntries] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    // Load entries on mount
+    useEffect(() => {
+        try {
+            const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
+            setEntries(Array.isArray(saved) ? saved : []);
+            setLoading(false);
+        } catch (err) {
+            console.error('useVoiceDiary: Load failed', err);
+            setError('Failed to load voice entries');
+            setEntries([]);
+            setLoading(false);
+        }
+    }, []);
+
+    // Add a new entry (metadata only - blob saved separately via db.js)
+    const addEntry = useCallback((id, duration) => {
+        try {
+            const newEntry = {
+                id,
+                date: new Date().toISOString(),
+                title: `Capsule ${new Date().toLocaleDateString()}`,
+                duration: duration || 0
+            };
+
+            setEntries(prev => {
+                const updated = [newEntry, ...prev];
+
+                const result = storage.set(storage.KEYS.VOICE_ENTRIES, updated);
+                if (!result.success) {
+                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
+                        ? 'Storage full! Delete some entries first.'
+                        : 'Failed to save entry.');
+                    return prev;
+                }
+
+                return updated;
+            });
+
+            return { success: true, entry: newEntry };
+        } catch (err) {
+            console.error('useVoiceDiary: Add failed', err);
+            setError('Failed to create entry');
+            return { success: false };
+        }
+    }, []);
+
+    // Delete an entry (metadata only - blob should be deleted separately)
+    const deleteEntry = useCallback((id) => {
+        try {
+            setEntries(prev => {
+                const updated = prev.filter(e => e.id !== id);
+                storage.set(storage.KEYS.VOICE_ENTRIES, updated);
+                return updated;
+            });
+            return { success: true };
+        } catch (err) {
+            console.error('useVoiceDiary: Delete failed', err);
+            setError('Failed to delete entry');
+            return { success: false };
+        }
+    }, []);
+
+    const clearError = useCallback(() => setError(null), []);
+
+    return {
+        entries,
+        loading,
+        error,
+        clearError,
+        addEntry,
+        deleteEntry,
+        count: entries.length
+    };
+};
