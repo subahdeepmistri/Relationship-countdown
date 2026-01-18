@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, startTransition } from 'react';
 import { useRelationship } from './context/RelationshipContext';
 
 import ThemeBackground from './components/ThemeBackground';
@@ -31,8 +31,8 @@ import AnniversarySelection from './components/AnniversarySelection';
 import DateSelection from './components/DateSelection';
 import PhotoSelection from './components/PhotoSelection';
 import NotificationSelection from './components/NotificationSelection';
-import WelcomeScreen from './components/WelcomeScreen'; // New Onboarding
-import NextMilestoneCard from './components/NextMilestoneCard'; // Phase 4 Milestone
+import WelcomeScreen from './components/WelcomeScreen';
+import NextMilestoneCard from './components/NextMilestoneCard';
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
 import { getStartDate } from './utils/relationshipLogic'; // Can likely be replaced by context data
 
@@ -140,8 +140,18 @@ function App() {
   }, []);
 
   // --- NAVIGATION HANDLERS ---
-  const handleNavigate = (view) => setActiveView(view);
-  const handleClose = () => setActiveView('home');
+  // Use startTransition to defer heavy component rendering
+  // This allows navbar animations to complete instantly while views load in background
+  const handleNavigate = (view) => {
+    startTransition(() => {
+      setActiveView(view);
+    });
+  };
+  const handleClose = () => {
+    startTransition(() => {
+      setActiveView('home');
+    });
+  };
 
   // --- RENDER GATES ---
 
