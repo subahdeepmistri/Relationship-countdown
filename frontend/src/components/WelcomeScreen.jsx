@@ -6,7 +6,7 @@ import React, { useState } from 'react';
  * @param {function} updateRelationship - Context setter for relationship data
  * @param {function} updateSettings - Context setter for app settings
  */
-const WelcomeScreen = ({ updateRelationship, updateSettings }) => {
+const WelcomeScreen = ({ updateRelationship, updateSettings, onBack }) => {
     const [step, setStep] = useState(1);
     const [names, setNames] = useState({ p1: '', p2: '' });
     const [date, setDate] = useState('');
@@ -85,9 +85,24 @@ const WelcomeScreen = ({ updateRelationship, updateSettings }) => {
                                 style={inputStyle}
                             />
                         </div>
-                        <button onClick={handleNext} disabled={!names.p1 || !names.p2} style={buttonStyle}>
-                            Next &rarr;
-                        </button>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', alignItems: 'center' }}>
+                            {onBack && (
+                                <button
+                                    onClick={onBack}
+                                    style={{
+                                        padding: '15px 25px', borderRadius: '30px',
+                                        background: 'transparent', border: '2px solid #e2e8f0',
+                                        color: '#64748b', fontSize: '1rem', fontWeight: '600',
+                                        cursor: 'pointer', transition: 'all 0.2s'
+                                    }}
+                                >
+                                    ← Back
+                                </button>
+                            )}
+                            <button onClick={handleNext} disabled={!names.p1 || !names.p2} style={buttonStyle}>
+                                Next &rarr;
+                            </button>
+                        </div>
                     </div>
                 )}
 

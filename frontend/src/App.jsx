@@ -32,6 +32,7 @@ import DateSelection from './components/DateSelection';
 import PhotoSelection from './components/PhotoSelection';
 import NotificationSelection from './components/NotificationSelection';
 import WelcomeScreen from './components/WelcomeScreen';
+import OnboardingChoice from './components/OnboardingChoice';
 import NextMilestoneCard from './components/NextMilestoneCard';
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
 import { getStartDate } from './utils/relationshipLogic'; // Can likely be replaced by context data
@@ -51,6 +52,9 @@ function App() {
 
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
+  const [showOnboardingChoice, setShowOnboardingChoice] = useState(
+    !relationship.startDate && !localStorage.getItem('rc_onboarding_choice_made')
+  );
 
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
@@ -159,12 +163,31 @@ function App() {
 
 
 
-  // 2. Onboarding Flow
+  // 2. Onboarding Flow - Show OnboardingChoice first for new users
+  if (!relationship.startDate && showOnboardingChoice) {
+    return (
+      <OnboardingChoice
+        onStartFresh={() => {
+          localStorage.setItem('rc_onboarding_choice_made', 'true');
+          setShowOnboardingChoice(false);
+        }}
+        onImportComplete={() => {
+          localStorage.setItem('rc_onboarding_choice_made', 'true');
+          window.location.reload(); // Reload to pick up imported data
+        }}
+      />
+    );
+  }
+
   if (!relationship.startDate) {
     return (
       <WelcomeScreen
         updateRelationship={updateRelationship}
         updateSettings={updateSettings}
+        onBack={() => {
+          localStorage.removeItem('rc_onboarding_choice_made');
+          setShowOnboardingChoice(true);
+        }}
       />
     );
   }

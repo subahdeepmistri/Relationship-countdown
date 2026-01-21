@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { storage } from '../utils/storageAdapter';
 
 // --- Crypto Helpers (Unchanged Logic, better organization) ---
 async function encryptData(data, password) {
@@ -70,7 +71,11 @@ const Icons = {
     Shield: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>,
     FileDown: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="m9 15 3 3 3-3"></path></svg>,
     HelpCircle: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>,
-    Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
+    Capsule: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="3" width="12" height="18" rx="6" ry="6" transform="rotate(30 12 12)" /><line x1="9" y1="12" x2="15" y2="12" transform="rotate(30 12 12)" /></svg>,
+    Target: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></svg>,
+    Image: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>,
+    Headphones: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 14v3a2 2 0 0 0 2 2h2v-7h-2" /><path d="M17 14v3a2 2 0 0 0 2 2h2v-7h-2" /><path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-9 9" /></svg>
 };
 
 const SyncManager = ({ onClose }) => {
@@ -85,17 +90,42 @@ const SyncManager = ({ onClose }) => {
     const [showOverwriteModal, setShowOverwriteModal] = useState(false);
     const [pendingImportData, setPendingImportData] = useState(null);
     const [showHelp, setShowHelp] = useState(false);
+    const [importAction, setImportAction] = useState('replace'); // 'replace' | 'merge'
+    const fileInputRef = useRef(null);
 
     // Password strength (memoized)
     const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
-    // Data summary for preview
+    // Complete data summary for preview (using storage adapter)
     const dataSummary = useMemo(() => ({
-        capsules: JSON.parse(localStorage.getItem('rc_capsules') || '[]').length,
-        goals: JSON.parse(localStorage.getItem('rc_goals') || '[]').length,
-        memories: JSON.parse(localStorage.getItem('rc_journey') || '[]').length,
-        voice: JSON.parse(localStorage.getItem('rc_voice_entries') || '[]').length
+        capsules: storage.get(storage.KEYS.CAPSULES, []).length,
+        goals: storage.get(storage.KEYS.GOALS, []).length,
+        memories: storage.get(storage.KEYS.JOURNEY, []).length,
+        voice: storage.get(storage.KEYS.VOICE_ENTRIES, []).length,
+        loveNotes: storage.get(storage.KEYS.LOVE_NOTES, []).length,
+        events: storage.get(storage.KEYS.EVENTS, []).length,
+        partner1: storage.get(storage.KEYS.PARTNER_1, ''),
+        partner2: storage.get(storage.KEYS.PARTNER_2, ''),
+        startDate: storage.get(storage.KEYS.START_DATE, ''),
+        lastSync: storage.get(storage.KEYS.LAST_SYNC, null),
     }), []);
+
+    // Calculate total data for empty state detection
+    const totalData = dataSummary.capsules + dataSummary.goals + dataSummary.memories + dataSummary.voice + dataSummary.loveNotes;
+
+    // Format last sync time
+    const formatLastSync = (isoString) => {
+        if (!isoString) return null;
+        const date = new Date(isoString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) return 'Today';
+        if (diffDays === 1) return 'Yesterday';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        return date.toLocaleDateString();
+    };
 
     // --- Actions ---
     const handleExport = async () => {
@@ -103,22 +133,23 @@ const SyncManager = ({ onClose }) => {
         if (password.length < 6) { setStatus({ type: 'error', msg: 'Password too short (min 6 characters)' }); return; }
         if (!confirmedPrivacy) { setStatus({ type: 'error', msg: 'Please accept the privacy warning' }); return; }
 
+        // Use storage adapter for COMPLETE data export
+        const allData = storage.exportAll();
         const data = {
-            capsules: JSON.parse(localStorage.getItem('rc_capsules') || '[]'),
-            goals: JSON.parse(localStorage.getItem('rc_goals') || '[]'),
-            journey: JSON.parse(localStorage.getItem('rc_journey') || '[]'),
-            voice: JSON.parse(localStorage.getItem('rc_voice_entries') || '[]'),
-            settings: {
-                music: localStorage.getItem('rc_bg_music_enabled'),
-                notifications: localStorage.getItem('rc_notifications')
-            },
-            exportedAt: new Date().toISOString()
+            ...allData,
+            _meta: {
+                appVersion: '1.1.0',
+                exportedAt: new Date().toISOString(),
+                syncVersion: 2 // Version for future migrations
+            }
         };
 
         try {
             setStatus({ type: 'loading', msg: 'Encrypting with AES-256...' });
             const encrypted = await encryptData(data, password);
             setExportData(encrypted);
+            // Save last sync timestamp
+            storage.set(storage.KEYS.LAST_SYNC, new Date().toISOString());
             setStatus({ type: 'success', msg: 'Encrypted successfully! Copy or download below.' });
         } catch (e) {
             setStatus({ type: 'error', msg: 'Encryption failed' });
@@ -147,15 +178,18 @@ const SyncManager = ({ onClose }) => {
 
     const confirmImport = () => {
         if (pendingImportData) {
-            // Restore data
-            if (pendingImportData.capsules) localStorage.setItem('rc_capsules', JSON.stringify(pendingImportData.capsules));
-            if (pendingImportData.goals) localStorage.setItem('rc_goals', JSON.stringify(pendingImportData.goals));
-            if (pendingImportData.journey) localStorage.setItem('rc_journey', JSON.stringify(pendingImportData.journey));
-            if (pendingImportData.voice) localStorage.setItem('rc_voice_entries', JSON.stringify(pendingImportData.voice));
+            // Use storage adapter for COMPLETE data import with merge support
+            const result = storage.importAll(pendingImportData, importAction === 'merge');
 
-            setShowOverwriteModal(false);
-            setStatus({ type: 'success', msg: 'Sync Complete! Restarting app...' });
-            setTimeout(() => window.location.reload(), 1500);
+            if (result.success) {
+                // Save last sync timestamp
+                storage.set(storage.KEYS.LAST_SYNC, new Date().toISOString());
+                setShowOverwriteModal(false);
+                setStatus({ type: 'success', msg: 'Sync Complete! Restarting app...' });
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                setStatus({ type: 'error', msg: 'Import failed. Please try again.' });
+            }
         }
     };
 
@@ -184,6 +218,38 @@ const SyncManager = ({ onClose }) => {
         setStatus({ type: 'success', msg: 'File downloaded!' });
     };
 
+    // File upload handler
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            setImportString(event.target.result);
+            setStatus({ type: 'success', msg: `File loaded: ${file.name}` });
+        };
+        reader.onerror = () => {
+            setStatus({ type: 'error', msg: 'Failed to read file' });
+        };
+        reader.readAsText(file);
+    };
+
+    // Calculate incoming data summary for preview
+    const getIncomingDataSummary = (data) => {
+        if (!data) return null;
+        return {
+            capsules: (data.CAPSULES || []).length,
+            goals: (data.GOALS || []).length,
+            memories: (data.JOURNEY || []).length,
+            voice: (data.VOICE_ENTRIES || []).length,
+            loveNotes: (data.LOVE_NOTES || []).length,
+            events: (data.EVENTS || []).length,
+            partner1: data.PARTNER_1 || '',
+            partner2: data.PARTNER_2 || '',
+            startDate: data.START_DATE || '',
+        };
+    };
+
     return (
         <div style={{
             position: 'fixed', inset: 0,
@@ -198,39 +264,122 @@ const SyncManager = ({ onClose }) => {
             {showOverwriteModal && (
                 <div style={{
                     position: 'fixed', inset: 0,
-                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+                    background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)',
                     zIndex: 3010, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '20px'
+                    padding: '20px', overflowY: 'auto'
                 }}>
                     <div style={{
-                        background: 'rgba(30, 41, 59, 0.95)', padding: '30px', borderRadius: '24px',
-                        border: '1px solid rgba(255,255,255,0.1)', textAlign: 'center', maxWidth: '380px',
+                        background: 'rgba(30, 41, 59, 0.98)', padding: '28px', borderRadius: '24px',
+                        border: '1px solid rgba(255,255,255,0.1)', maxWidth: '420px', width: '100%',
                         boxShadow: '0 25px 50px rgba(0,0,0,0.5)', animation: 'fadeIn 0.3s ease-out'
                     }}>
-                        <div style={{
-                            width: '64px', height: '64px', margin: '0 auto 20px',
-                            background: 'rgba(239, 68, 68, 0.15)', borderRadius: '50%',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '2rem' }}>⚡</span>
+                        {/* Header */}
+                        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                            <div style={{
+                                width: '56px', height: '56px', margin: '0 auto 16px',
+                                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', borderRadius: '50%',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <span style={{ fontSize: '1.5rem' }}>📥</span>
+                            </div>
+                            <h3 style={{ color: 'white', marginBottom: '8px', fontSize: '1.2rem', fontWeight: '700' }}>
+                                Incoming Data Preview
+                            </h3>
+                            <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                                Review what you're about to import
+                            </p>
                         </div>
-                        <h3 style={{ color: 'white', marginBottom: '12px', fontSize: '1.3rem', fontWeight: '700' }}>
-                            Replace All Data?
-                        </h3>
-                        <p style={{ color: '#94a3b8', marginBottom: '24px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                            This will <strong style={{ color: '#fca5a5' }}>permanently overwrite</strong> all your current app data with the imported backup.
-                        </p>
-                        <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
-                            <button onClick={confirmImport} style={{
-                                padding: '14px', background: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5',
-                                border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '14px', fontWeight: '600',
-                                cursor: 'pointer', transition: 'all 0.2s'
-                            }}>Yes, Replace Everything</button>
+
+                        {/* Incoming Data Summary */}
+                        {pendingImportData && (
+                            <div style={{
+                                background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.2)',
+                                borderRadius: '14px', padding: '16px', marginBottom: '20px'
+                            }}>
+                                <div style={{ fontSize: '0.75rem', color: '#a78bfa', marginBottom: '10px', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    From Partner's Device
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {(() => {
+                                        const incoming = getIncomingDataSummary(pendingImportData);
+                                        return incoming ? (
+                                            <>
+                                                <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>📦 {incoming.capsules} Capsules</div>
+                                                <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>🎯 {incoming.goals} Goals</div>
+                                                <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>📸 {incoming.memories} Memories</div>
+                                                <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>🎧 {incoming.voice} Voice Notes</div>
+                                                {incoming.loveNotes > 0 && <div style={{ color: '#e2e8f0', fontSize: '0.85rem' }}>💌 {incoming.loveNotes} Love Notes</div>}
+                                                {incoming.startDate && <div style={{ color: '#e2e8f0', fontSize: '0.85rem', gridColumn: '1 / -1' }}>📅 Started: {new Date(incoming.startDate).toLocaleDateString()}</div>}
+                                            </>
+                                        ) : <div style={{ color: '#94a3b8' }}>Data preview unavailable</div>;
+                                    })()}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Action Selection */}
+                        <div style={{ marginBottom: '20px' }}>
+                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '12px' }}>Choose import method:</div>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                    onClick={() => setImportAction('replace')}
+                                    style={{
+                                        flex: 1, padding: '12px', borderRadius: '12px',
+                                        background: importAction === 'replace' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255,255,255,0.03)',
+                                        border: importAction === 'replace' ? '2px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                                        color: importAction === 'replace' ? '#fca5a5' : '#94a3b8',
+                                        fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'center'
+                                    }}
+                                >
+                                    🔄 Replace All
+                                    <div style={{ fontSize: '0.7rem', marginTop: '4px', fontWeight: '400' }}>Overwrites existing</div>
+                                </button>
+                                <button
+                                    onClick={() => setImportAction('merge')}
+                                    style={{
+                                        flex: 1, padding: '12px', borderRadius: '12px',
+                                        background: importAction === 'merge' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255,255,255,0.03)',
+                                        border: importAction === 'merge' ? '2px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+                                        color: importAction === 'merge' ? '#34d399' : '#94a3b8',
+                                        fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer', textAlign: 'center'
+                                    }}
+                                >
+                                    ➕ Merge
+                                    <div style={{ fontSize: '0.7rem', marginTop: '4px', fontWeight: '400' }}>Keeps existing data</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Warning for Replace */}
+                        {importAction === 'replace' && (
+                            <div style={{
+                                background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+                                borderRadius: '12px', padding: '12px', marginBottom: '20px',
+                                fontSize: '0.8rem', color: '#fca5a5', display: 'flex', gap: '8px', alignItems: 'flex-start'
+                            }}>
+                                <span>⚠️</span>
+                                <span>This will <strong>permanently remove</strong> your current data and replace it with the imported data.</span>
+                            </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div style={{ display: 'flex', gap: '12px' }}>
                             <button onClick={cancelImport} style={{
-                                padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                                flex: 1, padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white',
                                 border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', fontWeight: '600',
                                 cursor: 'pointer', transition: 'all 0.2s'
                             }}>Cancel</button>
+                            <button onClick={confirmImport} style={{
+                                flex: 1, padding: '14px',
+                                background: importAction === 'replace'
+                                    ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                                    : 'linear-gradient(135deg, #10b981, #059669)',
+                                color: 'white', border: 'none', borderRadius: '14px', fontWeight: '600',
+                                cursor: 'pointer', transition: 'all 0.2s',
+                                boxShadow: importAction === 'replace' ? '0 8px 20px rgba(239, 68, 68, 0.3)' : '0 8px 20px rgba(16, 185, 129, 0.3)'
+                            }}>
+                                {importAction === 'replace' ? '🔄 Replace Now' : '✓ Merge Now'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -283,24 +432,79 @@ const SyncManager = ({ onClose }) => {
                     background: 'rgba(255,255,255,0.03)', borderRadius: '16px',
                     padding: '16px', marginBottom: '20px', border: '1px solid rgba(255,255,255,0.05)'
                 }}>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px', fontWeight: '500' }}>
-                        Your Data Summary
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: '500' }}>
+                            Your Data Summary
+                        </div>
+                        {dataSummary.lastSync && (
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '4px 10px', borderRadius: '12px',
+                                background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)'
+                            }}>
+                                <span style={{ fontSize: '0.65rem' }}>🔄</span>
+                                <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: '600' }}>
+                                    Synced {formatLastSync(dataSummary.lastSync)}
+                                </span>
+                            </div>
+                        )}
                     </div>
                     <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                            <span>💊</span> {dataSummary.capsules} Capsules
+                            <span style={{ color: '#f472b6' }}><Icons.Capsule /></span> {dataSummary.capsules} Capsules
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                            <span>🎯</span> {dataSummary.goals} Goals
+                            <span style={{ color: '#60a5fa' }}><Icons.Target /></span> {dataSummary.goals} Goals
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                            <span>💭</span> {dataSummary.memories} Memories
+                            <span style={{ color: '#a78bfa' }}><Icons.Image /></span> {dataSummary.memories} Memories
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
-                            <span>🎧</span> {dataSummary.voice} Voice Notes
+                            <span style={{ color: '#34d399' }}><Icons.Headphones /></span> {dataSummary.voice} Voice Notes
                         </div>
+                        {dataSummary.loveNotes > 0 && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#e2e8f0', fontSize: '0.85rem' }}>
+                                <span style={{ color: '#fb7185' }}>💌</span> {dataSummary.loveNotes} Love Notes
+                            </div>
+                        )}
                     </div>
+                    {dataSummary.startDate && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem', color: '#94a3b8' }}>
+                            📅 Together since {new Date(dataSummary.startDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </div>
+                    )}
                 </div>
+
+                {/* Quick Receive Banner - For new users or empty states */}
+                {totalData === 0 && mode === 'export' && (
+                    <div style={{
+                        background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))',
+                        border: '1px solid rgba(139, 92, 246, 0.3)',
+                        borderRadius: '20px', padding: '20px', marginBottom: '20px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '2rem', marginBottom: '10px' }}>💝</div>
+                        <h3 style={{ color: 'white', fontSize: '1.1rem', fontWeight: '700', marginBottom: '8px' }}>
+                            Want to sync with your partner?
+                        </h3>
+                        <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '16px', lineHeight: '1.5' }}>
+                            If your partner shared a sync code with you, click below to receive their data and start your shared journey.
+                        </p>
+                        <button
+                            onClick={() => setMode('import')}
+                            style={{
+                                padding: '14px 28px', borderRadius: '14px',
+                                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                                color: 'white', border: 'none', fontWeight: '700', fontSize: '1rem',
+                                cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px',
+                                boxShadow: '0 8px 20px rgba(59, 130, 246, 0.3)',
+                                transition: 'all 0.2s'
+                            }}
+                        >
+                            <Icons.Download /> Receive Data from Partner
+                        </button>
+                    </div>
+                )}
 
                 {/* Collapsible Help Section */}
                 <div style={{
@@ -537,12 +741,50 @@ const SyncManager = ({ onClose }) => {
                         </div>
                     ) : (
                         <div className="fade-in">
+                            {/* File Upload Zone */}
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                accept=".rcbackup,.json"
+                                onChange={handleFileUpload}
+                                style={{ display: 'none' }}
+                            />
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '2px dashed rgba(255,255,255,0.15)',
+                                    borderRadius: '16px', padding: '20px',
+                                    textAlign: 'center', cursor: 'pointer',
+                                    marginBottom: '16px', transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.5)'}
+                                onMouseLeave={e => e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'}
+                            >
+                                <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>📁</div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                                    Click to upload <span style={{ color: '#a78bfa' }}>.rcbackup</span> file
+                                </div>
+                                <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '4px' }}>
+                                    or paste the code below
+                                </div>
+                            </div>
+
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: '12px',
+                                margin: '16px 0', color: '#64748b', fontSize: '0.8rem'
+                            }}>
+                                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                                <span>OR PASTE CODE</span>
+                                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                            </div>
+
                             <textarea
-                                placeholder="Paste the encrypted code here..."
+                                placeholder="Paste the encrypted sync code from your partner..."
                                 value={importString}
                                 onChange={e => setImportString(e.target.value)}
                                 style={{
-                                    width: '100%', height: '140px', padding: '16px',
+                                    width: '100%', height: '120px', padding: '16px',
                                     background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)',
                                     borderRadius: '16px', color: 'white', fontSize: '0.9rem', outline: 'none',
                                     fontFamily: 'monospace', resize: 'none', marginBottom: '20px'
@@ -550,12 +792,19 @@ const SyncManager = ({ onClose }) => {
                             />
                             <button
                                 onClick={handleImport}
+                                disabled={!importString || !password}
                                 style={{
-                                    width: '100%', padding: '16px', borderRadius: '20px',
-                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                    color: 'white', border: 'none', fontWeight: 'bold', fontSize: '1rem',
-                                    cursor: 'pointer', boxShadow: '0 10px 25px rgba(16, 185, 129, 0.3)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                    width: '100%', padding: '16px', borderRadius: '16px',
+                                    background: importString && password
+                                        ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                        : 'rgba(255,255,255,0.05)',
+                                    color: importString && password ? 'white' : '#64748b',
+                                    border: 'none', fontWeight: 'bold', fontSize: '1rem',
+                                    cursor: importString && password ? 'pointer' : 'not-allowed',
+                                    boxShadow: importString && password ? '0 10px 25px rgba(16, 185, 129, 0.3)' : 'none',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                    opacity: importString && password ? 1 : 0.6,
+                                    transition: 'all 0.2s'
                                 }}
                             >
                                 <Icons.Unlock /> Decrypt & Restore
