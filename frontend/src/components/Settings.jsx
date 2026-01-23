@@ -33,9 +33,13 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
     const [toastMsg, setToastMsg] = useState('');
     const [currentTime, setCurrentTime] = useState(new Date());
 
+    // Anniversary Type
+    const [anniversaryType, setAnniversaryType] = useState('');
+
     // Collapsible Sections State
     const [expandedSections, setExpandedSections] = useState({
         profile: true,
+        personalization: false,
         timeline: false,
         notifications: false,
         ai: false,
@@ -60,6 +64,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             setPartner1(relationship.partner1);
             setPartner2(relationship.partner2);
             setNickname(relationship.nickname);
+            setAnniversaryType(settings.anniversaryType || 'couple');
 
             setLocalEvents(relationship.events || []);
 
@@ -72,6 +77,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             // Expand sections that have content
             setExpandedSections({
                 profile: true,
+                personalization: !!(relationship.partner1 || relationship.partner2 || relationship.nickname),
                 timeline: (relationship.events || []).length > 0,
                 notifications: settings.notifications,
                 ai: settings.aiEnabled,
@@ -156,6 +162,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         if (partner1 !== relationship.partner1) return true;
         if (partner2 !== relationship.partner2) return true;
         if (nickname !== relationship.nickname) return true;
+        if (anniversaryType !== (settings.anniversaryType || 'couple')) return true;
 
         // Simple length check for events or stringify for deeper check
         if (JSON.stringify(localEvents) !== JSON.stringify(relationship.events || [])) return true;
@@ -193,6 +200,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             notifications: enableNotifications,
             aiEnabled: enableAI,
             aiKey: apiKey.replace(/^Bearer\s+/i, '').trim(),
+            anniversaryType: anniversaryType,
 
             longDistance: {
                 enabled: ldEnabled,
@@ -449,7 +457,140 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                     `}</style>
 
 
-                    {/* --- 2. NOTIFICATIONS & AI --- */}
+                    {/* --- 2. PERSONALIZATION --- */}
+                    <div className="settings-section-card" style={{
+                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+                        backdropFilter: 'blur(10px)', borderRadius: '20px',
+                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden', transition: 'all 0.3s ease'
+                    }}>
+                        <button
+                            onClick={() => toggleSection('personalization')}
+                            aria-expanded={expandedSections.personalization}
+                            style={{
+                                width: '100%', padding: '18px', background: 'transparent',
+                                border: 'none', cursor: 'pointer', display: 'flex',
+                                alignItems: 'center', justifyContent: 'space-between',
+                                color: 'white', textAlign: 'left'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{
+                                    width: '42px', height: '42px', borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(249, 115, 22, 0.2))',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#fb7185'
+                                }}>
+                                    <Icons.Heart />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Personalization</div>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                                        {!expandedSections.personalization
+                                            ? (partner1 && partner2 ? `${partner1} & ${partner2}` : 'Configure names & type')
+                                            : 'Names, nickname & relationship type'}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                transform: expandedSections.personalization ? 'rotate(180deg)' : 'rotate(0)',
+                                transition: 'transform 0.3s ease'
+                            }}>
+                                <Icons.Chevron />
+                            </div>
+                        </button>
+
+                        {expandedSections.personalization && (
+                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                                {/* Partner Names */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px', fontWeight: '500' }}>Your Names</div>
+                                    <div style={{ display: 'flex', gap: '10px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Partner 1"
+                                                value={partner1}
+                                                onChange={(e) => setPartner1(e.target.value)}
+                                                className="glass-input"
+                                                style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', color: '#f472b6', fontSize: '1.2rem' }}>💕</div>
+                                        <div style={{ flex: 1 }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Partner 2"
+                                                value={partner2}
+                                                onChange={(e) => setPartner2(e.target.value)}
+                                                className="glass-input"
+                                                style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Nickname */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '8px', fontWeight: '500' }}>Relationship Nickname</div>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., Our Forever, Soulmates, etc."
+                                        value={nickname}
+                                        onChange={(e) => setNickname(e.target.value)}
+                                        className="glass-input"
+                                        style={{ width: '100%', padding: '12px', fontSize: '0.9rem' }}
+                                    />
+                                    <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '6px', marginBottom: 0 }}>
+                                        Displayed instead of names in the header
+                                    </p>
+                                </div>
+
+                                {/* Anniversary Type */}
+                                <div style={{ background: 'rgba(0,0,0,0.15)', padding: '14px', borderRadius: '12px' }}>
+                                    <div style={{ fontSize: '0.85rem', color: '#e2e8f0', marginBottom: '10px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <Icons.Tag /> Anniversary Type
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                                        {[
+                                            { value: 'couple', label: '💑 Couple', color: '#f472b6' },
+                                            { value: 'wedding', label: '💒 Wedding', color: '#a78bfa' },
+                                            { value: 'birthday', label: '🎂 Birthday', color: '#fbbf24' },
+                                            { value: 'puppy', label: '🐕 Puppy', color: '#fb923c' },
+                                            { value: 'kitten', label: '🐱 Kitten', color: '#38bdf8' },
+                                            { value: 'general', label: '📅 General', color: '#94a3b8' }
+                                        ].map(type => (
+                                            <button
+                                                key={type.value}
+                                                onClick={() => setAnniversaryType(type.value)}
+                                                style={{
+                                                    padding: '10px 8px',
+                                                    background: anniversaryType === type.value
+                                                        ? `${type.color}20`
+                                                        : 'rgba(255,255,255,0.05)',
+                                                    border: `1px solid ${anniversaryType === type.value ? type.color : 'rgba(255,255,255,0.1)'}`,
+                                                    borderRadius: '10px',
+                                                    color: anniversaryType === type.value ? type.color : '#94a3b8',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                {type.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {/* --- 3. NOTIFICATIONS & AI --- */}
                     <div className="settings-section-card" style={{
                         marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
                         backdropFilter: 'blur(10px)', borderRadius: '20px',
@@ -855,7 +996,9 @@ const Icons = {
     X: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>,
     Info: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>,
     Map: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>,
-    Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    Chevron: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
+    Heart: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>,
+    Tag: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" /><path d="M7 7h.01" /></svg>
 };
 
 const SectionHeader = ({ title, icon }) => (

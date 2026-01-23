@@ -22,6 +22,8 @@ import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
 import LegacyCapsule from './components/LegacyCapsule';
 import AboutSection from './components/AboutSection';
+import SystemStatusCard from './components/SystemStatusCard';
+import FeatureStatsCard from './components/FeatureStatsCard';
 
 import Navbar from './components/Navbar';
 
@@ -518,7 +520,9 @@ function App() {
 
           <NextMilestoneCard />
 
+          <SystemStatusCard onOpenSettings={() => setActiveView('settings')} />
 
+          <FeatureStatsCard onNavigate={handleNavigate} />
 
           <MessageCard />
           <LoveNotes />
