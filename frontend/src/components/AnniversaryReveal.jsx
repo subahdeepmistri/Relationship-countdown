@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
+import SyncManager from './SyncManager';
 import './AnniversaryReveal.css';
 
 // REVEAL TIME: January 24th, 2026 at 12:00 AM (midnight) IST
@@ -9,6 +10,11 @@ function AnniversaryReveal({ children }) {
     const [isRevealed, setIsRevealed] = useState(false);
     const [showTransition, setShowTransition] = useState(false);
     const [isUnlocked, setIsUnlocked] = useState(false);
+    const [showSyncManager, setShowSyncManager] = useState(false);
+
+    // Triple-tap detection for secret sync access
+    const tapCountRef = useRef(0);
+    const tapTimerRef = useRef(null);
 
     useEffect(() => {
         // Check for dev bypass
@@ -16,6 +22,12 @@ function AnniversaryReveal({ children }) {
         if (params.get('unlock') === 'true') {
             setIsUnlocked(true);
             setIsRevealed(true);
+            return;
+        }
+
+        // Check for sync bypass
+        if (params.get('sync') === 'true') {
+            setShowSyncManager(true);
             return;
         }
 
@@ -41,6 +53,29 @@ function AnniversaryReveal({ children }) {
             return () => clearInterval(timer);
         }
     }, []);
+
+    // Handle secret triple-tap on heart to access sync
+    const handleSecretTap = () => {
+        tapCountRef.current += 1;
+
+        // Clear previous timer
+        if (tapTimerRef.current) {
+            clearTimeout(tapTimerRef.current);
+        }
+
+        // If 3 taps within 1 second, open sync
+        if (tapCountRef.current >= 3) {
+            tapCountRef.current = 0;
+            setShowSyncManager(true);
+            // Haptic feedback if available
+            if (navigator.vibrate) navigator.vibrate(100);
+        } else {
+            // Reset tap count after 1 second
+            tapTimerRef.current = setTimeout(() => {
+                tapCountRef.current = 0;
+            }, 1000);
+        }
+    };
 
     const triggerReveal = () => {
         setShowTransition(true);
@@ -76,6 +111,11 @@ function AnniversaryReveal({ children }) {
             setIsRevealed(true);
         }, 5000);
     };
+
+    // Show Sync Manager overlay if secret accessed
+    if (showSyncManager && !isRevealed) {
+        return <SyncManager onClose={() => setShowSyncManager(false)} />;
+    }
 
     // If revealed, render the app
     if (isRevealed) {
@@ -134,7 +174,13 @@ function AnniversaryReveal({ children }) {
 
                 {/* Main Teaser Message */}
                 <div className="teaser-message">
-                    <div className="teaser-icon">
+                    {/* SECRET: Triple-tap heart to access sync */}
+                    <div
+                        className="teaser-icon"
+                        onClick={handleSecretTap}
+                        style={{ cursor: 'pointer' }}
+                        title="Something hidden here..."
+                    >
                         <div className="heart-glow">💕</div>
                     </div>
 
@@ -167,3 +213,4 @@ function AnniversaryReveal({ children }) {
 }
 
 export default AnniversaryReveal;
+
