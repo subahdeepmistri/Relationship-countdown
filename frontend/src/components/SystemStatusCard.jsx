@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRelationship } from '../context/RelationshipContext';
+import { storage } from '../utils/storageAdapter';
 
 /**
  * SystemStatusCard - Premium status indicator for active features
@@ -18,6 +19,13 @@ const SystemStatusCard = ({ onOpenSettings }) => {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [partnerTime, setPartnerTime] = useState('--:--');
     const [meetingCountdown, setMeetingCountdown] = useState(null);
+    const [lastSync, setLastSync] = useState(null);
+
+    // Load last sync time
+    useEffect(() => {
+        const syncTime = storage.get(storage.KEYS.LAST_SYNC, null);
+        setLastSync(syncTime);
+    }, []);
 
     useEffect(() => {
         if (!hasLongDistance) return;
@@ -189,6 +197,15 @@ const SystemStatusCard = ({ onOpenSettings }) => {
                         label={`${eventsCount} Event${eventsCount > 1 ? 's' : ''}`}
                         color="#F472B6"
                         bgColor="rgba(244, 114, 182, 0.1)"
+                    />
+                )}
+
+                {lastSync && (
+                    <StatusBadge
+                        icon="🔄"
+                        label={formatSyncTime(lastSync)}
+                        color="#3B82F6"
+                        bgColor="rgba(59, 130, 246, 0.1)"
                     />
                 )}
             </div>

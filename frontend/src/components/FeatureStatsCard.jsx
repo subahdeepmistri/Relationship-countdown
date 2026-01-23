@@ -18,6 +18,7 @@ const FeatureStatsCard = ({ onNavigate }) => {
     const [photoCount, setPhotoCount] = useState(0);
     const [dailyStreak, setDailyStreak] = useState(0);
     const [legacyCount, setLegacyCount] = useState(0);
+    const [loveNotesCount, setLoveNotesCount] = useState(0);
     const [storageInfo, setStorageInfo] = useState({ percentUsed: 0 });
 
     useEffect(() => {
@@ -29,6 +30,10 @@ const FeatureStatsCard = ({ onNavigate }) => {
         // Load legacy messages count
         const legacy = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
         setLegacyCount(Array.isArray(legacy) ? legacy.length : 0);
+
+        // Load love notes count
+        const loveNotes = storage.get(storage.KEYS.LOVE_NOTES, []);
+        setLoveNotesCount(Array.isArray(loveNotes) ? loveNotes.length : 0);
 
         // Calculate daily answer streak
         const answers = storage.get(storage.KEYS.DAILY_ANSWERS, {});
@@ -113,6 +118,15 @@ const FeatureStatsCard = ({ onNavigate }) => {
             subtitle: photoCount > 0 ? 'photos' : null,
             color: '#F59E0B',
             gradient: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)'
+        },
+        {
+            id: 'notes',
+            icon: '💌',
+            label: 'Love Notes',
+            value: loveNotesCount,
+            subtitle: loveNotesCount > 0 ? 'sweet notes' : null,
+            color: '#EC4899',
+            gradient: 'linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%)'
         },
         {
             id: 'daily',
