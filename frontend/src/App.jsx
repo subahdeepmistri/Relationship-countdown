@@ -1,5 +1,7 @@
 import React, { useState, useEffect, startTransition } from 'react';
 import { useRelationship } from './context/RelationshipContext';
+import LZString from 'lz-string';
+
 
 import ThemeBackground from './components/ThemeBackground';
 import Counter from './components/Counter';
@@ -18,6 +20,8 @@ import DistanceClock from './components/DistanceClock';
 import FutureGoalsTimeline from './components/FutureGoalsTimeline';
 import YearlyRecap from './components/YearlyRecap';
 // import SyncManager from './components/SyncManager'; // Removed for personal version
+import ShareUpdateModal from './components/ShareUpdateModal';
+
 import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
 import LegacyCapsule from './components/LegacyCapsule';
@@ -75,7 +79,35 @@ function App() {
   // 1. Shareable Link & Initialization
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    // --- MAGIC LINK SYNC ---
+    const syncData = params.get('sync');
+    if (syncData) {
+      try {
+        const decompressed = LZString.decompressFromEncodedURIComponent(syncData);
+        if (decompressed) {
+          const payload = JSON.parse(decompressed);
+          if (payload.r && payload.s) {
+            console.log("🔗 Magic Link Detected! Hydrating state...", payload);
+
+            // Update Context/Storage
+            updateRelationship(payload.r);
+            updateSettings(payload.s);
+
+            // Clean URL to prevent re-sync on reload
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            // Optional: Show success toast (not implemented global toast yet, just log)
+          }
+        }
+      } catch (e) {
+        console.error("Magic Link Parse Error:", e);
+      }
+    }
+
+    // --- LEGACY SHARE LINK SUPPORT ---
     const sharedDate = params.get('date');
+
 
     if (sharedDate) {
       // Auto-configure from link via Context
@@ -304,7 +336,7 @@ function App() {
       {activeView === 'capsules' && <TimeCapsuleManager onClose={handleClose} />}
       {activeView === 'goals' && <FutureGoalsTimeline onClose={handleClose} />}
       {activeView === 'recap' && <YearlyRecap onClose={handleClose} />}
-      {/* {activeView === 'sync' && <SyncManager onClose={handleClose} />} */}
+      {activeView === 'share' && <ShareUpdateModal onClose={handleClose} />}
       {activeView === 'voice' && <VoiceDiary onClose={handleClose} />}
       {activeView === 'journey' && <JourneyMap onClose={handleClose} />}
       {activeView === 'legacy' && <LegacyCapsule onClose={handleClose} />}
@@ -345,8 +377,29 @@ function App() {
         <header style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', padding: '0 10px'
         }}>
-          {/* Sync Button Removed */}
-          <div style={{ width: '48px' }}></div>
+          {/* Sync/Share Button */}
+          <button
+            onClick={() => setActiveView('share')}
+            title="Sync with Partner"
+            className="modern-btn"
+            style={{
+              width: '48px', height: '48px', borderRadius: '16px',
+              background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.4)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)'; }}
+            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </button>
+
 
           <div style={{ textAlign: 'center' }}>
 
