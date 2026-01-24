@@ -27,6 +27,18 @@ const SystemStatusCard = ({ onOpenSettings }) => {
         setLastSync(syncTime);
     }, []);
 
+    const formatSyncTime = (isoString) => {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        const now = new Date();
+        const diff = Math.floor((now - date) / 1000); // seconds
+
+        if (diff < 60) return 'Just now';
+        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+        return `${Math.floor(diff / 86400)}d ago`;
+    };
+
     useEffect(() => {
         if (!hasLongDistance) return;
 
