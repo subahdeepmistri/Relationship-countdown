@@ -17,7 +17,7 @@ import TimeCapsuleManager from './components/TimeCapsuleManager';
 import DistanceClock from './components/DistanceClock';
 import FutureGoalsTimeline from './components/FutureGoalsTimeline';
 import YearlyRecap from './components/YearlyRecap';
-import SyncManager from './components/SyncManager';
+// import SyncManager from './components/SyncManager'; // Removed for personal version
 import VoiceDiary from './components/VoiceDiary';
 import JourneyMap from './components/JourneyMap';
 import LegacyCapsule from './components/LegacyCapsule';
@@ -34,7 +34,7 @@ import DateSelection from './components/DateSelection';
 import PhotoSelection from './components/PhotoSelection';
 import NotificationSelection from './components/NotificationSelection';
 import WelcomeScreen from './components/WelcomeScreen';
-import OnboardingChoice from './components/OnboardingChoice';
+// import OnboardingChoice from './components/OnboardingChoice'; // Removed for personal version
 import NextMilestoneCard from './components/NextMilestoneCard';
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
 import { getStartDate } from './utils/relationshipLogic'; // Can likely be replaced by context data
@@ -54,9 +54,9 @@ function App() {
 
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
-  const [showOnboardingChoice, setShowOnboardingChoice] = useState(
-    !relationship.startDate && !localStorage.getItem('rc_onboarding_choice_made')
-  );
+  const [activeView, setActiveView] = useState('home');
+  // Removed OnboardingChoice state
+
 
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
@@ -165,21 +165,8 @@ function App() {
 
 
 
-  // 2. Onboarding Flow - Show OnboardingChoice first for new users
-  if (!relationship.startDate && showOnboardingChoice) {
-    return (
-      <OnboardingChoice
-        onStartFresh={() => {
-          localStorage.setItem('rc_onboarding_choice_made', 'true');
-          setShowOnboardingChoice(false);
-        }}
-        onImportComplete={() => {
-          localStorage.setItem('rc_onboarding_choice_made', 'true');
-          window.location.reload(); // Reload to pick up imported data
-        }}
-      />
-    );
-  }
+  // 2. Onboarding Flow - Directly to WelcomeScreen for personal version
+  /* Left empty to skip OnboardingChoice */
 
   if (!relationship.startDate) {
     return (
@@ -187,9 +174,10 @@ function App() {
         updateRelationship={updateRelationship}
         updateSettings={updateSettings}
         onBack={() => {
-          localStorage.removeItem('rc_onboarding_choice_made');
-          setShowOnboardingChoice(true);
-        }}
+          onBack = {() => {
+            // No back action needed as this is the new entry point
+          }
+        }
       />
     );
   }
@@ -316,7 +304,7 @@ function App() {
       {activeView === 'capsules' && <TimeCapsuleManager onClose={handleClose} />}
       {activeView === 'goals' && <FutureGoalsTimeline onClose={handleClose} />}
       {activeView === 'recap' && <YearlyRecap onClose={handleClose} />}
-      {activeView === 'sync' && <SyncManager onClose={handleClose} />}
+      {/* {activeView === 'sync' && <SyncManager onClose={handleClose} />} */}
       {activeView === 'voice' && <VoiceDiary onClose={handleClose} />}
       {activeView === 'journey' && <JourneyMap onClose={handleClose} />}
       {activeView === 'legacy' && <LegacyCapsule onClose={handleClose} />}
@@ -357,30 +345,8 @@ function App() {
         <header style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', padding: '0 10px'
         }}>
-          {/* Sync Button */}
-          <button
-            onClick={() => setActiveView('sync')}
-            title="Sync & Updates"
-            className="modern-btn"
-            style={{
-              width: '48px', height: '48px', borderRadius: '16px',
-              background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255, 255, 255, 0.4)', boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-            }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.1)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)'; }}
-            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-              <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-              <path d="M16 21h5v-5" />
-            </svg>
-          </button>
+          {/* Sync Button Removed */}
+          <div style={{ width: '48px' }}></div>
 
           <div style={{ textAlign: 'center' }}>
 
