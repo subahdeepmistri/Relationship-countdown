@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useWasm } from '../hooks/useWasm';
 
 const AnniversaryOverlay = () => {
@@ -115,7 +115,7 @@ const AnniversaryOverlay = () => {
 // Internal Sub-component for Audio
 const VoiceMessagePlayer = () => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const audioRef = React.useRef(null);
+    const audioRef = useRef(null);
 
     const togglePlay = () => {
         if (!audioRef.current) return;
