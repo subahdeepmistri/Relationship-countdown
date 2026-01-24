@@ -4,16 +4,32 @@ import { useWasm } from '../hooks/useWasm';
 const AnniversaryOverlay = () => {
     const { isLoaded, getAnniversaryCountdown } = useWasm();
     const [status, setStatus] = useState(null);
+    const [isDismissed, setIsDismissed] = useState(false);
 
     useEffect(() => {
         if (!isLoaded) return;
+
+        // Check local storage for dismissal
+        const today = new Date().toDateString(); // E.g., "Tue Jan 24 2026"
+        const lastDismissal = localStorage.getItem('rc_anniversary_dismissed');
+        if (lastDismissal === today) {
+            setIsDismissed(true);
+            return;
+        }
+
         const check = () => setStatus(getAnniversaryCountdown());
         check();
         const interval = setInterval(check, 60000); // Check every minute
         return () => clearInterval(interval);
     }, [isLoaded, getAnniversaryCountdown]);
 
-    if (!status || !status.is_today) return null;
+    const handleDismiss = () => {
+        const today = new Date().toDateString();
+        localStorage.setItem('rc_anniversary_dismissed', today);
+        setIsDismissed(true);
+    };
+
+    if (isDismissed || !status || !status.is_today) return null;
 
     return (
         <div style={{
@@ -30,21 +46,56 @@ const AnniversaryOverlay = () => {
             backdropFilter: 'blur(3px)'
         }}>
             <div className="pop-card" style={{
+                position: 'relative',
                 animation: 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 background: 'rgba(255, 255, 255, 0.95)',
                 color: '#e74c3c',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                padding: '50px'
+                padding: '50px',
+                maxWidth: '90%',
+                borderRadius: '24px'
             }}>
-                <h1 style={{ fontSize: '3rem', margin: 0 }}>Happy Anniversary!</h1>
-                <p style={{ fontSize: '1.5rem', marginBottom: '30px' }}>Another beautiful year together.</p>
+                <button
+                    onClick={handleDismiss}
+                    style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'transparent',
+                        border: 'none',
+                        fontSize: '1.5rem',
+                        cursor: 'pointer',
+                        color: '#64748b'
+                    }}
+                >
+                    ✕
+                </button>
+
+                <h1 style={{ fontSize: '2.5rem', margin: 0, textAlign: 'center' }}>Happy Anniversary!</h1>
+                <p style={{ fontSize: '1.2rem', marginBottom: '30px', textAlign: 'center', color: '#64748b' }}>Another beautiful year together.</p>
 
                 {/* Voice Message Section */}
                 <VoiceMessagePlayer />
 
                 <div style={{ fontSize: '2rem', marginTop: '30px' }}>💖</div>
+
+                <button
+                    onClick={handleDismiss}
+                    style={{
+                        marginTop: '30px',
+                        padding: '10px 20px',
+                        background: 'transparent',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '20px',
+                        color: '#64748b',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem'
+                    }}
+                >
+                    Continue to App
+                </button>
             </div>
             <style>{`
         @keyframes popIn {
