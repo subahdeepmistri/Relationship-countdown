@@ -58,7 +58,6 @@ function App() {
 
   // Local Session State (Navigation & Security)
   const [activeView, setActiveView] = useState('home');
-  const [activeView, setActiveView] = useState('home');
   // Removed OnboardingChoice state
 
 
