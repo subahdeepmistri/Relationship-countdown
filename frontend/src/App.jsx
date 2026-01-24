@@ -205,10 +205,8 @@ function App() {
         updateRelationship={updateRelationship}
         updateSettings={updateSettings}
         onBack={() => {
-          onBack = {() => {
-            // No back action needed as this is the new entry point
-          }
-        }
+          // No back action needed as this is the new entry point
+        }}
       />
     );
   }
