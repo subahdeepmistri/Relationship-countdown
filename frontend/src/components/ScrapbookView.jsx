@@ -29,6 +29,34 @@ const ScrapbookView = ({ onClose }) => {
         ? photos
         : photos.filter(p => p.date.includes(yearFilter));
 
+    // Lightbox Logic (defined early to avoid TDZ when referenced in effects)
+    const nextPhoto = () => {
+        if (lightboxIndex === null) return;
+        setLightboxIndex((prev) => (prev + 1) % photos.length);
+    };
+
+    const prevPhoto = () => {
+        if (lightboxIndex === null) return;
+        setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
+    };
+
+    // load hoisted as function decl so callable from early effect
+    async function loadCustomPhotos() {
+        try {
+            const stored = await getPhotos();
+            const processed = stored.map(item => ({
+                id: item.id,
+                src: URL.createObjectURL(item.blob),
+                caption: "New Memory",
+                date: new Date(item.id).toLocaleDateString(),
+                isCustom: true
+            }));
+            setPhotos([...DEFAULT_PHOTOS, ...processed]);
+        } catch (error) {
+            console.error("Error fetching memories:", error);
+        }
+    }
+
     useEffect(() => {
         loadCustomPhotos();
     }, []);
@@ -43,24 +71,7 @@ const ScrapbookView = ({ onClose }) => {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [lightboxIndex, photos]);
-
-    const loadCustomPhotos = async () => {
-        try {
-            const stored = await getPhotos();
-            // Stored is array of { id, blob }
-            const processed = stored.map(item => ({
-                id: item.id,
-                src: URL.createObjectURL(item.blob),
-                caption: "New Memory", // Default caption
-                date: new Date(item.id).toLocaleDateString(), // Use ID timestamp
-                isCustom: true
-            }));
-            setPhotos([...DEFAULT_PHOTOS, ...processed]);
-        } catch (e) {
-            console.error("Failed to load photos", e);
-        }
-    };
+    }, [lightboxIndex, photos, nextPhoto, prevPhoto]);
 
     const handleImportClick = () => {
         fileInputRef.current.click();
@@ -106,17 +117,6 @@ const ScrapbookView = ({ onClose }) => {
                 console.error("Failed to delete from DB", err);
             }
         }
-    };
-
-    // Lightbox Logic
-    const nextPhoto = () => {
-        if (lightboxIndex === null) return;
-        setLightboxIndex((prev) => (prev + 1) % photos.length);
-    };
-
-    const prevPhoto = () => {
-        if (lightboxIndex === null) return;
-        setLightboxIndex((prev) => (prev - 1 + photos.length) % photos.length);
     };
 
     // Swipe Handlers

@@ -1,5 +1,3 @@
-import { requestNotificationPermission } from './notifications';
-
 export const checkGentleReminder = () => {
     const lastOpened = localStorage.getItem('rc_last_opened');
     const sevenDays = 7 * 24 * 60 * 60 * 1000;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRelationship } from '../context/RelationshipContext';
 import { storage } from '../utils/storageAdapter';
 
@@ -21,11 +21,24 @@ const SystemStatusCard = ({ onOpenSettings }) => {
     const [meetingCountdown, setMeetingCountdown] = useState(null);
     const [lastSync, setLastSync] = useState(null);
 
-    // Load last sync time
-    useEffect(() => {
+    // Load last sync time + live reactivity so the "System Active" status always shows the actual current outputs / freshness from the whole app.
+    const reloadStatus = useCallback(() => {
         const syncTime = storage.get(storage.KEYS.LAST_SYNC, null);
         setLastSync(syncTime);
     }, []);
+
+    useEffect(() => {
+        reloadStatus();
+
+        const onMut = () => reloadStatus();
+        window.addEventListener('rc-storage-mutated', onMut);
+        const onStor = (e) => { if (!e.key || e.key === storage.KEYS.LAST_SYNC) reloadStatus(); };
+        window.addEventListener('storage', onStor);
+        return () => {
+            window.removeEventListener('rc-storage-mutated', onMut);
+            window.removeEventListener('storage', onStor);
+        };
+    }, [reloadStatus]);
 
     const formatSyncTime = (isoString) => {
         if (!isoString) return '';

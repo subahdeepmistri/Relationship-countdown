@@ -1,17 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const BackgroundMusic = () => {
-    const [isPlaying, setIsPlaying] = useState(false);
+    // Initialize from localStorage to avoid setState-in-effect
+    const [isPlaying, setIsPlaying] = useState(() => localStorage.getItem('relationship_app_music') === 'true');
     const [isHovered, setIsHovered] = useState(false);
     const audioRef = useRef(null);
-
-    // Load state from localStorage on mount
-    useEffect(() => {
-        const savedState = localStorage.getItem('relationship_app_music');
-        if (savedState === 'true') {
-            setIsPlaying(true);
-        }
-    }, []);
 
     // Handle Play/Pause
     useEffect(() => {

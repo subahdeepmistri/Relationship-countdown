@@ -11,29 +11,53 @@
  * - Ready for cloud sync
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { storage } from '../utils/storageAdapter';
 
 // ============================================
 // useCapsules - Time Capsule Management
 // ============================================
 export const useCapsules = () => {
-    const [capsules, setCapsules] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Load capsules on mount
-    useEffect(() => {
+    // Lazy init from storage (sync) - no loading needed after mount, avoids setState-in-effect
+    const [capsules, setCapsules] = useState(() => {
         try {
             const saved = storage.get(storage.KEYS.CAPSULES, []);
-            setCapsules(Array.isArray(saved) ? saved : []);
-            setLoading(false);
+            return Array.isArray(saved) ? saved : [];
         } catch (err) {
             console.error('useCapsules: Load failed', err);
-            setError('Failed to load capsules');
-            setCapsules([]);
-            setLoading(false);
+            return [];
         }
+    });
+    const [loading] = useState(false);
+    const [error, setError] = useState(null);
+
+    // Live reactivity: reload when other parts of app (or cross tab via storage event) mutate this data.
+    // This makes dashboard progress/stats always show actual current system state.
+    useEffect(() => {
+        const handler = (ev) => {
+            const k = ev?.detail?.key;
+            if (!k || k === storage.KEYS.CAPSULES) {
+                try {
+                    const saved = storage.get(storage.KEYS.CAPSULES, []);
+                    setCapsules(Array.isArray(saved) ? saved : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('rc-storage-mutated', handler);
+        // Also catch direct storage events for robustness
+        const storageHandler = (e) => {
+            if (!e.key || e.key === storage.KEYS.CAPSULES) {
+                try {
+                    const saved = storage.get(storage.KEYS.CAPSULES, []);
+                    setCapsules(Array.isArray(saved) ? saved : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('storage', storageHandler);
+        return () => {
+            window.removeEventListener('rc-storage-mutated', handler);
+            window.removeEventListener('storage', storageHandler);
+        };
     }, []);
 
     // Add a new capsule
@@ -115,25 +139,35 @@ export const useCapsules = () => {
 // useGoals - Future Goals Management
 // ============================================
 export const useGoals = () => {
-    const [goals, setGoals] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Load goals on mount (sorted by date)
-    useEffect(() => {
+    // Lazy init from storage (sync) - avoids setState-in-effect
+    const [goals, setGoals] = useState(() => {
         try {
             const saved = storage.get(storage.KEYS.GOALS, []);
-            const sorted = Array.isArray(saved)
+            return Array.isArray(saved)
                 ? saved.sort((a, b) => new Date(a.date) - new Date(b.date))
                 : [];
-            setGoals(sorted);
-            setLoading(false);
         } catch (err) {
             console.error('useGoals: Load failed', err);
-            setError('Failed to load goals');
-            setGoals([]);
-            setLoading(false);
+            return [];
         }
+    });
+    const [loading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const handler = (ev) => {
+            const k = ev?.detail?.key;
+            if (!k || k === storage.KEYS.GOALS) {
+                try {
+                    const saved = storage.get(storage.KEYS.GOALS, []);
+                    setGoals(Array.isArray(saved) ? saved.sort((a, b) => new Date(a.date) - new Date(b.date)) : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('rc-storage-mutated', handler);
+        const storageHandler = (e) => { if (!e.key || e.key === storage.KEYS.GOALS) { try { const s = storage.get(storage.KEYS.GOALS, []); setGoals(Array.isArray(s)?s.sort((a,b)=>new Date(a.date)-new Date(b.date)):[]); } catch { /* */ } } };
+        window.addEventListener('storage', storageHandler);
+        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', storageHandler); };
     }, []);
 
     // Add a new goal
@@ -229,22 +263,33 @@ export const useGoals = () => {
 // useLegacyMessages - Legacy Capsule Messages
 // ============================================
 export const useLegacyMessages = () => {
-    const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Load messages on mount
-    useEffect(() => {
+    // Lazy init from storage (sync) - avoids setState-in-effect
+    const [messages, setMessages] = useState(() => {
         try {
             const saved = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
-            setMessages(Array.isArray(saved) ? saved : []);
-            setLoading(false);
+            return Array.isArray(saved) ? saved : [];
         } catch (err) {
             console.error('useLegacyMessages: Load failed', err);
-            setError('Failed to load messages');
-            setMessages([]);
-            setLoading(false);
+            return [];
         }
+    });
+    const [loading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const handler = (ev) => {
+            const k = ev?.detail?.key;
+            if (!k || k === storage.KEYS.LEGACY_MESSAGES) {
+                try {
+                    const saved = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
+                    setMessages(Array.isArray(saved) ? saved : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('rc-storage-mutated', handler);
+        const sh = (e) => { if (!e.key || e.key === storage.KEYS.LEGACY_MESSAGES) try { setMessages(storage.get(storage.KEYS.LEGACY_MESSAGES, []) || []); } catch { /* */ } };
+        window.addEventListener('storage', sh);
+        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
     }, []);
 
     // Seal a new message
@@ -329,35 +374,27 @@ export const useLegacyMessages = () => {
 // useAppStats - Aggregate Stats for Recap
 // ============================================
 export const useAppStats = () => {
-    const [stats, setStats] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
+    // Lazy compute stats on init (all sync storage reads)
+    const [stats] = useState(() => {
         try {
             const today = new Date();
             const currentYear = today.getFullYear();
 
-            // Get start date
             const startDateStr = storage.get(storage.KEYS.START_DATE, null);
             const startDate = startDateStr ? new Date(startDateStr) : today;
 
-            // Calculate days
             const diff = today - startDate;
             const totalDays = Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
 
-            // Get capsules count
             const capsules = storage.get(storage.KEYS.CAPSULES, []);
-
-            // Get goals stats
             const goals = storage.get(storage.KEYS.GOALS, []);
             const achievedGoals = Array.isArray(goals)
                 ? goals.filter(g => g.status === 'achieved').length
                 : 0;
 
-            // Get legacy messages count
             const legacyMessages = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
 
-            setStats({
+            return {
                 year: currentYear,
                 totalDays,
                 startDate: startDateStr,
@@ -371,14 +408,13 @@ export const useAppStats = () => {
                 legacyMessages: {
                     total: Array.isArray(legacyMessages) ? legacyMessages.length : 0
                 }
-            });
-
-            setLoading(false);
+            };
         } catch (err) {
             console.error('useAppStats: Load failed', err);
-            setLoading(false);
+            return null;
         }
-    }, []);
+    });
+    const [loading] = useState(false);
 
     return { stats, loading };
 };
@@ -387,25 +423,35 @@ export const useAppStats = () => {
 // useJourney - Journey Milestones Management
 // ============================================
 export const useJourney = () => {
-    const [milestones, setMilestones] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Load milestones on mount (sorted by date)
-    useEffect(() => {
+    // Lazy init from storage (sync) - avoids setState-in-effect
+    const [milestones, setMilestones] = useState(() => {
         try {
             const saved = storage.get(storage.KEYS.JOURNEY, []);
-            const sorted = Array.isArray(saved)
+            return Array.isArray(saved)
                 ? saved.sort((a, b) => new Date(a.date) - new Date(b.date))
                 : [];
-            setMilestones(sorted);
-            setLoading(false);
         } catch (err) {
             console.error('useJourney: Load failed', err);
-            setError('Failed to load milestones');
-            setMilestones([]);
-            setLoading(false);
+            return [];
         }
+    });
+    const [loading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const handler = (ev) => {
+            const k = ev?.detail?.key;
+            if (!k || k === storage.KEYS.JOURNEY) {
+                try {
+                    const saved = storage.get(storage.KEYS.JOURNEY, []);
+                    setMilestones(Array.isArray(saved) ? saved.sort((a, b) => new Date(a.date) - new Date(b.date)) : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('rc-storage-mutated', handler);
+        const sh = (e) => { if (!e.key || e.key === storage.KEYS.JOURNEY) try { const s=storage.get(storage.KEYS.JOURNEY,[]); setMilestones(Array.isArray(s)?s.sort((a,b)=>new Date(a.date)-new Date(b.date)):[]); } catch { /* */ } };
+        window.addEventListener('storage', sh);
+        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
     }, []);
 
     // Add a new milestone
@@ -478,22 +524,33 @@ export const useJourney = () => {
 // Note: Audio blobs are stored in IndexedDB via db.js
 // This hook manages ONLY the metadata (entries list)
 export const useVoiceDiary = () => {
-    const [entries, setEntries] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Load entries on mount
-    useEffect(() => {
+    // Lazy init from storage (sync) - avoids setState-in-effect
+    const [entries, setEntries] = useState(() => {
         try {
             const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
-            setEntries(Array.isArray(saved) ? saved : []);
-            setLoading(false);
+            return Array.isArray(saved) ? saved : [];
         } catch (err) {
             console.error('useVoiceDiary: Load failed', err);
-            setError('Failed to load voice entries');
-            setEntries([]);
-            setLoading(false);
+            return [];
         }
+    });
+    const [loading] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const handler = (ev) => {
+            const k = ev?.detail?.key;
+            if (!k || k === storage.KEYS.VOICE_ENTRIES) {
+                try {
+                    const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
+                    setEntries(Array.isArray(saved) ? saved : []);
+                } catch { /* live update ignore */ }
+            }
+        };
+        window.addEventListener('rc-storage-mutated', handler);
+        const sh = (e) => { if (!e.key || e.key === storage.KEYS.VOICE_ENTRIES) try { setEntries(storage.get(storage.KEYS.VOICE_ENTRIES, []) || []); } catch { /* */ } };
+        window.addEventListener('storage', sh);
+        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
     }, []);
 
     // Add a new entry (metadata only - blob saved separately via db.js)

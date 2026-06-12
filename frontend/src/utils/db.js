@@ -120,4 +120,35 @@ export const savePhoto = async (id, blob, caption = '', date = new Date().toISOS
 export const getPhotos = () => getAllFromStore(PHOTO_STORE);
 export const deletePhoto = (id) => deleteFromStore(PHOTO_STORE, id);
 
+/**
+ * Compute total size (bytes) of all media stored in IndexedDB (photos + audio + profiles).
+ * Used for accurate "entire system" storage reporting in status/progress UIs.
+ * Graceful: returns 0 on any error (no crash).
+ */
+export const getTotalMediaSize = async () => {
+  try {
+    const [photos, audios, profiles] = await Promise.all([
+      getAllFromStore(PHOTO_STORE).catch(() => []),
+      getAllFromStore(AUDIO_STORE).catch(() => []),
+      getAllFromStore(PROFILE_STORE).catch(() => [])
+    ]);
+
+    let total = 0;
+    const addSize = (items) => {
+      if (!Array.isArray(items)) return;
+      for (const item of items) {
+        if (item && item.blob && typeof item.blob.size === 'number') {
+          total += item.blob.size;
+        }
+      }
+    };
+    addSize(photos);
+    addSize(audios);
+    addSize(profiles);
+    return total;
+  } catch {
+    return 0;
+  }
+};
+
 

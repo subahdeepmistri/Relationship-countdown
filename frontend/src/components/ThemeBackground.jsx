@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import '../styles/theme.css';
 
 const ThemeBackground = ({ children }) => {

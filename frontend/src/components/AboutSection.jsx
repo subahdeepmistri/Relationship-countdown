@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const AboutSection = ({ onClose }) => {
@@ -53,6 +54,7 @@ const AboutSection = ({ onClose }) => {
             return timeLeft;
         };
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTimeLeft(calculateTimeLeft());
 
         const timer = setInterval(() => {

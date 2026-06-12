@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { storage } from '../utils/storageAdapter';
 
 const QUESTIONS = [
@@ -18,35 +18,33 @@ const QUESTIONS = [
 const MAX_STORED_DAYS = 30; // Limit stored answers to prevent unbounded growth
 
 const DailyQuestion = () => {
-    const [question, setQuestion] = useState("");
-    const [answer, setAnswer] = useState("");
-    const [isAnswered, setIsAnswered] = useState(false);
-    const [selectedMood, setSelectedMood] = useState(null);
-    const [timeIcon, setTimeIcon] = useState("☀️");
-
-    useEffect(() => {
+    // Compute initial state synchronously from date/storage to avoid setState-in-effect anti-pattern
+    const initialState = (() => {
         const h = new Date().getHours();
-        setTimeIcon(h >= 6 && h < 18 ? "☀️" : "🌛");
+        const timeIcon = h >= 6 && h < 18 ? "☀️" : "🌛";
 
-        // Simple hash to pick a question based on the date
         const today = new Date();
         const start = new Date(today.getFullYear(), 0, 0);
         const diff = today - start;
         const oneDay = 1000 * 60 * 60 * 24;
         const dayOfYear = Math.floor(diff / oneDay);
-
         const index = dayOfYear % QUESTIONS.length;
-        setQuestion(QUESTIONS[index]);
+        const q = QUESTIONS[index];
 
-        // Check if already answered today using consolidated storage
         const todayKey = today.toDateString();
         const answers = storage.get(storage.KEYS.DAILY_ANSWERS, {});
+        const existing = answers[todayKey];
+        const ans = existing ? (existing.text || existing) : "";
+        const answered = !!existing;
 
-        if (answers[todayKey]) {
-            setAnswer(answers[todayKey].text || answers[todayKey]);
-            setIsAnswered(true);
-        }
-    }, []);
+        return { question: q, answer: ans, isAnswered: answered, timeIcon };
+    })();
+
+    const question = initialState.question;
+    const timeIcon = initialState.timeIcon;
+    const [answer, setAnswer] = useState(initialState.answer);
+    const [isAnswered, setIsAnswered] = useState(initialState.isAnswered);
+    const [selectedMood, setSelectedMood] = useState(null);
 
     const saveAnswer = () => {
         const todayKey = new Date().toDateString();

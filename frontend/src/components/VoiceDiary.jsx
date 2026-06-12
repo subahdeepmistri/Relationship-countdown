@@ -7,14 +7,11 @@ const VoiceDiary = ({ onClose }) => {
     // Use centralized hook for voice entry metadata
     const {
         entries,
-        loading,
-        error,
         addEntry: addEntryToHook,
-        deleteEntry: deleteEntryFromHook,
-        clearError
+        deleteEntry: deleteEntryFromHook
     } = useVoiceDiary();
 
-    const [isPaused, setIsPaused] = useState(false);
+    const [_isPaused, _setIsPaused] = useState(false);
     const [playbackProgress, setPlaybackProgress] = useState(0); // 0-100
     const [playbackTime, setPlaybackTime] = useState(0);
 
@@ -31,15 +28,18 @@ const VoiceDiary = ({ onClose }) => {
     const chunksRef = useRef([]);
     const timerRef = useRef(null);
     const audioRef = useRef(new Audio());
-    const pressTimerRef = useRef(null); // To detect actual "hold" intent vs tap
 
-    // Show error from hook
-    useEffect(() => {
-        if (error) {
-            console.error('VoiceDiary error:', error);
-            clearError();
-        }
-    }, [error, clearError]);
+    // Timer helpers (defined early for use in effects above in source)
+    function startTimer() {
+        stopTimer();
+        timerRef.current = setInterval(() => {
+            setRecordingDuration(prev => prev + 1);
+        }, 1000);
+    }
+
+    function stopTimer() {
+        if (timerRef.current) clearInterval(timerRef.current);
+    }
 
     // Heart burst effect reset
     useEffect(() => {
@@ -103,13 +103,13 @@ const VoiceDiary = ({ onClose }) => {
                 stream.getTracks().forEach(track => track.stop());
 
                 setRecordingDuration(0);
-                setIsPaused(false);
+                _setIsPaused(false);
                 setSaveSuccess(true); // Trigger success animation
             };
 
             mediaRecorderRef.current.start();
             setIsRecording(true);
-            setIsPaused(false);
+            _setIsPaused(false);
             setRecordingDuration(0);
 
             startTimer();
@@ -121,22 +121,11 @@ const VoiceDiary = ({ onClose }) => {
         }
     };
 
-    const startTimer = () => {
-        stopTimer();
-        timerRef.current = setInterval(() => {
-            setRecordingDuration(prev => prev + 1);
-        }, 1000);
-    };
-
-    const stopTimer = () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-    };
-
     const stopRecording = () => {
         if (mediaRecorderRef.current && isRecording) {
             mediaRecorderRef.current.stop();
             setIsRecording(false);
-            setIsPaused(false);
+            _setIsPaused(false);
             stopTimer();
         }
     };
@@ -156,7 +145,7 @@ const VoiceDiary = ({ onClose }) => {
         startRecording();
     };
 
-    const handlePressEnd = (e) => {
+    const handlePressEnd = () => {
         // Only stop on release if we're in "hold to record" mode
         // Since we now support tap-to-stop, we don't need to stop here
         // This prevents double-stop issues

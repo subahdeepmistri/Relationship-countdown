@@ -6,7 +6,7 @@ const YearlyRecap = ({ onClose }) => {
     const [saved, setSaved] = useState(false);
 
     // Use centralized hook instead of direct localStorage
-    const { stats: appStats, loading } = useAppStats();
+    const { stats: appStats } = useAppStats();
 
     // Map hook data to expected format
     const stats = {

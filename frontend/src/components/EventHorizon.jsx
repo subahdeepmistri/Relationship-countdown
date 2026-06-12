@@ -14,7 +14,6 @@ const EventHorizon = () => {
 
     const calculateTime = (dateStr) => {
         const target = new Date(dateStr);
-        const now = new Date();
         // Reset hours for pure date comparison
         target.setHours(0, 0, 0, 0);
         const nowZero = new Date();

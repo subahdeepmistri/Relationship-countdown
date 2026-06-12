@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { savePhoto, getPhotos, deletePhoto } from '../utils/db';
 import '../styles/theme.css';
 
@@ -84,6 +84,9 @@ const MemoryCarousel = () => {
             // Save to IndexedDB
             await savePhoto(id, file, caption, createdAt);
 
+            // Notify full system (progress bar + stats tiles) so the "entire system" view updates live with the new memory
+            try { window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key: 'idb-photo', ts: Date.now() } })); } catch { /* notify ignore */ }
+
             // Reload photos
             await loadPhotos();
 
@@ -108,6 +111,7 @@ const MemoryCarousel = () => {
         try {
             await deletePhoto(id);
             if (selectedPhoto?.id === id) setSelectedPhoto(null);
+            try { window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key: 'idb-photo', ts: Date.now() } })); } catch { /* notify ignore */ }
             await loadPhotos();
 
         } catch (err) {

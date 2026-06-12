@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { useLegacyMessages } from '../hooks/useDataHooks';
 import '../styles/LegacyMode.css'; // Make sure to retain basic CSS or replace if needed, but we'll use inline mostly for the new vibe
@@ -6,12 +7,9 @@ import '../styles/LegacyMode.css'; // Make sure to retain basic CSS or replace i
 const LegacyCapsule = ({ onClose }) => {
     const {
         messages,
-        loading,
-        error,
         sealMessage,
         deleteMessage,
-        clearAll,
-        clearError
+        clearAll: _clearAll
     } = useLegacyMessages();
 
     // Sound effect refs (placeholders - real audio would require files)
@@ -65,7 +63,7 @@ const LegacyCapsule = ({ onClose }) => {
                         onWrite={() => setView('writing')}
                         onOrbClick={(msg) => { setSelectedOrb(msg); setView('viewing-orb'); }}
                         onClose={onClose}
-                        onClearAll={clearAll}
+
                     />
                 )}
                 {view === 'writing' && (
@@ -93,7 +91,7 @@ const LegacyCapsule = ({ onClose }) => {
 
 // --- Sub-Components ---
 
-const MainVaultView = ({ messages, onWrite, onOrbClick, onClearAll }) => {
+const MainVaultView = ({ messages, onWrite, onOrbClick }) => {
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -382,14 +380,18 @@ const OrbDetailView = ({ orb, onClose, onDelete }) => {
 
 // Simple Background Starfield
 const StarField = () => {
-    // Generate static random stars
+    // Generate deterministic "random" stars (pure function, stable across renders)
+    const seeded = (seed) => {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+    };
     const stars = React.useMemo(() => {
         return Array.from({ length: 50 }).map((_, i) => ({
-            top: Math.random() * 100 + '%',
-            left: Math.random() * 100 + '%',
-            size: Math.random() * 2 + 1 + 'px',
-            opacity: Math.random(),
-            animationDuration: Math.random() * 3 + 2 + 's'
+            top: (seeded(i * 1.1) * 100) + '%',
+            left: (seeded(i * 2.3 + 7) * 100) + '%',
+            size: (seeded(i * 3.7 + 11) * 2 + 1) + 'px',
+            opacity: seeded(i * 4.9 + 13) * 0.7 + 0.3,
+            animationDuration: (seeded(i * 5.1 + 17) * 3 + 2) + 's'
         }));
     }, []);
 

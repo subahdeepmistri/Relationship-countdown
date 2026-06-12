@@ -1,17 +1,25 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 
-// FAILSAFE: MOCK DATA FOR DEVELOPMENT (Since Rust is missing)
-const MOCK_START_DATE = new Date("2023-01-24T00:00:00"); // Updated to User Date
-const MOCK_ANNIVERSARY_DATE = new Date("2024-01-24T00:00:00");
-
+// Note: WASM integration is currently stubbed; all calculations use optimized JS fallbacks.
+// Rust wasm crate exists in /rust-wasm but is not yet wired (lib.rs placeholder).
 export function useWasm() {
-  const [isLoaded, setIsLoaded] = useState(true); // Mock loaded immediately
+  // isLoaded kept for API compatibility if real WASM is added later
+  const isLoaded = true;
 
-  // Mock function to replace Rust's get_relationship_stats
+  // Mock function to replace Rust's get_relationship_stats (currently unused by callers, who use relationshipLogic.js instead)
   const getRelationshipStats = useCallback(() => {
+    // Fallback date logic; in real use would come from context
+    const storedDate = localStorage.getItem('rc_start_date') || '2023-01-24';
+    let startDate;
+    if (storedDate.includes('-') && storedDate.length >= 10) {
+      const [y, m, d] = storedDate.split('-').map(Number);
+      startDate = new Date(y, m - 1, d, 0, 0, 0, 0);
+    } else {
+      startDate = new Date(storedDate);
+    }
     const now = new Date();
-    const diff = now - MOCK_START_DATE;
-
+    let diff = now - startDate;
+    if (diff < 0) diff = 0;
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);

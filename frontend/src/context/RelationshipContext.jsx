@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { storage } from '../utils/storageAdapter';
 
+/* eslint-disable react-refresh/only-export-components -- Context file intentionally exports hook + provider for convenience */
+
 const RelationshipContext = createContext();
 
 export const useRelationship = () => {
@@ -60,6 +62,7 @@ export const RelationshipProvider = ({ children }) => {
                 }];
                 // We don't just set state, we write to storage to fix it permanently
                 storage.set(storage.KEYS.EVENTS, initialEvent);
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setState(prev => ({
                     ...prev,
                     relationship: { ...prev.relationship, events: initialEvent }
@@ -71,7 +74,7 @@ export const RelationshipProvider = ({ children }) => {
                 }));
             }
         }
-    }, []);
+    }, [state.relationship.events]); // include to satisfy exhaustive (migration runs once-ish)
 
     // --- MULTI-TAB SYNC ---
     // Only sync on changes to relationship/settings keys, NOT feature data like capsules/goals

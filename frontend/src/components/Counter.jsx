@@ -98,7 +98,7 @@ const Counter = () => {
                     { label: 'Hours', val: stats.hours },
                     { label: 'Mins', val: stats.minutes },
                     { label: 'Secs', val: stats.seconds }
-                ].map((item, idx) => (
+                ].map((item) => (
                     <div key={item.label} style={{
                         background: 'rgba(255, 255, 255, 0.8)',
                         border: '1px solid rgba(255, 255, 255, 0.6)',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGoals } from '../hooks/useDataHooks';
 import { ConfirmModal, Toast } from './shared';
@@ -9,11 +10,11 @@ const FutureGoalsTimeline = ({ onClose }) => {
     const {
         goals,
         loading,
-        error,
+        error: _error,
+        clearError: _clearError,
         addGoal: addGoalToHook,
         toggleStatus: toggleStatusInHook,
-        deleteGoal,
-        clearError
+        deleteGoal
     } = useGoals();
 
     const [newTitle, setNewTitle] = useState('');

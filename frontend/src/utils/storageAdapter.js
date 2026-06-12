@@ -147,6 +147,7 @@ export const storage = {
             }
 
             localStorage.setItem(key, serialized);
+            storage.notifyChange(key);
             return { success: true };
         } catch (error) {
             // Handle quota exceeded
@@ -169,6 +170,7 @@ export const storage = {
     remove: (key) => {
         try {
             localStorage.removeItem(key);
+            storage.notifyChange(key);
             return { success: true };
         } catch (error) {
             console.error(`Storage: Remove failed for ${key}:`, error);
@@ -185,6 +187,7 @@ export const storage = {
             Object.values(KEYS).forEach(key => {
                 localStorage.removeItem(key);
             });
+            storage.notifyChange(null);
             return { success: true };
         } catch (error) {
             console.error('Storage: Clear failed:', error);
@@ -193,18 +196,18 @@ export const storage = {
     },
 
     /**
-     * Check available storage space (approximate)
-     * @returns {{ used: number, available: number, total: number }} in bytes
+     * Check available storage space (approximate) - localStorage only (sync)
+     * @returns {{ used: number, available: number, total: number, percentUsed: number }} in bytes
      */
     getStorageInfo: () => {
         try {
             let used = 0;
-            for (let key in localStorage) {
-                if (localStorage.hasOwnProperty(key)) {
+            for (const key in localStorage) {
+                if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
                     used += localStorage[key].length * 2; // UTF-16 = 2 bytes per char
                 }
             }
-            // Most browsers allow 5-10MB
+            // Most browsers allow 5-10MB for localStorage
             const total = 5 * 1024 * 1024; // 5MB estimate
             return {
                 used,
@@ -212,8 +215,55 @@ export const storage = {
                 total,
                 percentUsed: Math.round((used / total) * 100)
             };
-        } catch (error) {
+        } catch {
             return { used: 0, available: 0, total: 0, percentUsed: 0 };
+        }
+    },
+
+    /**
+     * Full system storage report (async). Includes localStorage + real sizes of media in IndexedDB.
+     * Used by dashboard progress bars to show "actual output from entire system".
+     * percentUsed is rough (LS vs 5MB + media as additive "used bytes" for color coding).
+     */
+    getFullStorageInfo: async (getMediaSizeFn) => {
+        const ls = storage.getStorageInfo();
+        let mediaBytes = 0;
+        try {
+            if (typeof getMediaSizeFn === 'function') {
+                mediaBytes = await getMediaSizeFn();
+            }
+        } catch { /* ignore */ }
+        const totalUsed = ls.used + mediaBytes;
+        // For visual health: treat high media as "more used" but LS % is the constrained one.
+        // We'll expose raw numbers + a combined health score (lower used = healthier vault).
+        const lsPercent = ls.percentUsed;
+        // Rough combined: if media > 50MB treat as significant usage
+        const mediaMB = Math.round(mediaBytes / (1024 * 1024));
+        const health = Math.max(0, Math.min(100, Math.round(100 - (lsPercent * 0.6 + (mediaMB > 100 ? 30 : mediaMB / 5)))));
+        return {
+            ...ls,
+            mediaBytes,
+            mediaMB,
+            totalUsed,
+            lsPercent,
+            healthScore: health, // 0-100 trustworthy "vault health" (higher better)
+            lastChecked: new Date().toISOString()
+        };
+    },
+
+    /**
+     * Notify listeners (dashboard cards, etc.) that app data changed.
+     * Enables live updates to progress bars / system status without full reload.
+     */
+    notifyChange: (key = null) => {
+        try {
+            window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key, ts: Date.now() } }));
+        } catch { /* ignore dispatch errors */ }
+
+        // Auto-touch LAST_SYNC for core relationship/settings data so SystemStatus "last sync" / freshness always reflects reality
+        const CORE_KEYS = [KEYS.PARTNER_1, KEYS.PARTNER_2, KEYS.NICKNAME, KEYS.START_DATE, KEYS.EVENTS, KEYS.NOTIFICATIONS, KEYS.AI_ENABLED, KEYS.AI_KEY, KEYS.LD_ENABLED, KEYS.LD_OFFSET, KEYS.LD_MEET, KEYS.LD_MY_LOC, KEYS.LD_PARTNER_LOC, KEYS.SETUP_COMPLETE, KEYS.PHOTOS_SET, KEYS.ANNIVERSARY_TYPE];
+        if (key && CORE_KEYS.includes(key)) {
+            try { localStorage.setItem(KEYS.LAST_SYNC, new Date().toISOString()); } catch { /* ignore */ }
         }
     },
 
@@ -248,7 +298,9 @@ export const storage = {
                 array.push(newData);
             }
 
-            return storage.set(key, array);
+            const res = storage.set(key, array);
+            storage.notifyChange(key);
+            return res;
         } catch (error) {
             console.error(`Storage: updateArrayItem failed for ${key}:`, error);
             return { success: false, error: 'UPDATE_FAILED' };
@@ -285,6 +337,7 @@ export const storage = {
                     storage.set(key, data[name]);
                 }
             });
+            storage.notifyChange(null);
 
             return { success: true };
         } catch (error) {

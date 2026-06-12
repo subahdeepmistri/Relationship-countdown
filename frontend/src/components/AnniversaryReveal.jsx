@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import './AnniversaryReveal.css';
 
@@ -8,41 +8,8 @@ const REVEAL_DATE = new Date('2026-01-24T00:00:00+05:30');
 function AnniversaryReveal({ children }) {
     const [isRevealed, setIsRevealed] = useState(false);
     const [showTransition, setShowTransition] = useState(false);
-    const [isUnlocked, setIsUnlocked] = useState(false);
 
-    useEffect(() => {
-        // Check for dev bypass
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('unlock') === 'true') {
-            setIsUnlocked(true);
-            setIsRevealed(true);
-            return;
-        }
-
-        // Check if already past reveal time
-        const checkTime = () => {
-            const now = new Date();
-            if (now >= REVEAL_DATE) {
-                triggerReveal();
-                return true;
-            }
-            return false;
-        };
-
-        // Initial check
-        if (!checkTime()) {
-            // Check every second until reveal
-            const timer = setInterval(() => {
-                if (checkTime()) {
-                    clearInterval(timer);
-                }
-            }, 1000);
-
-            return () => clearInterval(timer);
-        }
-    }, []);
-
-    const triggerReveal = () => {
+    const triggerReveal = useCallback(() => {
         setShowTransition(true);
 
         // Fire confetti burst
@@ -75,7 +42,38 @@ function AnniversaryReveal({ children }) {
         setTimeout(() => {
             setIsRevealed(true);
         }, 5000);
-    };
+    }, []);
+
+    useEffect(() => {
+        // Check for dev bypass
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('unlock') === 'true') {
+            setIsRevealed(true);
+            return;
+        }
+
+        // Check if already past reveal time
+        const checkTime = () => {
+            const now = new Date();
+            if (now >= REVEAL_DATE) {
+                triggerReveal();
+                return true;
+            }
+            return false;
+        };
+
+        // Initial check
+        if (!checkTime()) {
+            // Check every second until reveal
+            const timer = setInterval(() => {
+                if (checkTime()) {
+                    clearInterval(timer);
+                }
+            }, 1000);
+
+            return () => clearInterval(timer);
+        }
+    }, [triggerReveal]);  // include for correctness (though stable)
 
     // If revealed, render the app
     if (isRevealed) {

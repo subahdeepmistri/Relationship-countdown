@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import confetti from 'canvas-confetti';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { useJourney } from '../hooks/useDataHooks';
 import { ConfirmModal, Toast } from './shared';
@@ -8,11 +9,13 @@ const JourneyMap = ({ onClose }) => {
     // Use centralized hook instead of direct localStorage
     const {
         milestones,
-        loading,
+        // error/clearError retained for potential toast/error UI in effects (even if currently unused in render)
+         
         error,
+         
+        clearError,
         addMilestone: addMilestoneToHook,
-        deleteMilestone: deleteMilestoneFromHook,
-        clearError
+        deleteMilestone: deleteMilestoneFromHook
     } = useJourney();
 
     const [newTitle, setNewTitle] = useState('');

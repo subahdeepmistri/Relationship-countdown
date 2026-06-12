@@ -41,7 +41,7 @@ import WelcomeScreen from './components/WelcomeScreen';
 // import OnboardingChoice from './components/OnboardingChoice'; // Removed for personal version
 import NextMilestoneCard from './components/NextMilestoneCard';
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
-import { getStartDate } from './utils/relationshipLogic'; // Can likely be replaced by context data
+import { storage } from './utils/storageAdapter';
 
 import { checkAnniversaryNotification } from './utils/notifications';
 import { useWasm } from './hooks/useWasm';
@@ -93,6 +93,11 @@ function App() {
             updateRelationship(payload.r);
             updateSettings(payload.s);
 
+            // Mark sync time for SystemStatus "last sync" progress/trust indicator
+            try {
+                storage.set(storage.KEYS.LAST_SYNC, new Date().toISOString());
+            } catch { /* sync parse ignore */ }
+
             // Clean URL to prevent re-sync on reload
             window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -101,7 +106,7 @@ function App() {
         }
       } catch (e) {
         console.error("Magic Link Parse Error:", e);
-      }
+      } // the empty was elsewhere? fix any remaining empty
     }
 
     // --- LEGACY SHARE LINK SUPPORT ---

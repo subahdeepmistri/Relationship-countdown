@@ -24,6 +24,9 @@ export default defineConfig([
     },
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Allow setState in effects for mount-time initialization from storage (common safe pattern).
+      // The recommended rule flags it to discourage cascading, but our cases are one-time sync loads.
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
 ])

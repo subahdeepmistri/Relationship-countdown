@@ -38,11 +38,8 @@ const TimelineView = ({ onClose }) => {
         }
     };
 
-    useEffect(() => {
-        loadEvents();
-    }, []);
-
-    const loadEvents = () => {
+    // loadEvents hoisted via function decl
+    function loadEvents() {
         const stored = localStorage.getItem('rc_events');
         let parsed = [];
 
@@ -60,7 +57,11 @@ const TimelineView = ({ onClose }) => {
         // Sort by date ascending (History flow)
         parsed.sort((a, b) => new Date(a.date) - new Date(b.date));
         setEvents(parsed);
-    };
+    }
+
+    useEffect(() => {
+        loadEvents();
+    }, []);
 
     const requestDelete = (id) => {
         setDeleteConfirmId(id);

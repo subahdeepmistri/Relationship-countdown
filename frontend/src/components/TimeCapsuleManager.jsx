@@ -72,7 +72,7 @@ const TimeCapsuleManager = ({ onClose }) => {
             setSelectedCapsule(cap);
             setView('view-capsule');
         } else {
-            const daysLeft = Math.ceil((cap.unlockDate - Date.now()) / (1000 * 60 * 60 * 24));
+            const daysLeft = Math.ceil((cap.unlockDate - Date.now()) / (1000 * 60 * 60 * 24)); // eslint-disable-line react-hooks/purity -- Date.now in event handler, not render path
             showToast(`Locked for ${daysLeft} more days 🔒`);
         }
     };

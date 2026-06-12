@@ -20,6 +20,8 @@ const LoveNotes = () => {
         localStorage.setItem('rc_love_note_time', new Date().toISOString());
         setLastUpdated('Just now');
         setIsEditing(false);
+        // Notify the system stats / progress bar so it immediately reflects the real love note output
+        try { window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key: 'rc_love_note', ts: Date.now() } })); } catch { /* notify */ }
     };
 
     return (

@@ -3,19 +3,17 @@ import { useWasm } from '../hooks/useWasm';
 
 const AnniversaryOverlay = () => {
     const { isLoaded, getAnniversaryCountdown } = useWasm();
+
+    // Initialize dismissal from localStorage synchronously to avoid setState in effect
     const [status, setStatus] = useState(null);
-    const [isDismissed, setIsDismissed] = useState(false);
+    const [isDismissed, setIsDismissed] = useState(() => {
+        const today = new Date().toDateString();
+        const lastDismissal = localStorage.getItem('rc_anniversary_dismissed');
+        return lastDismissal === today;
+    });
 
     useEffect(() => {
         if (!isLoaded) return;
-
-        // Check local storage for dismissal
-        const today = new Date().toDateString(); // E.g., "Tue Jan 24 2026"
-        const lastDismissal = localStorage.getItem('rc_anniversary_dismissed');
-        if (lastDismissal === today) {
-            setIsDismissed(true);
-            return;
-        }
 
         const check = () => setStatus(getAnniversaryCountdown());
         check();
