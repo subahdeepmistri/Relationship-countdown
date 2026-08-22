@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { storage } from '../utils/storageAdapter';
 
 const TimelineView = ({ onClose }) => {
     const [events, setEvents] = useState([]);
@@ -38,30 +39,38 @@ const TimelineView = ({ onClose }) => {
         }
     };
 
-    // loadEvents hoisted via function decl
-    function loadEvents() {
-        const stored = localStorage.getItem('rc_events');
-        let parsed = [];
+    // Load via the storage adapter (guarded parsing + change notifications).
+    // The synthetic "Beginning" event is only added when the stored events
+    // don't already contain the start date — otherwise it appeared twice.
+    const loadEvents = useCallback(() => {
+        const stored = storage.get(storage.KEYS.EVENTS, []);
+        const customEvents = Array.isArray(stored) ? stored.filter(e => e && typeof e === 'object') : [];
 
-        // Add main start date as an event if not present in custom events
-        const legacyDate = localStorage.getItem('rc_start_date');
-        if (legacyDate) {
-            parsed.push({ id: 'legacy', title: 'The Beginning', date: legacyDate, emoji: '💖', isMain: true });
+        const startDate = storage.get(storage.KEYS.START_DATE, '');
+        const hasStartEvent = customEvents.some(e =>
+            e.isMain || (startDate && e.date === startDate)
+        );
+
+        let parsed = customEvents;
+        if (startDate && !hasStartEvent) {
+            parsed = [{ id: 'legacy', title: 'The Beginning', date: startDate, emoji: '💖', isMain: true }, ...customEvents];
         }
 
-        if (stored) {
-            const customEvents = JSON.parse(stored);
-            parsed = [...parsed, ...customEvents];
-        }
-
-        // Sort by date ascending (History flow)
-        parsed.sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Sort by date ascending (History flow) — NaN-safe comparator
+        parsed.sort((a, b) => {
+            const ta = new Date(a.date).getTime() || 0;
+            const tb = new Date(b.date).getTime() || 0;
+            return ta - tb;
+        });
         setEvents(parsed);
-    }
+    }, []);
 
     useEffect(() => {
         loadEvents();
-    }, []);
+        const onMut = () => loadEvents();
+        window.addEventListener('rc-storage-mutated', onMut);
+        return () => window.removeEventListener('rc-storage-mutated', onMut);
+    }, [loadEvents]);
 
     const requestDelete = (id) => {
         setDeleteConfirmId(id);
@@ -69,9 +78,13 @@ const TimelineView = ({ onClose }) => {
 
     const confirmDelete = () => {
         if (deleteConfirmId) {
-            const stored = JSON.parse(localStorage.getItem('rc_events') || '[]');
-            const updated = stored.filter(e => e.id !== deleteConfirmId);
-            localStorage.setItem('rc_events', JSON.stringify(updated));
+            // Synthetic 'legacy' entry isn't in storage — deleting it means
+            // clearing the start date itself.
+            if (deleteConfirmId === 'legacy') {
+                storage.remove(storage.KEYS.START_DATE);
+            } else {
+                storage.updateArrayItem(storage.KEYS.EVENTS, deleteConfirmId, null);
+            }
             loadEvents();
             setDeleteConfirmId(null);
         }

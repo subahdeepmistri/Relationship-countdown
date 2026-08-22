@@ -298,9 +298,8 @@ export const storage = {
                 array.push(newData);
             }
 
-            const res = storage.set(key, array);
-            storage.notifyChange(key);
-            return res;
+            // storage.set already notifies listeners — don't dispatch twice.
+            return storage.set(key, array);
         } catch (error) {
             console.error(`Storage: updateArrayItem failed for ${key}:`, error);
             return { success: false, error: 'UPDATE_FAILED' };

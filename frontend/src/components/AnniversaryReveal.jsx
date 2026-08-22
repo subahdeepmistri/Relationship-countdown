@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import confetti from 'canvas-confetti';
 import './AnniversaryReveal.css';
 
 // REVEAL TIME: January 24th, 2026 at 12:00 AM (midnight) IST
@@ -12,31 +11,34 @@ function AnniversaryReveal({ children }) {
     const triggerReveal = useCallback(() => {
         setShowTransition(true);
 
-        // Fire confetti burst
-        const duration = 4000;
-        const end = Date.now() + duration;
+        // Fire confetti burst — canvas-confetti is loaded on demand so it
+        // never blocks the initial page load.
+        import('canvas-confetti').then(({ default: confetti }) => {
+            const duration = 4000;
+            const end = Date.now() + duration;
 
-        const frame = () => {
-            confetti({
-                particleCount: 3,
-                angle: 60,
-                spread: 55,
-                origin: { x: 0, y: 0.8 },
-                colors: ['#FB7185', '#F472B6', '#FDA4AF', '#FDE68A', '#FFFFFF']
-            });
-            confetti({
-                particleCount: 3,
-                angle: 120,
-                spread: 55,
-                origin: { x: 1, y: 0.8 },
-                colors: ['#FB7185', '#F472B6', '#FDA4AF', '#FDE68A', '#FFFFFF']
-            });
+            const frame = () => {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#FB7185', '#F472B6', '#FDA4AF', '#FDE68A', '#FFFFFF']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#FB7185', '#F472B6', '#FDA4AF', '#FDE68A', '#FFFFFF']
+                });
 
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
-        };
-        frame();
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            };
+            frame();
+        });
 
         // After transition, show the app
         setTimeout(() => {

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { saveProfileImage, getProfileImage } from '../utils/db'; // Added getProfileImage import
+import { compressImage } from '../utils/imageCompression';
+import { createManagedObjectURL, revokeObjectURL } from '../utils/objectUrlManager';
 import '../styles/theme.css';
 
 const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
@@ -9,6 +11,14 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
     const [img2, setImg2] = useState(null);
     const [preview1, setPreview1] = useState(null);
     const [preview2, setPreview2] = useState(null);
+
+    // Cleanup previews on unmount
+    useEffect(() => {
+        return () => {
+            revokeObjectURL('preview-1');
+            revokeObjectURL('preview-2');
+        };
+    }, []);
 
     // Name State
     const [name1, setName1] = useState('');
@@ -57,8 +67,8 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
                 getProfileImage('profile_1'),
                 getProfileImage('profile_2')
             ]).then(([blob1, blob2]) => {
-                if (blob1) setPreview1(URL.createObjectURL(blob1));
-                if (blob2) setPreview2(URL.createObjectURL(blob2));
+                if (blob1) setPreview1(createManagedObjectURL(blob1, 'preview-1'));
+                if (blob2) setPreview2(createManagedObjectURL(blob2, 'preview-2'));
             });
         }
     }, [isEditing]);
@@ -68,10 +78,10 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
         if (file) {
             if (index === 1) {
                 setImg1(file);
-                setPreview1(URL.createObjectURL(file));
+                setPreview1(createManagedObjectURL(file, 'preview-1'));
             } else {
                 setImg2(file);
-                setPreview2(URL.createObjectURL(file));
+                setPreview2(createManagedObjectURL(file, 'preview-2'));
             }
         }
     };
@@ -99,8 +109,9 @@ const PhotoSelection = ({ onSelect, onBack, isEditing = false }) => {
         setIsSaving(true);
         // Save to IndexedDB
         // Note: Logic handles if img is null (keeps existing) or new file
-        if (img1) await saveProfileImage('profile_1', img1);
-        if (img2) await saveProfileImage('profile_2', img2);
+        // Profile avatars display small — compress harder than gallery photos.
+        if (img1) await saveProfileImage('profile_1', await compressImage(img1, { maxDimension: 600, quality: 0.85 }));
+        if (img2) await saveProfileImage('profile_2', await compressImage(img2, { maxDimension: 600, quality: 0.85 }));
 
         // Save Names to LocalStorage
         localStorage.setItem('rc_partner1', name1);

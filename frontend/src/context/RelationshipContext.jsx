@@ -1,7 +1,13 @@
-import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { storage } from '../utils/storageAdapter';
+import {
+    sanitizeRelationship,
+    sanitizeSettings,
+    sanitizeLongDistance
+} from '../domain/relationshipSchema';
 
 /* eslint-disable react-refresh/only-export-components -- Context file intentionally exports hook + provider for convenience */
+export { sanitizeRelationship, sanitizeSettings } from '../domain/relationshipSchema';
 
 const RelationshipContext = createContext();
 
@@ -13,96 +19,63 @@ export const useRelationship = () => {
     return context;
 };
 
-export const RelationshipProvider = ({ children }) => {
-    // --- INITIAL STATE ---
-    // We check storage for existing data, defaulting to empty strings/false
+// --- DATA GATEWAY: flat storage keys -> aggregate shape ---
 
-    // Helper to load full state from storage
-    const loadStateFromStorage = () => ({
-        relationship: {
-            partner1: storage.get(storage.KEYS.PARTNER_1, ''),
-            partner2: storage.get(storage.KEYS.PARTNER_2, ''),
-            nickname: storage.get(storage.KEYS.NICKNAME, ''),
-            startDate: storage.get(storage.KEYS.START_DATE, ''),
-            events: storage.get(storage.KEYS.EVENTS, []),
+const loadStateFromStorage = () => ({
+    relationship: sanitizeRelationship({
+        partner1: storage.get(storage.KEYS.PARTNER_1, ''),
+        partner2: storage.get(storage.KEYS.PARTNER_2, ''),
+        nickname: storage.get(storage.KEYS.NICKNAME, ''),
+        startDate: storage.get(storage.KEYS.START_DATE, ''),
+        events: storage.get(storage.KEYS.EVENTS, []),
+    }),
+    settings: sanitizeSettings({
+        notifications: storage.get(storage.KEYS.NOTIFICATIONS, false),
+        aiEnabled: storage.get(storage.KEYS.AI_ENABLED, false),
+        aiKey: storage.get(storage.KEYS.AI_KEY, ''),
+        appLockEnabled: storage.get(storage.KEYS.LOCK_ENABLED, false),
+        longDistance: {
+            enabled: storage.get(storage.KEYS.LD_ENABLED, false),
+            offset: storage.get(storage.KEYS.LD_OFFSET, ''),
+            meet: storage.get(storage.KEYS.LD_MEET, ''),
+            myLoc: storage.get(storage.KEYS.LD_MY_LOC, ''),
+            partnerLoc: storage.get(storage.KEYS.LD_PARTNER_LOC, '')
         },
-        settings: {
-            notifications: storage.get(storage.KEYS.NOTIFICATIONS, false),
-            aiEnabled: storage.get(storage.KEYS.AI_ENABLED, false),
-            aiKey: storage.get(storage.KEYS.AI_KEY, ''),
-            appLockEnabled: storage.get(storage.KEYS.LOCK_ENABLED, false),
-            longDistance: {
-                enabled: storage.get(storage.KEYS.LD_ENABLED, false),
-                offset: storage.get(storage.KEYS.LD_OFFSET, ''),
-                meet: storage.get(storage.KEYS.LD_MEET, ''),
-                myLoc: storage.get(storage.KEYS.LD_MY_LOC, ''),
-                partnerLoc: storage.get(storage.KEYS.LD_PARTNER_LOC, '')
-            },
-            setupComplete: storage.get(storage.KEYS.SETUP_COMPLETE, false),
-            photosSet: storage.get(storage.KEYS.PHOTOS_SET, false),
-            anniversaryType: storage.get(storage.KEYS.ANNIVERSARY_TYPE, '')
-        }
-    });
+        setupComplete: storage.get(storage.KEYS.SETUP_COMPLETE, false),
+        photosSet: storage.get(storage.KEYS.PHOTOS_SET, false),
+        anniversaryType: storage.get(storage.KEYS.ANNIVERSARY_TYPE, '')
+    })
+});
 
-    const [state, setState] = useState(loadStateFromStorage());
+// Keys owned by this aggregate — cross-tab changes to them trigger re-hydration.
+const SYNC_KEYS = [
+    storage.KEYS.PARTNER_1,
+    storage.KEYS.PARTNER_2,
+    storage.KEYS.NICKNAME,
+    storage.KEYS.START_DATE,
+    storage.KEYS.EVENTS,
+    storage.KEYS.NOTIFICATIONS,
+    storage.KEYS.AI_ENABLED,
+    storage.KEYS.AI_KEY,
+    storage.KEYS.LOCK_ENABLED,
+    storage.KEYS.SETUP_COMPLETE,
+    storage.KEYS.PHOTOS_SET,
+    storage.KEYS.ANNIVERSARY_TYPE,
+    storage.KEYS.LD_ENABLED,
+    storage.KEYS.LD_OFFSET,
+    storage.KEYS.LD_MEET,
+    storage.KEYS.LD_MY_LOC,
+    storage.KEYS.LD_PARTNER_LOC
+];
 
-    // --- MIGRATION & VALIDATION ---
-    useEffect(() => {
-        // Ensure events is an array
-        if (!Array.isArray(state.relationship.events)) {
-            // Migration: Check for legacy date
-            const legacyDate = storage.get(storage.KEYS.START_DATE);
-            if (legacyDate) {
-                const initialEvent = [{
-                    id: 'legacy-init',
-                    title: 'The Beginning',
-                    date: legacyDate,
-                    emoji: '💖',
-                    isMain: true
-                }];
-                // We don't just set state, we write to storage to fix it permanently
-                storage.set(storage.KEYS.EVENTS, initialEvent);
-                // eslint-disable-next-line react-hooks/set-state-in-effect
-                setState(prev => ({
-                    ...prev,
-                    relationship: { ...prev.relationship, events: initialEvent }
-                }));
-            } else {
-                setState(prev => ({
-                    ...prev,
-                    relationship: { ...prev.relationship, events: [] }
-                }));
-            }
-        }
-    }, [state.relationship.events]); // include to satisfy exhaustive (migration runs once-ish)
+export const RelationshipProvider = ({ children }) => {
+    const [state, setState] = useState(loadStateFromStorage);
 
     // --- MULTI-TAB SYNC ---
     // Only sync on changes to relationship/settings keys, NOT feature data like capsules/goals
     useEffect(() => {
-        const SYNC_KEYS = [
-            storage.KEYS.PARTNER_1,
-            storage.KEYS.PARTNER_2,
-            storage.KEYS.NICKNAME,
-            storage.KEYS.START_DATE,
-            storage.KEYS.EVENTS,
-            storage.KEYS.NOTIFICATIONS,
-            storage.KEYS.AI_ENABLED,
-            storage.KEYS.AI_KEY,
-            storage.KEYS.LOCK_ENABLED,
-            storage.KEYS.SETUP_COMPLETE,
-            storage.KEYS.PHOTOS_SET,
-            storage.KEYS.ANNIVERSARY_TYPE,
-            storage.KEYS.LD_ENABLED,
-            storage.KEYS.LD_OFFSET,
-            storage.KEYS.LD_MEET,
-            storage.KEYS.LD_MY_LOC,
-            storage.KEYS.LD_PARTNER_LOC
-        ];
-
         const handleStorageChange = (e) => {
-            // Only sync if the key is a relationship/settings key (not feature data)
             if (SYNC_KEYS.includes(e.key)) {
-                console.log('🔄 Syncing state from another tab...');
                 setState(loadStateFromStorage());
             }
         };
@@ -111,62 +84,82 @@ export const RelationshipProvider = ({ children }) => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
-    // --- ACTIONS ---
+    // --- COMMANDS ---
+    // Updates pass through the same domain sanitizers as loads, so magic-link
+    // / share payloads (`?sync=`) cannot inject malformed state. Sanitized
+    // fields are persisted individually to keep the flat key layout.
 
-    const updateRelationship = useCallback((updates) => {
+    const updateRelationship = useCallback((updates = {}) => {
         setState(prev => {
-            const newState = { ...prev, relationship: { ...prev.relationship, ...updates } };
+            const incoming = sanitizeRelationship({ ...prev.relationship, ...updates });
 
-            // Persist
-            if (updates.partner1 !== undefined) storage.set(storage.KEYS.PARTNER_1, updates.partner1);
-            if (updates.partner2 !== undefined) storage.set(storage.KEYS.PARTNER_2, updates.partner2);
-            if (updates.nickname !== undefined) storage.set(storage.KEYS.NICKNAME, updates.nickname);
-            if (updates.startDate !== undefined) storage.set(storage.KEYS.START_DATE, updates.startDate);
-            if (updates.events !== undefined) storage.set(storage.KEYS.EVENTS, updates.events);
+            if ('partner1' in updates) storage.set(storage.KEYS.PARTNER_1, incoming.partner1);
+            if ('partner2' in updates) storage.set(storage.KEYS.PARTNER_2, incoming.partner2);
+            if ('nickname' in updates) storage.set(storage.KEYS.NICKNAME, incoming.nickname);
+            if ('startDate' in updates) storage.set(storage.KEYS.START_DATE, incoming.startDate);
+            if ('events' in updates) storage.set(storage.KEYS.EVENTS, incoming.events);
 
-            return newState;
+            return { ...prev, relationship: incoming };
         });
     }, []);
 
-    const updateSettings = useCallback((updates) => {
+    const updateSettings = useCallback((updates = {}) => {
         setState(prev => {
-            const newState = { ...prev, settings: { ...prev.settings, ...updates } };
+            const mergedRaw = {
+                ...prev.settings,
+                ...updates,
+                longDistance: updates.longDistance !== undefined
+                    ? sanitizeLongDistance({
+                        ...prev.settings.longDistance,
+                        ...updates.longDistance
+                    })
+                    : prev.settings.longDistance
+            };
+            const incoming = sanitizeSettings(mergedRaw);
 
-            // Persist
-            if (updates.notifications !== undefined) storage.set(storage.KEYS.NOTIFICATIONS, updates.notifications);
-            if (updates.aiEnabled !== undefined) storage.set(storage.KEYS.AI_ENABLED, updates.aiEnabled);
-            if (updates.aiKey !== undefined) storage.set(storage.KEYS.AI_KEY, updates.aiKey);
-            if (updates.appLockEnabled !== undefined) storage.set(storage.KEYS.LOCK_ENABLED, updates.appLockEnabled);
-            if (updates.setupComplete !== undefined) storage.set(storage.KEYS.SETUP_COMPLETE, updates.setupComplete);
-            if (updates.photosSet !== undefined) storage.set(storage.KEYS.PHOTOS_SET, updates.photosSet);
-            if (updates.anniversaryType !== undefined) storage.set(storage.KEYS.ANNIVERSARY_TYPE, updates.anniversaryType);
+            if ('notifications' in updates) storage.set(storage.KEYS.NOTIFICATIONS, incoming.notifications);
+            if ('aiEnabled' in updates) storage.set(storage.KEYS.AI_ENABLED, incoming.aiEnabled);
+            if ('aiKey' in updates) storage.set(storage.KEYS.AI_KEY, incoming.aiKey);
+            if ('appLockEnabled' in updates) storage.set(storage.KEYS.LOCK_ENABLED, incoming.appLockEnabled);
+            if ('setupComplete' in updates) storage.set(storage.KEYS.SETUP_COMPLETE, incoming.setupComplete);
+            if ('photosSet' in updates) storage.set(storage.KEYS.PHOTOS_SET, incoming.photosSet);
+            if ('anniversaryType' in updates) storage.set(storage.KEYS.ANNIVERSARY_TYPE, incoming.anniversaryType);
 
             if (updates.longDistance) {
-                if (updates.longDistance.enabled !== undefined) storage.set(storage.KEYS.LD_ENABLED, updates.longDistance.enabled);
-                if (updates.longDistance.offset !== undefined) storage.set(storage.KEYS.LD_OFFSET, updates.longDistance.offset);
-                if (updates.longDistance.meet !== undefined) storage.set(storage.KEYS.LD_MEET, updates.longDistance.meet);
-                if (updates.longDistance.myLoc !== undefined) storage.set(storage.KEYS.LD_MY_LOC, updates.longDistance.myLoc);
-                if (updates.longDistance.partnerLoc !== undefined) storage.set(storage.KEYS.LD_PARTNER_LOC, updates.longDistance.partnerLoc);
+                storage.set(storage.KEYS.LD_ENABLED, incoming.longDistance.enabled);
+                storage.set(storage.KEYS.LD_OFFSET, incoming.longDistance.offset);
+                storage.set(storage.KEYS.LD_MEET, incoming.longDistance.meet);
+                storage.set(storage.KEYS.LD_MY_LOC, incoming.longDistance.myLoc);
+                storage.set(storage.KEYS.LD_PARTNER_LOC, incoming.longDistance.partnerLoc);
             }
 
-            return newState;
+            return { ...prev, settings: incoming };
         });
     }, []);
 
     const resetApp = useCallback(() => {
+        // Wipe localStorage keys AND IndexedDB media so "Erase All Data"
+        // genuinely removes every trace (photos, voice notes, profiles).
         storage.clear();
+        import('../utils/db').then(({ clearAllMedia }) => clearAllMedia()).catch((e) => {
+            console.error('Failed to clear media during reset:', e);
+        });
         setState(loadStateFromStorage()); // Will revert to defaults
         window.location.reload();
     }, []);
 
+    // Memoized so consumers only re-render when relationship/settings data
+    // or action identities actually change — not on every provider render.
+    const value = useMemo(() => ({
+        relationship: state.relationship,
+        settings: state.settings,
+        updateRelationship,
+        updateSettings,
+        resetApp
+    }), [state.relationship, state.settings, updateRelationship, updateSettings, resetApp]);
+
     return (
-        <RelationshipContext.Provider value={{
-            relationship: state.relationship,
-            settings: state.settings,
-            updateRelationship,
-            updateSettings,
-            resetApp
-        }}>
+        <RelationshipContext.Provider value={value}>
             {children}
         </RelationshipContext.Provider>
     );

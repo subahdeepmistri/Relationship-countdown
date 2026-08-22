@@ -13,8 +13,7 @@ export default defineConfig({
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.js',
-      registerType: 'autoUpdate',
-      manifest: {
+      registerType: 'autoUpdate',      manifest: {
         name: 'Relationship Countdown',
         short_name: 'OurTime',
         description: 'A personal relationship countdown and anniversary tracker.',
@@ -60,4 +59,19 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    // Split stable vendor code so app-code deploys don't invalidate the
+    // framework cache layer (long-term browser caching).
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react-dom') || id.includes('/react/') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+          }
+        }
+      }
+    }
+  }
 })

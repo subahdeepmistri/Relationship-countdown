@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { savePhoto, getPhotos, deletePhoto } from '../utils/db';
+import { compressImage } from '../utils/imageCompression';
+import { createManagedObjectURL, revokeObjectURL, revokeAllObjectURLs, getManagedObjectURL } from '../utils/objectUrlManager';
 import '../styles/theme.css';
 
 const MemoryCarousel = () => {
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-
-    // Object URLs cache to prevent memory leaks
-    const [objectUrls, setObjectUrls] = useState({});
 
     // Lightbox State
     const [selectedPhoto, setSelectedPhoto] = useState(null);
@@ -23,14 +22,13 @@ const MemoryCarousel = () => {
         loadPhotos();
     }, []);
 
-    // CRITICAL: Cleanup object URLs on unmount to prevent memory leak
+    // CRITICAL: Cleanup ALL managed object URLs on unmount
     useEffect(() => {
         return () => {
-            Object.values(objectUrls).forEach(url => {
-                URL.revokeObjectURL(url);
-            });
+            // Revoke all on unmount (manager is global but we clean aggressively for this heavy gallery)
+            revokeAllObjectURLs();
         };
-    }, [objectUrls]);
+    }, []);
 
     const loadPhotos = async () => {
         try {
@@ -38,18 +36,13 @@ const MemoryCarousel = () => {
             // Sort by createdAt desc
             memoryList.sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
 
-            // Create object URLs once and cache them
-            const urls = {};
+            // Create managed object URLs (prevents leaks, tracked globally)
             memoryList.forEach(photo => {
                 if (photo.blob) {
-                    urls[photo.id] = URL.createObjectURL(photo.blob);
+                    createManagedObjectURL(photo.blob, photo.id);
                 }
             });
 
-            // Revoke old URLs before setting new ones
-            Object.values(objectUrls).forEach(url => URL.revokeObjectURL(url));
-
-            setObjectUrls(urls);
             setPhotos(memoryList);
         } catch (error) {
             console.error("Error fetching memories:", error);
@@ -81,8 +74,11 @@ const MemoryCarousel = () => {
             const id = `memory_${Date.now()}`;
             const createdAt = new Date().toISOString();
 
+            // Compress before persisting (graceful: returns original on failure)
+            const optimized = await compressImage(file);
+
             // Save to IndexedDB
-            await savePhoto(id, file, caption, createdAt);
+            await savePhoto(id, optimized, caption, createdAt);
 
             // Notify full system (progress bar + stats tiles) so the "entire system" view updates live with the new memory
             try { window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key: 'idb-photo', ts: Date.now() } })); } catch { /* notify ignore */ }
@@ -111,6 +107,8 @@ const MemoryCarousel = () => {
         try {
             await deletePhoto(id);
             if (selectedPhoto?.id === id) setSelectedPhoto(null);
+            // Clean up the specific URL immediately
+            revokeObjectURL(id);
             try { window.dispatchEvent(new CustomEvent('rc-storage-mutated', { detail: { key: 'idb-photo', ts: Date.now() } })); } catch { /* notify ignore */ }
             await loadPhotos();
 
@@ -202,7 +200,7 @@ const MemoryCarousel = () => {
                             className="memory-item"
                             onClick={() => setSelectedPhoto(photo)}
                         >
-                            <img src={objectUrls[photo.id]} alt="Memory" loading="lazy" />
+                            <img src={getManagedObjectURL(photo.id)} alt="Memory" loading="lazy" />
                             <div className="memory-overlay">
                                 <span style={{ fontSize: '0.9rem', color: 'white' }}>👁️ View</span>
                             </div>
@@ -233,7 +231,7 @@ const MemoryCarousel = () => {
                     </button>
 
                     <img
-                        src={objectUrls[selectedPhoto.id]}
+                        src={getManagedObjectURL(selectedPhoto.id)}
                         alt="Full Memory"
                         style={{
                             maxWidth: '90%', maxHeight: '70vh', objectFit: 'contain',

@@ -121,6 +121,26 @@ export const getPhotos = () => getAllFromStore(PHOTO_STORE);
 export const deletePhoto = (id) => deleteFromStore(PHOTO_STORE, id);
 
 /**
+ * Wipe ALL media stores (photos, audio, profile images).
+ * Used by "Erase All Data" so a reset truly removes everything.
+ */
+export const clearAllMedia = async () => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        try {
+            const tx = db.transaction([AUDIO_STORE, PHOTO_STORE, PROFILE_STORE], 'readwrite');
+            tx.objectStore(AUDIO_STORE).clear();
+            tx.objectStore(PHOTO_STORE).clear();
+            tx.objectStore(PROFILE_STORE).clear();
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e.target.error);
+        } catch (e) {
+            reject(e);
+        }
+    });
+};
+
+/**
  * Compute total size (bytes) of all media stored in IndexedDB (photos + audio + profiles).
  * Used for accurate "entire system" storage reporting in status/progress UIs.
  * Graceful: returns 0 on any error (no crash).

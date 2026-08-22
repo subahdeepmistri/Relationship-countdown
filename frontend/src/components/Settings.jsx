@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import '../styles/theme.css';
 
 import { useRelationship } from '../context/RelationshipContext';
+import { storage } from '../utils/storageAdapter';
 
 const Settings = ({ isOpen, onClose, onEditPhotos }) => {
-    const { settings, relationship, updateSettings, updateRelationship } = useRelationship();
+    const { settings, relationship, updateSettings, updateRelationship, resetApp } = useRelationship();
 
     // Local Buffer State (Editing)
     const [enableNotifications, setEnableNotifications] = useState(false);
@@ -43,8 +44,62 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         timeline: false,
         notifications: false,
         ai: false,
-        longDistance: false
+        longDistance: false,
+        data: false
     });
+
+    // Data & Privacy state
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [dataToast, setDataToast] = useState('');
+    const importFileRef = React.useRef(null);
+
+    const handleExportData = () => {
+        try {
+            const data = storage.exportAll();
+            // Media blobs live in IndexedDB and can't be embedded in JSON export;
+            // note this clearly so users keep expectations honest.
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `relationship-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            setDataToast('Backup downloaded 💾');
+        } catch {
+            setDataToast('Export failed — please try again');
+        }
+    };
+
+    const handleImportData = (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try {
+                const parsed = JSON.parse(reader.result);
+                if (!parsed || typeof parsed !== 'object' || !parsed._exportedAt) {
+                    throw new Error('Not a valid backup file');
+                }
+                const result = storage.importAll(parsed, false);
+                if (result.success) {
+                    setToastMsg('Backup restored. Reloading…');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    setDataToast('Restore failed — file may be corrupted');
+                }
+            } catch {
+                setDataToast('Invalid backup file');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    };
+
+    const handleResetApp = () => {
+        setShowResetModal(false);
+        resetApp();
+    };
 
     const toggleSection = (section) => {
         setExpandedSections(prev => ({
@@ -53,38 +108,45 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         }));
     };
 
+    // Keep latest context in a ref so the init effect below can re-run on
+    // `isOpen` transitions without wiping unsaved edits on every context change.
+    const contextRef = React.useRef({ settings, relationship });
+    contextRef.current = { settings, relationship };
+
     // Initialize Buffer from Context when Opened
     useEffect(() => {
         if (isOpen) {
+            const { settings: s, relationship: r } = contextRef.current;
             setToastMsg('');
-            setEnableNotifications(settings.notifications);
-            setEnableAI(settings.aiEnabled);
-            setApiKey(settings.aiKey);
+            setEnableNotifications(s.notifications);
+            setEnableAI(s.aiEnabled);
+            setApiKey(s.aiKey);
 
-            setPartner1(relationship.partner1);
-            setPartner2(relationship.partner2);
-            setNickname(relationship.nickname);
-            setAnniversaryType(settings.anniversaryType || 'couple');
+            setPartner1(r.partner1);
+            setPartner2(r.partner2);
+            setNickname(r.nickname);
+            setAnniversaryType(s.anniversaryType || 'couple');
 
-            setLocalEvents(relationship.events || []);
+            setLocalEvents(r.events || []);
 
-            setLdEnabled(settings.longDistance.enabled);
-            setLdOffset(settings.longDistance.offset);
-            setLdMeet(settings.longDistance.meet);
-            setLdMyLoc(settings.longDistance.myLoc);
-            setLdPartnerLoc(settings.longDistance.partnerLoc);
+            setLdEnabled(s.longDistance.enabled);
+            setLdOffset(s.longDistance.offset);
+            setLdMeet(s.longDistance.meet);
+            setLdMyLoc(s.longDistance.myLoc);
+            setLdPartnerLoc(s.longDistance.partnerLoc);
 
             // Expand sections that have content
             setExpandedSections({
                 profile: true,
-                personalization: !!(relationship.partner1 || relationship.partner2 || relationship.nickname),
-                timeline: (relationship.events || []).length > 0,
-                notifications: settings.notifications,
-                ai: settings.aiEnabled,
-                longDistance: settings.longDistance.enabled
+                personalization: !!(r.partner1 || r.partner2 || r.nickname),
+                timeline: (r.events || []).length > 0,
+                notifications: s.notifications,
+                ai: s.aiEnabled,
+                longDistance: s.longDistance.enabled,
+                data: false
             });
         }
-    }, [isOpen, settings, relationship]);
+    }, [isOpen]);
 
     // Auto-dismiss toast safety
     useEffect(() => {
@@ -94,11 +156,19 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
         }
     }, [toastMsg]);
 
-    // Clock Timer
     useEffect(() => {
+        if (dataToast) {
+            const timer = setTimeout(() => setDataToast(''), 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [dataToast]);
+
+    // Clock Timer (only run while the settings panel is open)
+    useEffect(() => {
+        if (!isOpen) return;
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [isOpen]);
 
     const getPartnerTime = () => {
         const offsetVal = parseFloat(ldOffset);
@@ -218,7 +288,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
             events: localEvents
         });
 
-        if (enableNotifications && Notification.permission !== 'granted') {
+        if (enableNotifications && 'Notification' in window && Notification.permission !== 'granted') {
             Notification.requestPermission();
         }
 
@@ -268,6 +338,38 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                 padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white',
                                 border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', fontWeight: '600', cursor: 'pointer'
                             }}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reset Everything Modal */}
+            {showResetModal && (
+                <div style={{
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+                    zIndex: 10010, display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                    <div style={{
+                        background: 'rgba(30, 41, 59, 0.95)', padding: '30px', borderRadius: '24px',
+                        border: '1px solid rgba(239, 68, 68, 0.3)', textAlign: 'center', maxWidth: '340px',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)', animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        <div style={{ fontSize: '3rem', marginBottom: '15px' }}>💔</div>
+                        <h3 style={{ color: 'white', marginBottom: '10px', fontSize: '1.2rem' }}>Erase everything?</h3>
+                        <p style={{ color: '#94a3b8', marginBottom: '25px', lineHeight: '1.5', fontSize: '0.88rem' }}>
+                            All names, dates, notes, photos and voice messages will be
+                            permanently deleted from this device. This cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
+                            <button onClick={handleResetApp} style={{
+                                padding: '14px', background: 'rgba(239, 68, 68, 0.85)', color: 'white',
+                                border: 'none', borderRadius: '15px', fontWeight: '700', cursor: 'pointer'
+                            }}>Yes, erase everything</button>
+                            <button onClick={() => setShowResetModal(false)} style={{
+                                padding: '14px', background: 'rgba(255,255,255,0.05)', color: 'white',
+                                border: '1px solid rgba(255,255,255,0.1)', borderRadius: '15px', fontWeight: '600', cursor: 'pointer'
+                            }}>Keep my memories</button>
                         </div>
                     </div>
                 </div>
@@ -388,51 +490,16 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                 <div className="settings-content" style={{ maxHeight: '70vh', overflowY: 'auto', paddingRight: '5px', scrollBehavior: 'smooth' }}>
 
                     {/* --- 1. PROFILE & NAMES --- */}
-                    <div className="settings-section-card" style={{
-                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        overflow: 'hidden', transition: 'all 0.3s ease'
-                    }}>
-                        <button
-                            onClick={() => toggleSection('profile')}
-                            aria-expanded={expandedSections.profile}
-                            style={{
-                                width: '100%', padding: '18px', background: 'transparent',
-                                border: 'none', cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', justifyContent: 'space-between',
-                                color: 'white', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '42px', height: '42px', borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(251, 113, 133, 0.2))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#f472b6'
-                                }}>
-                                    <Icons.User />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Profile & Photos</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                                        {!expandedSections.profile ? 'Edit your profile images' : 'How you appear together'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                width: '28px', height: '28px', borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center',
-                                transform: expandedSections.profile ? 'rotate(180deg)' : 'rotate(0)',
-                                transition: 'transform 0.3s ease'
-                            }}>
-                                <Icons.Chevron />
-                            </div>
-                        </button>
-
-                        {expandedSections.profile && (
-                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                    <SectionCard
+                        icon={<Icons.User />}
+                        tint="linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(251, 113, 133, 0.2))"
+                        color="#f472b6"
+                        title="Profile & Photos"
+                        collapsedSubtitle="Edit your profile images"
+                        expandedSubtitle="How you appear together"
+                        expanded={expandedSections.profile}
+                        onToggle={() => toggleSection('profile')}
+                    >
                                 <button
                                     onClick={onEditPhotos}
                                     className="edit-photos-btn"
@@ -446,9 +513,7 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                     <span style={{ display: 'flex' }}><Icons.Camera /></span>
                                     Edit Profile Photos
                                 </button>
-                            </div>
-                        )}
-                    </div>
+                    </SectionCard>
                     <style>{`
                         .edit-photos-btn:hover {
                             background: rgba(255, 255, 255, 0.08) !important;
@@ -458,53 +523,16 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
 
 
                     {/* --- 2. PERSONALIZATION --- */}
-                    <div className="settings-section-card" style={{
-                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        overflow: 'hidden', transition: 'all 0.3s ease'
-                    }}>
-                        <button
-                            onClick={() => toggleSection('personalization')}
-                            aria-expanded={expandedSections.personalization}
-                            style={{
-                                width: '100%', padding: '18px', background: 'transparent',
-                                border: 'none', cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', justifyContent: 'space-between',
-                                color: 'white', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '42px', height: '42px', borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(249, 115, 22, 0.2))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#fb7185'
-                                }}>
-                                    <Icons.Heart />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Personalization</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                                        {!expandedSections.personalization
-                                            ? (partner1 && partner2 ? `${partner1} & ${partner2}` : 'Configure names & type')
-                                            : 'Names, nickname & relationship type'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                width: '28px', height: '28px', borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center',
-                                transform: expandedSections.personalization ? 'rotate(180deg)' : 'rotate(0)',
-                                transition: 'transform 0.3s ease'
-                            }}>
-                                <Icons.Chevron />
-                            </div>
-                        </button>
-
-                        {expandedSections.personalization && (
-                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                    <SectionCard
+                        icon={<Icons.Heart />}
+                        tint="linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(249, 115, 22, 0.2))"
+                        color="#fb7185"
+                        title="Personalization"
+                        collapsedSubtitle={partner1 && partner2 ? `${partner1} & ${partner2}` : 'Configure names & type'}
+                        expandedSubtitle="Names, nickname & relationship type"
+                        expanded={expandedSections.personalization}
+                        onToggle={() => toggleSection('personalization')}
+                    >
                                 {/* Partner Names */}
                                 <div style={{ marginBottom: '16px' }}>
                                     <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: '10px', fontWeight: '500' }}>Your Names</div>
@@ -585,59 +613,20 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                         ))}
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                    </SectionCard>
 
 
                     {/* --- 3. NOTIFICATIONS & AI --- */}
-                    <div className="settings-section-card" style={{
-                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        overflow: 'hidden', transition: 'all 0.3s ease'
-                    }}>
-                        <button
-                            onClick={() => toggleSection('notifications')}
-                            aria-expanded={expandedSections.notifications}
-                            style={{
-                                width: '100%', padding: '18px', background: 'transparent',
-                                border: 'none', cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', justifyContent: 'space-between',
-                                color: 'white', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '42px', height: '42px', borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#10b981'
-                                }}>
-                                    <Icons.Bell />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Notifications & AI</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                                        {!expandedSections.notifications
-                                            ? `${enableNotifications ? 'Reminders active' : 'Reminders off'}${enableAI ? ' • AI enabled' : ''}`
-                                            : 'Configure reminders and AI messages'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                width: '28px', height: '28px', borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center',
-                                transform: expandedSections.notifications ? 'rotate(180deg)' : 'rotate(0)',
-                                transition: 'transform 0.3s ease'
-                            }}>
-                                <Icons.Chevron />
-                            </div>
-                        </button>
-
-                        {expandedSections.notifications && (
-                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                    <SectionCard
+                        icon={<Icons.Bell />}
+                        tint="linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2))"
+                        color="#10b981"
+                        title="Notifications & AI"
+                        collapsedSubtitle={`${enableNotifications ? 'Reminders active' : 'Reminders off'}${enableAI ? ' • AI enabled' : ''}`}
+                        expandedSubtitle="Configure reminders and AI messages"
+                        expanded={expandedSections.notifications}
+                        onToggle={() => toggleSection('notifications')}
+                    >
                                 <GlassToggle
                                     label="Anniversary Reminders"
                                     desc="Get notified on special dates"
@@ -669,59 +658,20 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                         </p>
                                     </div>
                                 )}
-                            </div>
-                        )}
-                    </div>
+                    </SectionCard>
 
 
                     {/* --- 3. TIMELINE EVENTS --- */}
-                    <div className="settings-section-card" style={{
-                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        overflow: 'hidden', transition: 'all 0.3s ease'
-                    }}>
-                        <button
-                            onClick={() => toggleSection('timeline')}
-                            aria-expanded={expandedSections.timeline}
-                            style={{
-                                width: '100%', padding: '18px', background: 'transparent',
-                                border: 'none', cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', justifyContent: 'space-between',
-                                color: 'white', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '42px', height: '42px', borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(244, 114, 182, 0.2))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#fb7185'
-                                }}>
-                                    <Icons.Calendar />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Timeline Events</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                                        {!expandedSections.timeline
-                                            ? `${localEvents.length} milestone${localEvents.length !== 1 ? 's' : ''} saved`
-                                            : 'Important dates in your story'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                width: '28px', height: '28px', borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center',
-                                transform: expandedSections.timeline ? 'rotate(180deg)' : 'rotate(0)',
-                                transition: 'transform 0.3s ease'
-                            }}>
-                                <Icons.Chevron />
-                            </div>
-                        </button>
-
-                        {expandedSections.timeline && (
-                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                    <SectionCard
+                        icon={<Icons.Calendar />}
+                        tint="linear-gradient(135deg, rgba(251, 113, 133, 0.2), rgba(244, 114, 182, 0.2))"
+                        color="#fb7185"
+                        title="Timeline Events"
+                        collapsedSubtitle={`${localEvents.length} milestone${localEvents.length !== 1 ? 's' : ''} saved`}
+                        expandedSubtitle="Important dates in your story"
+                        expanded={expandedSections.timeline}
+                        onToggle={() => toggleSection('timeline')}
+                    >
                                 {localEvents.length === 0 ? (
                                     <div style={{
                                         padding: '24px', textAlign: 'center', borderRadius: '12px',
@@ -795,62 +745,23 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                         <span>+</span> Add Event
                                     </button>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                    </SectionCard>
                     <style>{`
                         .trash-btn:hover { background: rgba(239, 68, 68, 0.2) !important; transform: scale(1.05); }
                         .add-btn:hover { background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.4)) !important; }
                     `}</style>
 
                     {/* --- 4. LONG DISTANCE --- */}
-                    <div className="settings-section-card" style={{
-                        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
-                        backdropFilter: 'blur(10px)', borderRadius: '20px',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
-                        overflow: 'hidden', transition: 'all 0.3s ease'
-                    }}>
-                        <button
-                            onClick={() => toggleSection('longDistance')}
-                            aria-expanded={expandedSections.longDistance}
-                            style={{
-                                width: '100%', padding: '18px', background: 'transparent',
-                                border: 'none', cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', justifyContent: 'space-between',
-                                color: 'white', textAlign: 'left'
-                            }}
-                        >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div style={{
-                                    width: '42px', height: '42px', borderRadius: '12px',
-                                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(34, 211, 238, 0.2))',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#38bdf8'
-                                }}>
-                                    <Icons.Globe />
-                                </div>
-                                <div>
-                                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>Long Distance Mode</div>
-                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-                                        {!expandedSections.longDistance
-                                            ? (ldEnabled ? 'Active • Dual clocks enabled' : 'Disabled')
-                                            : 'Timezones & countdown to meeting'}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                width: '28px', height: '28px', borderRadius: '8px',
-                                background: 'rgba(255,255,255,0.05)', display: 'flex',
-                                alignItems: 'center', justifyContent: 'center',
-                                transform: expandedSections.longDistance ? 'rotate(180deg)' : 'rotate(0)',
-                                transition: 'transform 0.3s ease'
-                            }}>
-                                <Icons.Chevron />
-                            </div>
-                        </button>
-
-                        {expandedSections.longDistance && (
-                            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                    <SectionCard
+                        icon={<Icons.Globe />}
+                        tint="linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(34, 211, 238, 0.2))"
+                        color="#38bdf8"
+                        title="Long Distance Mode"
+                        collapsedSubtitle={ldEnabled ? 'Active • Dual clocks enabled' : 'Disabled'}
+                        expandedSubtitle="Timezones & countdown to meeting"
+                        expanded={expandedSections.longDistance}
+                        onToggle={() => toggleSection('longDistance')}
+                    >
                                 <GlassToggle
                                     label="Enable Long Distance Mode"
                                     desc="Show dual clocks & distance"
@@ -919,9 +830,65 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        )}
-                    </div>
+                    </SectionCard>
+
+                    {/* --- 5. DATA & PRIVACY --- */}
+                    <SectionCard
+                        icon={<Icons.Shield />}
+                        tint="linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(100, 116, 139, 0.2))"
+                        color="#cbd5e1"
+                        title="Data & Privacy"
+                        collapsedSubtitle="Everything stays on this device"
+                        expandedSubtitle="Backup, restore & erase"
+                        expanded={expandedSections.data}
+                        onToggle={() => toggleSection('data')}
+                    >
+                                <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: '1.6', margin: '0 0 14px 0' }}>
+                                    Your story lives only in this browser — there is no server.
+                                    Download a backup regularly so nothing is ever lost.
+                                </p>
+                                <button onClick={handleExportData} className="data-action-btn" style={{
+                                    width: '100%', padding: '13px', marginBottom: '10px',
+                                    background: 'rgba(16, 185, 129, 0.15)', border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    borderRadius: '14px', color: '#34d399', fontWeight: '600', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.9rem'
+                                }}>
+                                    ⬇️ Download Backup
+                                </button>
+                                <button onClick={() => importFileRef.current?.click()} className="data-action-btn" style={{
+                                    width: '100%', padding: '13px', marginBottom: '10px',
+                                    background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.3)',
+                                    borderRadius: '14px', color: '#38bdf8', fontWeight: '600', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.9rem'
+                                }}>
+                                    ⬆️ Restore Backup
+                                </button>
+                                <input
+                                    ref={importFileRef}
+                                    type="file"
+                                    accept="application/json,.json"
+                                    onChange={handleImportData}
+                                    style={{ display: 'none' }}
+                                    aria-hidden="true"
+                                />
+                                <p style={{ fontSize: '0.72rem', color: '#64748b', margin: '0 0 14px 0', lineHeight: '1.5' }}>
+                                    Note: photos & voice notes are stored separately and are not
+                                    included in backup files yet.
+                                </p>
+                                <button onClick={() => setShowResetModal(true)} className="data-danger-btn" style={{
+                                    width: '100%', padding: '13px',
+                                    background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '14px', color: '#fca5a5', fontWeight: '600', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '0.9rem'
+                                }}>
+                                    🗑️ Erase All Data
+                                </button>
+                                {dataToast && (
+                                    <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#34d399', margin: '12px 0 0', fontWeight: '600' }}>
+                                        {dataToast}
+                                    </p>
+                                )}
+                    </SectionCard>
 
 
 
@@ -964,9 +931,11 @@ const Settings = ({ isOpen, onClose, onEditPhotos }) => {
                 </div>
             </div>
             {/* Keeping styles inline as before */}
-            <style>{`
-                .glass-input { width: 100%; padding: 14px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-size: 1rem; outline: none; transition: all 0.3s; }
-                .glass-input:focus { background: rgba(0, 0, 0, 0.5); border-color: rgba(255, 255, 255, 0.3); }
+                    <style>{`
+                        .glass-input { width: 100%; padding: 14px; border-radius: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.1); color: white; font-size: 1rem; outline: none; transition: all 0.3s; }
+                        .glass-input:focus { background: rgba(0, 0, 0, 0.5); border-color: rgba(255, 255, 255, 0.3); }
+                        .data-action-btn:hover { filter: brightness(1.3); }
+                        .data-danger-btn:hover { background: rgba(239, 68, 68, 0.25) !important; }
                 .settings-section { background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
                 .nested-settings { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.1); animation: slideDown 0.3s ease; }
                 @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
@@ -1005,6 +974,61 @@ const SectionHeader = ({ title, icon }) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', opacity: 0.9 }}>
         <span style={{ display: 'flex', alignItems: 'center', color: '#94a3b8' }}>{icon}</span>
         <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'white', fontWeight: '600', letterSpacing: '0.5px' }}>{title}</h3>
+    </div>
+);
+
+// --- REUSABLE COLLAPSIBLE SECTION CARD ---
+// One implementation replaces six hand-copied header/toggle/chrome blocks.
+// Visual output is identical to the original inline markup.
+const SectionCard = ({ icon, tint, color, title, collapsedSubtitle, expandedSubtitle, expanded, onToggle, children }) => (
+    <div className="settings-section-card" style={{
+        marginBottom: '16px', background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(10px)', borderRadius: '20px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        overflow: 'hidden', transition: 'all 0.3s ease'
+    }}>
+        <button
+            onClick={onToggle}
+            aria-expanded={expanded}
+            style={{
+                width: '100%', padding: '18px', background: 'transparent',
+                border: 'none', cursor: 'pointer', display: 'flex',
+                alignItems: 'center', justifyContent: 'space-between',
+                color: 'white', textAlign: 'left'
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                    width: '42px', height: '42px', borderRadius: '12px',
+                    background: tint,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color
+                }}>
+                    {icon}
+                </div>
+                <div>
+                    <div style={{ fontWeight: '600', fontSize: '1rem' }}>{title}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
+                        {expanded ? expandedSubtitle : collapsedSubtitle}
+                    </div>
+                </div>
+            </div>
+            <div style={{
+                width: '28px', height: '28px', borderRadius: '8px',
+                background: 'rgba(255,255,255,0.05)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0)',
+                transition: 'transform 0.3s ease'
+            }}>
+                <Icons.Chevron />
+            </div>
+        </button>
+
+        {expanded && (
+            <div style={{ padding: '0 18px 18px 18px', animation: 'slideDown 0.3s ease' }}>
+                {children}
+            </div>
+        )}
     </div>
 );
 

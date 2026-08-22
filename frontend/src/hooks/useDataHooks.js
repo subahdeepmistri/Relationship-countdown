@@ -3,64 +3,163 @@
  * ==================================
  * Centralized data access pattern for all feature data.
  * Components should NEVER directly access localStorage.
- * 
- * Benefits:
- * - Consistent error handling
- * - Automatic state synchronization
- * - Easy to test
- * - Ready for cloud sync
+ *
+ * ARCHITECTURE (v2):
+ * Every feature collection used to re-implement the same 5 concerns
+ * (lazy load, live sync, add, delete, error handling) — ~600 lines of
+ * drifted copy-paste. They now share one engine:
+ *
+ *   useStorageSyncValue(key)  → reactive primitive: read + live-reload
+ *   useCollection(key, opts)  → CRUD array wrapper with rollback + errors
+ *
+ * The six exported hooks below keep their exact public APIs, so no
+ * component changes were needed. Per-feature differences are declared
+ * as data (sort comparator, insert position), not duplicated code.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { storage } from '../utils/storageAdapter';
+
+// ============================================
+// PRIMITIVE: reactive single-key storage value
+// ============================================
+
+/**
+ * Subscribe to a storage key and keep it in state, re-reading whenever the
+ * key is mutated locally ('rc-storage-mutated') or from another tab
+ * ('storage' event). This is the single source of live-sync logic — the old
+ * code base had 7 hand-rolled copies of this listener pair.
+ *
+ * @param {string} key - Storage key (storage.KEYS.*)
+ * @param {(raw: any) => any} [select] - Optional transform applied to raw value
+ * @returns {[any, (updater: any) => void]} value and raw setState
+ */
+export function useStorageSyncValue(key, select) {
+    const read = useCallback(() => {
+        try {
+            const raw = storage.get(key, null);
+            return select ? select(raw) : raw;
+        } catch (err) {
+            console.error(`useStorageSyncValue[${key}]: read failed`, err);
+            return undefined;
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key]);
+
+    const [value, setValue] = useState(read);
+    const readRef = useRef(read);
+    readRef.current = read;
+
+    useEffect(() => {
+        setValue(readRef.current());
+
+        const onMut = () => setValue(readRef.current());
+        const onStorage = (e) => {
+            if (!e.key || e.key === key) setValue(readRef.current());
+        };
+
+        window.addEventListener('rc-storage-mutated', onMut);
+        window.addEventListener('storage', onStorage);
+        return () => {
+            window.removeEventListener('rc-storage-mutated', onMut);
+            window.removeEventListener('storage', onStorage);
+        };
+    }, [key]);
+
+    return [value, setValue];
+}
+
+// ============================================
+// ENGINE: generic collection CRUD over a storage key
+// ============================================
+
+/**
+ * @param {string} key - Storage key holding a JSON array
+ * @param {object} [options]
+ * @param {(a: object, b: object) => number} [options.sort] - Comparator kept
+ *   invariant after every load/add (goals & journey sort by date).
+ * @param {'append'|'prepend'} [options.insert='append']
+ * @returns collection state + mutation helpers
+ */
+function useCollection(key, { sort, insert = 'append' } = {}) {
+    const order = (items) => (sort ? [...items].sort(sort) : items);
+
+    // Guarantees an array even if storage holds garbage (defensive parity
+    // with what each legacy hook did inline with its own try/Array.isArray).
+    const selectArray = (raw) => {
+        try {
+            if (!Array.isArray(raw)) return [];
+            return sort ? [...raw].sort(sort) : raw;
+        } catch {
+            return [];
+        }
+    };
+
+    const [items, setItems] = useStorageSyncValue(key, selectArray);
+    const [error, setError] = useState(null);
+
+    // Ref mirror so mutation callbacks never read stale closures, and so
+    // persistence happens exactly once per mutation (the legacy version
+    // wrote to storage inside the setState updater, which double-fires
+    // under StrictMode).
+    const itemsRef = useRef(items);
+    itemsRef.current = items;
+
+    const commit = useCallback((updated, failureMessage) => {
+        const ordered = order(updated);
+        const result = storage.set(key, ordered);
+        if (!result.success) {
+            setError(
+                result.error === storage.StorageError.QUOTA_EXCEEDED
+                    ? 'Storage full! Delete some items first.'
+                    : failureMessage
+            );
+            return false;
+        }
+        setItems(ordered);
+        return true;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [key]);
+
+    const addItem = useCallback((item, failureMessage = 'Failed to save.') =>
+        commit(insert === 'prepend' ? [item, ...itemsRef.current] : [...itemsRef.current, item], failureMessage),
+        [commit, insert]);
+
+    const removeItem = useCallback((id) =>
+        commit(itemsRef.current.filter(item => item.id !== id), 'Failed to delete.'),
+        [commit]);
+
+    const mapItem = useCallback((id, fn, failureMessage = 'Failed to update.') =>
+        commit(itemsRef.current.map(item => (item.id === id ? fn(item) : item)), failureMessage),
+        [commit]);
+
+    const replaceAll = useCallback((next) => {
+        try {
+            setItems(next);
+            const result = storage.set(key, next);
+            return { success: !!result.success };
+        } catch (err) {
+            console.error(`${key}: replaceAll failed`, err);
+            return { success: false };
+        }
+    }, [key, setItems]);
+
+    return { items, setItems, error, setError, commit, addItem, removeItem, mapItem, replaceAll };
+}
+
+const byDate = (a, b) => (new Date(a.date || 0)) - (new Date(b.date || 0));
+const quotaError = (result, fallback) =>
+    result.error === storage.StorageError.QUOTA_EXCEEDED
+        ? 'Storage full! Delete some items first.'
+        : fallback;
 
 // ============================================
 // useCapsules - Time Capsule Management
 // ============================================
 export const useCapsules = () => {
-    // Lazy init from storage (sync) - no loading needed after mount, avoids setState-in-effect
-    const [capsules, setCapsules] = useState(() => {
-        try {
-            const saved = storage.get(storage.KEYS.CAPSULES, []);
-            return Array.isArray(saved) ? saved : [];
-        } catch (err) {
-            console.error('useCapsules: Load failed', err);
-            return [];
-        }
-    });
-    const [loading] = useState(false);
-    const [error, setError] = useState(null);
+    const { items: capsules, error, setError, addItem, removeItem } =
+        useCollection(storage.KEYS.CAPSULES);
 
-    // Live reactivity: reload when other parts of app (or cross tab via storage event) mutate this data.
-    // This makes dashboard progress/stats always show actual current system state.
-    useEffect(() => {
-        const handler = (ev) => {
-            const k = ev?.detail?.key;
-            if (!k || k === storage.KEYS.CAPSULES) {
-                try {
-                    const saved = storage.get(storage.KEYS.CAPSULES, []);
-                    setCapsules(Array.isArray(saved) ? saved : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('rc-storage-mutated', handler);
-        // Also catch direct storage events for robustness
-        const storageHandler = (e) => {
-            if (!e.key || e.key === storage.KEYS.CAPSULES) {
-                try {
-                    const saved = storage.get(storage.KEYS.CAPSULES, []);
-                    setCapsules(Array.isArray(saved) ? saved : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('storage', storageHandler);
-        return () => {
-            window.removeEventListener('rc-storage-mutated', handler);
-            window.removeEventListener('storage', storageHandler);
-        };
-    }, []);
-
-    // Add a new capsule
     const addCapsule = useCallback((content, unlockDate) => {
         try {
             const newCapsule = {
@@ -69,108 +168,46 @@ export const useCapsules = () => {
                 unlockDate: new Date(unlockDate).getTime(),
                 createdAt: Date.now()
             };
-
-            setCapsules(prev => {
-                const updated = [...prev, newCapsule];
-                const result = storage.set(storage.KEYS.CAPSULES, updated);
-
-                if (!result.success) {
-                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
-                        ? 'Storage full! Delete some capsules first.'
-                        : 'Failed to save capsule.');
-                    return prev; // Rollback
-                }
-
-                return updated;
-            });
-
+            addItem(newCapsule, quotaError(null, 'Failed to save capsule.'));
             return { success: true, capsule: newCapsule };
         } catch (err) {
             console.error('useCapsules: Add failed', err);
             setError('Failed to create capsule');
             return { success: false };
         }
-    }, []);
+    }, [addItem, setError]);
 
-    // Delete a capsule
     const deleteCapsule = useCallback((id) => {
         try {
-            setCapsules(prev => {
-                const updated = prev.filter(c => c.id !== id);
-                storage.set(storage.KEYS.CAPSULES, updated);
-                return updated;
-            });
+            removeItem(id);
             return { success: true };
         } catch (err) {
             console.error('useCapsules: Delete failed', err);
             setError('Failed to delete capsule');
             return { success: false };
         }
-    }, []);
+    }, [removeItem, setError]);
 
-    // Check if a capsule is unlocked
-    const isUnlocked = useCallback((unlockDate) => {
-        return Date.now() >= unlockDate;
-    }, []);
+    const isUnlocked = useCallback((unlockDate) => Date.now() >= unlockDate, []);
 
-    // Get counts
     const counts = {
         total: capsules.length,
         locked: capsules.filter(c => !isUnlocked(c.unlockDate)).length,
         unlocked: capsules.filter(c => isUnlocked(c.unlockDate)).length
     };
 
-    // Clear error
-    const clearError = useCallback(() => setError(null), []);
+    const clearError = useCallback(() => setError(null), [setError]);
 
-    return {
-        capsules,
-        loading,
-        error,
-        clearError,
-        addCapsule,
-        deleteCapsule,
-        isUnlocked,
-        counts
-    };
+    return { capsules, loading: false, error, clearError, addCapsule, deleteCapsule, isUnlocked, counts };
 };
 
 // ============================================
 // useGoals - Future Goals Management
 // ============================================
 export const useGoals = () => {
-    // Lazy init from storage (sync) - avoids setState-in-effect
-    const [goals, setGoals] = useState(() => {
-        try {
-            const saved = storage.get(storage.KEYS.GOALS, []);
-            return Array.isArray(saved)
-                ? saved.sort((a, b) => new Date(a.date) - new Date(b.date))
-                : [];
-        } catch (err) {
-            console.error('useGoals: Load failed', err);
-            return [];
-        }
-    });
-    const [loading] = useState(false);
-    const [error, setError] = useState(null);
+    const { items: goals, error, setError, addItem, removeItem, mapItem } =
+        useCollection(storage.KEYS.GOALS, { sort: byDate });
 
-    useEffect(() => {
-        const handler = (ev) => {
-            const k = ev?.detail?.key;
-            if (!k || k === storage.KEYS.GOALS) {
-                try {
-                    const saved = storage.get(storage.KEYS.GOALS, []);
-                    setGoals(Array.isArray(saved) ? saved.sort((a, b) => new Date(a.date) - new Date(b.date)) : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('rc-storage-mutated', handler);
-        const storageHandler = (e) => { if (!e.key || e.key === storage.KEYS.GOALS) { try { const s = storage.get(storage.KEYS.GOALS, []); setGoals(Array.isArray(s)?s.sort((a,b)=>new Date(a.date)-new Date(b.date)):[]); } catch { /* */ } } };
-        window.addEventListener('storage', storageHandler);
-        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', storageHandler); };
-    }, []);
-
-    // Add a new goal
     const addGoal = useCallback((title, date) => {
         try {
             const newGoal = {
@@ -180,119 +217,54 @@ export const useGoals = () => {
                 status: 'planned', // planned | achieved
                 createdAt: Date.now()
             };
-
-            setGoals(prev => {
-                const updated = [...prev, newGoal].sort((a, b) =>
-                    new Date(a.date || 0) - new Date(b.date || 0)
-                );
-
-                const result = storage.set(storage.KEYS.GOALS, updated);
-                if (!result.success) {
-                    setError('Failed to save goal');
-                    return prev;
-                }
-
-                return updated;
-            });
-
+            addItem(newGoal, 'Failed to save goal');
             return { success: true, goal: newGoal };
         } catch (err) {
             console.error('useGoals: Add failed', err);
             setError('Failed to create goal');
             return { success: false };
         }
-    }, []);
+    }, [addItem, setError]);
 
-    // Toggle goal status
     const toggleStatus = useCallback((id) => {
         try {
-            setGoals(prev => {
-                const updated = prev.map(g =>
-                    g.id === id
-                        ? { ...g, status: g.status === 'planned' ? 'achieved' : 'planned' }
-                        : g
-                );
-                storage.set(storage.KEYS.GOALS, updated);
-                return updated;
-            });
+            mapItem(id, g => ({ ...g, status: g.status === 'planned' ? 'achieved' : 'planned' }));
             return { success: true };
         } catch (err) {
             console.error('useGoals: Toggle failed', err);
             return { success: false };
         }
-    }, []);
+    }, [mapItem]);
 
-    // Delete a goal
     const deleteGoal = useCallback((id) => {
         try {
-            setGoals(prev => {
-                const updated = prev.filter(g => g.id !== id);
-                storage.set(storage.KEYS.GOALS, updated);
-                return updated;
-            });
+            removeItem(id);
             return { success: true };
         } catch (err) {
             console.error('useGoals: Delete failed', err);
             setError('Failed to delete goal');
             return { success: false };
         }
-    }, []);
+    }, [removeItem, setError]);
 
-    // Get counts
     const counts = {
         total: goals.length,
         planned: goals.filter(g => g.status === 'planned').length,
         achieved: goals.filter(g => g.status === 'achieved').length
     };
 
-    const clearError = useCallback(() => setError(null), []);
+    const clearError = useCallback(() => setError(null), [setError]);
 
-    return {
-        goals,
-        loading,
-        error,
-        clearError,
-        addGoal,
-        toggleStatus,
-        deleteGoal,
-        counts
-    };
+    return { goals, loading: false, error, clearError, addGoal, toggleStatus, deleteGoal, counts };
 };
 
 // ============================================
 // useLegacyMessages - Legacy Capsule Messages
 // ============================================
 export const useLegacyMessages = () => {
-    // Lazy init from storage (sync) - avoids setState-in-effect
-    const [messages, setMessages] = useState(() => {
-        try {
-            const saved = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
-            return Array.isArray(saved) ? saved : [];
-        } catch (err) {
-            console.error('useLegacyMessages: Load failed', err);
-            return [];
-        }
-    });
-    const [loading] = useState(false);
-    const [error, setError] = useState(null);
+    const { items: messages, error, setError, addItem, removeItem, replaceAll } =
+        useCollection(storage.KEYS.LEGACY_MESSAGES);
 
-    useEffect(() => {
-        const handler = (ev) => {
-            const k = ev?.detail?.key;
-            if (!k || k === storage.KEYS.LEGACY_MESSAGES) {
-                try {
-                    const saved = storage.get(storage.KEYS.LEGACY_MESSAGES, []);
-                    setMessages(Array.isArray(saved) ? saved : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('rc-storage-mutated', handler);
-        const sh = (e) => { if (!e.key || e.key === storage.KEYS.LEGACY_MESSAGES) try { setMessages(storage.get(storage.KEYS.LEGACY_MESSAGES, []) || []); } catch { /* */ } };
-        window.addEventListener('storage', sh);
-        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
-    }, []);
-
-    // Seal a new message
     const sealMessage = useCallback((text, years) => {
         try {
             const unlockDate = new Date();
@@ -304,63 +276,42 @@ export const useLegacyMessages = () => {
                 unlockDate: unlockDate.getTime(),
                 createdAt: Date.now()
             };
-
-            setMessages(prev => {
-                const updated = [...prev, newMessage];
-                const result = storage.set(storage.KEYS.LEGACY_MESSAGES, updated);
-
-                if (!result.success) {
-                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
-                        ? 'Storage full! Delete some messages first.'
-                        : 'Failed to save message.');
-                    return prev;
-                }
-
-                return updated;
-            });
-
+            addItem(newMessage, 'Failed to save message.');
             return { success: true, message: newMessage };
         } catch (err) {
             console.error('useLegacyMessages: Seal failed', err);
             setError('Failed to seal message');
             return { success: false };
         }
-    }, []);
+    }, [addItem, setError]);
 
-    // Delete a message
     const deleteMessage = useCallback((id) => {
         try {
-            setMessages(prev => {
-                const updated = prev.filter(m => m.id !== id);
-                storage.set(storage.KEYS.LEGACY_MESSAGES, updated);
-                return updated;
-            });
+            removeItem(id);
             return { success: true };
         } catch (err) {
             console.error('useLegacyMessages: Delete failed', err);
             setError('Failed to delete message');
             return { success: false };
         }
-    }, []);
+    }, [removeItem, setError]);
 
     // Clear all messages (hard reset)
     const clearAll = useCallback(() => {
         try {
-            setMessages([]);
-            storage.set(storage.KEYS.LEGACY_MESSAGES, []);
-            return { success: true };
+            return replaceAll([]);
         } catch (err) {
             console.error('useLegacyMessages: Clear failed', err);
             setError('Failed to clear messages');
             return { success: false };
         }
-    }, []);
+    }, [replaceAll, setError]);
 
-    const clearError = useCallback(() => setError(null), []);
+    const clearError = useCallback(() => setError(null), [setError]);
 
     return {
         messages,
-        loading,
+        loading: false,
         error,
         clearError,
         sealMessage,
@@ -414,47 +365,17 @@ export const useAppStats = () => {
             return null;
         }
     });
-    const [loading] = useState(false);
 
-    return { stats, loading };
+    return { stats, loading: false };
 };
 
 // ============================================
 // useJourney - Journey Milestones Management
 // ============================================
 export const useJourney = () => {
-    // Lazy init from storage (sync) - avoids setState-in-effect
-    const [milestones, setMilestones] = useState(() => {
-        try {
-            const saved = storage.get(storage.KEYS.JOURNEY, []);
-            return Array.isArray(saved)
-                ? saved.sort((a, b) => new Date(a.date) - new Date(b.date))
-                : [];
-        } catch (err) {
-            console.error('useJourney: Load failed', err);
-            return [];
-        }
-    });
-    const [loading] = useState(false);
-    const [error, setError] = useState(null);
+    const { items: milestones, error, setError, addItem, removeItem } =
+        useCollection(storage.KEYS.JOURNEY, { sort: byDate });
 
-    useEffect(() => {
-        const handler = (ev) => {
-            const k = ev?.detail?.key;
-            if (!k || k === storage.KEYS.JOURNEY) {
-                try {
-                    const saved = storage.get(storage.KEYS.JOURNEY, []);
-                    setMilestones(Array.isArray(saved) ? saved.sort((a, b) => new Date(a.date) - new Date(b.date)) : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('rc-storage-mutated', handler);
-        const sh = (e) => { if (!e.key || e.key === storage.KEYS.JOURNEY) try { const s=storage.get(storage.KEYS.JOURNEY,[]); setMilestones(Array.isArray(s)?s.sort((a,b)=>new Date(a.date)-new Date(b.date)):[]); } catch { /* */ } };
-        window.addEventListener('storage', sh);
-        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
-    }, []);
-
-    // Add a new milestone
     const addMilestone = useCallback((title, date, desc = '') => {
         try {
             const newMilestone = {
@@ -464,52 +385,31 @@ export const useJourney = () => {
                 desc: desc.trim(),
                 createdAt: Date.now()
             };
-
-            setMilestones(prev => {
-                const updated = [...prev, newMilestone].sort(
-                    (a, b) => new Date(a.date) - new Date(b.date)
-                );
-
-                const result = storage.set(storage.KEYS.JOURNEY, updated);
-                if (!result.success) {
-                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
-                        ? 'Storage full! Delete some milestones first.'
-                        : 'Failed to save milestone.');
-                    return prev;
-                }
-
-                return updated;
-            });
-
+            addItem(newMilestone, 'Failed to save milestone.');
             return { success: true, milestone: newMilestone };
         } catch (err) {
             console.error('useJourney: Add failed', err);
             setError('Failed to create milestone');
             return { success: false };
         }
-    }, []);
+    }, [addItem, setError]);
 
-    // Delete a milestone
     const deleteMilestone = useCallback((id) => {
         try {
-            setMilestones(prev => {
-                const updated = prev.filter(m => m.id !== id);
-                storage.set(storage.KEYS.JOURNEY, updated);
-                return updated;
-            });
+            removeItem(id);
             return { success: true };
         } catch (err) {
             console.error('useJourney: Delete failed', err);
             setError('Failed to delete milestone');
             return { success: false };
         }
-    }, []);
+    }, [removeItem, setError]);
 
-    const clearError = useCallback(() => setError(null), []);
+    const clearError = useCallback(() => setError(null), [setError]);
 
     return {
         milestones,
-        loading,
+        loading: false,
         error,
         clearError,
         addMilestone,
@@ -524,36 +424,9 @@ export const useJourney = () => {
 // Note: Audio blobs are stored in IndexedDB via db.js
 // This hook manages ONLY the metadata (entries list)
 export const useVoiceDiary = () => {
-    // Lazy init from storage (sync) - avoids setState-in-effect
-    const [entries, setEntries] = useState(() => {
-        try {
-            const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
-            return Array.isArray(saved) ? saved : [];
-        } catch (err) {
-            console.error('useVoiceDiary: Load failed', err);
-            return [];
-        }
-    });
-    const [loading] = useState(false);
-    const [error, setError] = useState(null);
+    const { items: entries, error, setError, addItem, removeItem } =
+        useCollection(storage.KEYS.VOICE_ENTRIES, { insert: 'prepend' });
 
-    useEffect(() => {
-        const handler = (ev) => {
-            const k = ev?.detail?.key;
-            if (!k || k === storage.KEYS.VOICE_ENTRIES) {
-                try {
-                    const saved = storage.get(storage.KEYS.VOICE_ENTRIES, []);
-                    setEntries(Array.isArray(saved) ? saved : []);
-                } catch { /* live update ignore */ }
-            }
-        };
-        window.addEventListener('rc-storage-mutated', handler);
-        const sh = (e) => { if (!e.key || e.key === storage.KEYS.VOICE_ENTRIES) try { setEntries(storage.get(storage.KEYS.VOICE_ENTRIES, []) || []); } catch { /* */ } };
-        window.addEventListener('storage', sh);
-        return () => { window.removeEventListener('rc-storage-mutated', handler); window.removeEventListener('storage', sh); };
-    }, []);
-
-    // Add a new entry (metadata only - blob saved separately via db.js)
     const addEntry = useCallback((id, duration) => {
         try {
             const newEntry = {
@@ -562,50 +435,31 @@ export const useVoiceDiary = () => {
                 title: `Capsule ${new Date().toLocaleDateString()}`,
                 duration: duration || 0
             };
-
-            setEntries(prev => {
-                const updated = [newEntry, ...prev];
-
-                const result = storage.set(storage.KEYS.VOICE_ENTRIES, updated);
-                if (!result.success) {
-                    setError(result.error === storage.StorageError.QUOTA_EXCEEDED
-                        ? 'Storage full! Delete some entries first.'
-                        : 'Failed to save entry.');
-                    return prev;
-                }
-
-                return updated;
-            });
-
+            addItem(newEntry, 'Failed to save entry.');
             return { success: true, entry: newEntry };
         } catch (err) {
             console.error('useVoiceDiary: Add failed', err);
             setError('Failed to create entry');
             return { success: false };
         }
-    }, []);
+    }, [addItem, setError]);
 
-    // Delete an entry (metadata only - blob should be deleted separately)
     const deleteEntry = useCallback((id) => {
         try {
-            setEntries(prev => {
-                const updated = prev.filter(e => e.id !== id);
-                storage.set(storage.KEYS.VOICE_ENTRIES, updated);
-                return updated;
-            });
+            removeItem(id);
             return { success: true };
         } catch (err) {
             console.error('useVoiceDiary: Delete failed', err);
             setError('Failed to delete entry');
             return { success: false };
         }
-    }, []);
+    }, [removeItem, setError]);
 
-    const clearError = useCallback(() => setError(null), []);
+    const clearError = useCallback(() => setError(null), [setError]);
 
     return {
         entries,
-        loading,
+        loading: false,
         error,
         clearError,
         addEntry,

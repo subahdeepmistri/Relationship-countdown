@@ -7,3 +7,20 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Security headers
+# NOTE: A strict CSP is intentionally NOT set — the app relies heavily on
+# inline styles and Vite's inline bootstrap. Revisit if styles are extracted.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Never render this app framed (clickjacking protection)
+    X-Frame-Options = "DENY"
+    # Prevent MIME-sniffing
+    X-Content-Type-Options = "nosniff"
+    # Sync payloads live in URLs — never leak them via Referer
+    Referrer-Policy = "no-referrer"
+    # Only the microphone is used (voice diary); deny everything else
+    Permissions-Policy = "geolocation=(), camera=(), microphone=(self), payment=()"
+    # Isolate browsing context (mitigates Spectre-class side channels)
+    Cross-Origin-Opener-Policy = "same-origin"

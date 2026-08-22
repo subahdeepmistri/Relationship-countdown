@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { addHours, formatTime } from '../utils/dateUtils';
 
 const DistanceClock = ({ partnerOffset, meetingDate, myLoc, partnerLoc }) => {
     const [myTime, setMyTime] = useState('');
@@ -10,12 +11,9 @@ const DistanceClock = ({ partnerOffset, meetingDate, myLoc, partnerLoc }) => {
             const now = new Date();
             setMyTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
-            // Calculate partner time
-            // partnerOffset is +/- hours from current local time (simplified logic for prototype)
-            // A better way is usually timezone string, but offset is easier for user to input manually
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const partnerDate = new Date(utc + (3600000 * partnerOffset));
-            setTheirTime(partnerDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+            // Calculate partner time using centralized util (consistent with rest of app)
+            const partnerDate = addHours(now, partnerOffset);
+            setTheirTime(formatTime(partnerDate));
 
             // Meeting countdown
             if (meetingDate) {

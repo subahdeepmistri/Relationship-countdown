@@ -1,4 +1,4 @@
-import React, { useState, useEffect, startTransition } from 'react';
+import React, { useState, useEffect, Suspense, lazy, startTransition } from 'react';
 import { useRelationship } from './context/RelationshipContext';
 import LZString from 'lz-string';
 
@@ -7,41 +7,46 @@ import ThemeBackground from './components/ThemeBackground';
 import Counter from './components/Counter';
 import MessageCard from './components/MessageCard';
 import AnniversaryOverlay from './components/AnniversaryOverlay';
-import Settings from './components/Settings';
 import MemoryCarousel from './components/MemoryCarousel';
 
-// import LinkToTimeline from './components/LinkToTimeline'; // Removed, integrated in Navbar or App state
-import MilestoneCelebration from './components/MilestoneCelebration';
-import TimelineView from './components/TimelineView';
-import LoveNotes from './components/LoveNotes';
-import ScrapbookView from './components/ScrapbookView';
-import TimeCapsuleManager from './components/TimeCapsuleManager';
-import DistanceClock from './components/DistanceClock';
-import FutureGoalsTimeline from './components/FutureGoalsTimeline';
-import YearlyRecap from './components/YearlyRecap';
-// import SyncManager from './components/SyncManager'; // Removed for personal version
-import ShareUpdateModal from './components/ShareUpdateModal';
+// Settings is the largest app module and only needed when opened — lazy-load it.
+const Settings = lazy(() => import('./components/Settings'));
 
-import VoiceDiary from './components/VoiceDiary';
-import JourneyMap from './components/JourneyMap';
-import LegacyCapsule from './components/LegacyCapsule';
-import AboutSection from './components/AboutSection';
-import SystemStatusCard from './components/SystemStatusCard';
-import FeatureStatsCard from './components/FeatureStatsCard';
+// Heavy overlay views are code-split: they are only mounted on demand and
+// pull large deps (framer-motion, html2canvas, canvas-confetti) out of the
+// initial bundle entirely.
+const MilestoneCelebration = lazy(() => import('./components/MilestoneCelebration'));
+const TimelineView = lazy(() => import('./components/TimelineView'));
+const ScrapbookView = lazy(() => import('./components/ScrapbookView'));
+const TimeCapsuleManager = lazy(() => import('./components/TimeCapsuleManager'));
+const FutureGoalsTimeline = lazy(() => import('./components/FutureGoalsTimeline'));
+const YearlyRecap = lazy(() => import('./components/YearlyRecap'));
+const ShareUpdateModal = lazy(() => import('./components/ShareUpdateModal'));
+
+// LoveNotes & DistanceClock are small and render inline on the home screen —
+// they stay eager so the first paint never waits on a chunk round-trip.
+import LoveNotes from './components/LoveNotes';
+import DistanceClock from './components/DistanceClock';
+
+const VoiceDiary = lazy(() => import('./components/VoiceDiary'));
+const JourneyMap = lazy(() => import('./components/JourneyMap'));
+const LegacyCapsule = lazy(() => import('./components/LegacyCapsule'));
+const AboutSection = lazy(() => import('./components/AboutSection'));
 
 import Navbar from './components/Navbar';
 
 import DailyQuestion from './components/DailyQuestion';
 
-import AnniversarySelection from './components/AnniversarySelection';
-import DateSelection from './components/DateSelection';
-import PhotoSelection from './components/PhotoSelection';
-import NotificationSelection from './components/NotificationSelection';
+const AnniversarySelection = lazy(() => import('./components/AnniversarySelection'));
+const PhotoSelection = lazy(() => import('./components/PhotoSelection'));
+const NotificationSelection = lazy(() => import('./components/NotificationSelection'));
 import WelcomeScreen from './components/WelcomeScreen';
-// import OnboardingChoice from './components/OnboardingChoice'; // Removed for personal version
 import NextMilestoneCard from './components/NextMilestoneCard';
+import SystemStatusCard from './components/SystemStatusCard';
+import FeatureStatsCard from './components/FeatureStatsCard';
 import { getProfileImage } from './utils/db'; // Keep DB for blobs until migrated (optional)
 import { storage } from './utils/storageAdapter';
+import { createManagedObjectURL } from './utils/objectUrlManager';
 
 import { checkAnniversaryNotification } from './utils/notifications';
 import { useWasm } from './hooks/useWasm';
@@ -63,11 +68,13 @@ function App() {
 
   const [isNightOwl, setIsNightOwl] = useState(false);
   const [profileImages, setProfileImages] = useState({ left: null, right: null });
+  const [photoVersion, setPhotoVersion] = useState(0);
 
   // Easter Egg & Modals State (must be declared before early returns)
   const [showEasterEgg, setShowEasterEgg] = useState(false);
   const [showFirstPhotoModal, setShowFirstPhotoModal] = useState(false);
   const [useRealNames, setUseRealNames] = useState(false);
+  const [pendingSync, setPendingSync] = useState(null);
   const longPressTimer = React.useRef(null);
 
   // WASM Hook for calculations
@@ -83,30 +90,40 @@ function App() {
     const syncData = params.get('sync');
     if (syncData) {
       try {
+        // Guard rails: URL-carried payloads are untrusted input.
+        const MAX_SYNC_LENGTH = 100000; // ~100KB — real payloads are a few KB
+        if (syncData.length > MAX_SYNC_LENGTH) {
+          throw new Error('Sync payload too large');
+        }
+
         const decompressed = LZString.decompressFromEncodedURIComponent(syncData);
         if (decompressed) {
           const payload = JSON.parse(decompressed);
           if (payload.r && payload.s) {
-            console.log("🔗 Magic Link Detected! Hydrating state...", payload);
+            console.log("🔗 Magic Link Detected! Awaiting user consent...", payload);
 
-            // Update Context/Storage
-            updateRelationship(payload.r);
-            updateSettings(payload.s);
+            // SECURITY: never accept credentials from a link. The partner's
+            // device must use its own AI key (older links may still carry one).
+            delete payload.s.aiKey;
 
-            // Mark sync time for SystemStatus "last sync" progress/trust indicator
-            try {
-                storage.set(storage.KEYS.LAST_SYNC, new Date().toISOString());
-            } catch { /* sync parse ignore */ }
+            // Stale-payload guard: applying months-old data could silently
+            // roll the user back (classic lost-update on last-writer-wins sync).
+            const SYNC_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+            if (typeof payload.t === 'number' && Date.now() - payload.t > SYNC_MAX_AGE_MS) {
+              console.warn('Magic Link ignored: payload is older than 90 days.');
+            } else {
+              // CONSENT: a URL must never silently overwrite the user's story.
+              // Park the payload and let the user explicitly accept or decline.
+              setPendingSync(payload);
+            }
 
-            // Clean URL to prevent re-sync on reload
+            // Clean URL to prevent re-sync on reload (payload lives in state now)
             window.history.replaceState({}, document.title, window.location.pathname);
-
-            // Optional: Show success toast (not implemented global toast yet, just log)
           }
         }
       } catch (e) {
         console.error("Magic Link Parse Error:", e);
-      } // the empty was elsewhere? fix any remaining empty
+      }
     }
 
     // --- LEGACY SHARE LINK SUPPORT ---
@@ -148,20 +165,24 @@ function App() {
     return () => clearInterval(midnightTimer);
   }, [getAnniversaryCountdown, updateRelationship]);
 
-  // 2. Profile Images Loading (Side Effect for Blobs)
+  // 2. Profile Images Loading (Side Effect for Blobs) - using managed URLs for safety
   useEffect(() => {
     if (settings.photosSet) {
+      let revoked = false;
+      const created = { left: null, right: null };
       Promise.all([
         getProfileImage('profile_1'),
         getProfileImage('profile_2')
       ]).then(([blob1, blob2]) => {
-        setProfileImages({
-          left: blob1 ? URL.createObjectURL(blob1) : null,
-          right: blob2 ? URL.createObjectURL(blob2) : null
-        });
+        if (revoked) return;
+        created.left = blob1 ? createManagedObjectURL(blob1, 'profile-1') : null;
+        created.right = blob2 ? createManagedObjectURL(blob2, 'profile-2') : null;
+        setProfileImages(created);
       });
+      // Re-running (photo edit) replaces managed URLs by id; nothing leaks.
+      return () => { revoked = true; };
     }
-  }, [settings.photosSet]);
+  }, [settings.photosSet, photoVersion]);
 
   // 3. Night Owl & Scrapbook Listener
   useEffect(() => {
@@ -218,20 +239,24 @@ function App() {
 
   if (!settings.photosSet) {
     return (
-      <PhotoSelection
-        onSelect={() => updateSettings({ photosSet: true })}
-        onBack={() => updateRelationship({ startDate: '' })} // Go back logic
-      />
+      <Suspense fallback={<ViewLoader />}>
+        <PhotoSelection
+          onSelect={() => updateSettings({ photosSet: true })}
+          onBack={() => updateRelationship({ startDate: '' })} // Go back logic
+        />
+      </Suspense>
     );
   }
 
   if (!settings.setupComplete) {
     return (
-      <NotificationSelection
-        onComplete={() => updateSettings({ setupComplete: true })}
-        onBack={() => updateSettings({ photosSet: false })}
-        profileImages={profileImages}
-      />
+      <Suspense fallback={<ViewLoader />}>
+        <NotificationSelection
+          onComplete={() => updateSettings({ setupComplete: true })}
+          onBack={() => updateSettings({ photosSet: false })}
+          profileImages={profileImages}
+        />
+      </Suspense>
     );
   }
 
@@ -260,7 +285,7 @@ function App() {
   };
 
   return (
-    <>
+    <Suspense fallback={<ViewLoader />}>
       <UpdatePrompt />
       <ThemeBackground />
 
@@ -345,13 +370,16 @@ function App() {
       {activeView === 'timeline' && <TimelineView onClose={handleClose} />}
       {activeView === 'about' && <AboutSection onClose={handleClose} />}
 
-      {/* Settings & Overlays */}
-      <Settings
-        isOpen={activeView === 'settings'}
-        onClose={handleClose}
-        onEditPhotos={() => setActiveView('edit-photos')}
-        onOpenAbout={() => setActiveView('about')}
-      />
+      {/* Settings & Overlays — only mounted while open, so its chunk
+          loads on demand instead of bloating the initial bundle */}
+      {activeView === 'settings' && (
+        <Settings
+          isOpen={true}
+          onClose={handleClose}
+          onEditPhotos={() => setActiveView('edit-photos')}
+          onOpenAbout={() => setActiveView('about')}
+        />
+      )}
 
       {activeView === 'edit-photos' && (
         <PhotoSelection
@@ -359,12 +387,9 @@ function App() {
           onBack={() => setActiveView('settings')}
           onSelect={() => {
             setActiveView('settings');
-            // Re-fetch images - handled by effect dependency on photosSet? 
-            // We might need a trigger. Let's toggle a dummy state or just assume blobs update?
-            // PhotoSelection saves to IndexedDB.
-            // We can force reload images by updating a version counter in Context if we wanted purity.
-            // For now, reload fits the image blob architecture until that is refactored.
-            window.location.reload();
+            // Re-fetch profile blobs without nuking the whole app state.
+            // createManagedObjectURL revokes the previous URL per id, so this is leak-free.
+            setPhotoVersion(v => v + 1);
           }}
         />
       )}
@@ -596,8 +621,18 @@ function App() {
           <p style={{ margin: 0, fontWeight: '500' }}>The night is ours.</p>
         </div>
       )}
-    </>
+    </Suspense>
   );
 }
+
+// Minimal placeholder while a lazily-imported view streams in.
+const ViewLoader = () => (
+  <div style={{
+    position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'var(--bg-color)', zIndex: 9998
+  }}>
+    <div className="animate-heartbeat" style={{ fontSize: '2rem' }}>💖</div>
+  </div>
+);
 
 export default App;

@@ -5,28 +5,25 @@ const Counter = () => {
     const [stats, setStats] = useState(null);
 
     useEffect(() => {
-        let animationFrameId;
-
-        const tick = () => {
+        // Seconds-level precision only — a 1s interval is far kinder to
+        // battery/CPU than a 60fps requestAnimationFrame loop.
+        const update = () => {
             const currentStats = getRelationshipStats();
             if (currentStats) setStats(currentStats);
-            animationFrameId = requestAnimationFrame(tick);
         };
 
-        tick(); // Start loop
+        update();
+        const interval = setInterval(update, 1000);
 
         // Handle tab visibility to force immediate update when waking up
         const handleVisibilityChange = () => {
-            if (!document.hidden) {
-                const currentStats = getRelationshipStats();
-                if (currentStats) setStats(currentStats);
-            }
+            if (!document.hidden) update();
         };
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         return () => {
-            cancelAnimationFrame(animationFrameId);
+            clearInterval(interval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, []);

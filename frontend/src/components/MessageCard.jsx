@@ -9,6 +9,11 @@ const MessageCard = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        // Abort in-flight AI requests on unmount/settings change to prevent
+        // setState-on-unmounted and wasted bandwidth.
+        const controller = new AbortController();
+        let cancelled = false;
+
         const fetchMessage = async () => {
             const stats = getRelationshipStats();
             if (!stats) {
@@ -34,6 +39,7 @@ const MessageCard = () => {
                 try {
                     const response = await fetch('https://api.openai.com/v1/chat/completions', {
                         method: 'POST',
+                        signal: controller.signal,
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${settings.aiKey.trim()}`
@@ -63,17 +69,21 @@ const MessageCard = () => {
                     const aiText = data.choices && data.choices[0] ? data.choices[0].message.content.trim() : "Love is mysterious...";
 
                     // Cache and Set
+                    if (cancelled) return;
                     localStorage.setItem('rc_daily_ai_msg', aiText);
                     localStorage.setItem('rc_daily_ai_date', today);
                     setMessage(aiText);
 
                 } catch (error) {
+                    if (cancelled || error.name === 'AbortError') return;
                     console.error("AI Generation Failed:", error);
                     // If AI was explicitly enabled, show the error so the user knows
                     setMessage(`⚡ ${error.message}`);
                 } finally {
-                    setLoading(false);
-                    setVisible(true);
+                    if (!cancelled) {
+                        setLoading(false);
+                        setVisible(true);
+                    }
                 }
             } else {
                 // 3. Static Fallback
@@ -83,6 +93,11 @@ const MessageCard = () => {
         };
 
         fetchMessage();
+
+        return () => {
+            cancelled = true;
+            controller.abort();
+        };
     }, [settings.aiEnabled, settings.aiKey]); // Retry when settings change
 
     const setStaticMessage = (days) => {

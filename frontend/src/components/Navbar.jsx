@@ -51,7 +51,7 @@ const Navbar = ({ onNavigate, activeView }) => {
                     gap: '6px'
                 }}>
                     {navItems.map((item) => {
-                        const isActive = activeView === item.id || (item.id === 'capsules' && !activeView);
+                        const isActive = activeView === item.id;
                         return (
                             <NavItem
                                 key={item.id}
@@ -72,6 +72,8 @@ const NavItem = memo(({ item, isActive, onClick }) => {
     return (
         <button
             onClick={onClick}
+            aria-label={item.label}
+            aria-pressed={isActive}
             style={{
                 background: 'transparent',
                 border: 'none',

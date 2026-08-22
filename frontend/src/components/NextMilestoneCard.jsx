@@ -4,26 +4,22 @@ import { getNextMilestone } from '../utils/relationshipLogic';
 const NextMilestoneCard = () => {
     const [milestone, setMilestone] = useState(null);
     const [showDetails, setShowDetails] = useState(false);
-    const [secondsTick, setSecondsTick] = useState(0);
 
+    // Milestones change at most once per day; a per-second interval would
+    // re-render the whole card 86,400 times/day for zero visual benefit.
     useEffect(() => {
-        const next = getNextMilestone();
-        setMilestone(next);
+        setMilestone(getNextMilestone());
 
-        // Ticking effect for countdown
-        const interval = setInterval(() => {
-            setSecondsTick(prev => prev + 1);
-        }, 1000);
-        return () => clearInterval(interval);
+        const refresh = () => setMilestone(getNextMilestone());
+        const onVisible = () => { if (!document.hidden) refresh(); };
+        document.addEventListener('visibilitychange', onVisible);
+        const minuteTimer = setInterval(refresh, 60000);
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisible);
+            clearInterval(minuteTimer);
+        };
     }, []);
-
-    // Confetti logic if clear < 7 days
-    useEffect(() => {
-        if (showDetails && milestone && milestone.daysLeft <= 7) {
-            // Trigger confetti (using simple CSS classes or just icon animation for now as per "no heavy JS libraries")
-            // We'll use the existing 'event-horizon' style simple particle system if available or just consistent UI
-        }
-    }, [showDetails, milestone]);
 
     if (!milestone) return null;
 
@@ -80,6 +76,9 @@ const NextMilestoneCard = () => {
                         50% { transform: scale(1.05); }
                         100% { transform: scale(1); }
                     }
+                    .milestone-days-pulse {
+                        animation: tickPulse 2.4s ease-in-out infinite;
+                    }
                 `}</style>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px', zIndex: 1 }}>
@@ -110,9 +109,8 @@ const NextMilestoneCard = () => {
                 </div>
 
                 <div style={{ textAlign: 'center', minWidth: '60px', zIndex: 1, background: 'rgba(255,255,255,0.5)', padding: '8px 14px', borderRadius: '16px', backdropFilter: 'blur(4px)' }}>
-                    <div key={secondsTick} style={{
-                        fontSize: '1.5rem', fontWeight: '800', color: '#EA580C', lineHeight: 1,
-                        animation: 'tickPulse 0.3s ease-out'
+                    <div className="milestone-days-pulse" style={{
+                        fontSize: '1.5rem', fontWeight: '800', color: '#EA580C', lineHeight: 1
                     }}>
                         {milestone.daysLeft}
                     </div>

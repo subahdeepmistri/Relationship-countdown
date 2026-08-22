@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { savePhoto, getPhotos, deletePhoto } from '../utils/db';
+import { compressImage } from '../utils/imageCompression';
+import { createManagedObjectURL, revokeObjectURL, revokeAllObjectURLs, getManagedObjectURL } from '../utils/objectUrlManager';
 
 const DEFAULT_PHOTOS = [
     { id: 'def1', src: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7', caption: "Where it all began", date: "Jan 2023" },
@@ -44,13 +46,18 @@ const ScrapbookView = ({ onClose }) => {
     async function loadCustomPhotos() {
         try {
             const stored = await getPhotos();
-            const processed = stored.map(item => ({
-                id: item.id,
-                src: URL.createObjectURL(item.blob),
-                caption: "New Memory",
-                date: new Date(item.id).toLocaleDateString(),
-                isCustom: true
-            }));
+            const processed = stored.map(item => {
+                if (item.blob) {
+                    createManagedObjectURL(item.blob, `scrapbook-${item.id}`);
+                }
+                return {
+                    id: item.id,
+                    src: getManagedObjectURL(`scrapbook-${item.id}`),
+                    caption: "New Memory",
+                    date: new Date(item.id).toLocaleDateString(),
+                    isCustom: true
+                };
+            });
             setPhotos([...DEFAULT_PHOTOS, ...processed]);
         } catch (error) {
             console.error("Error fetching memories:", error);
@@ -59,6 +66,9 @@ const ScrapbookView = ({ onClose }) => {
 
     useEffect(() => {
         loadCustomPhotos();
+        return () => {
+            revokeAllObjectURLs();
+        };
     }, []);
 
     // Keyboard Navigation
@@ -83,11 +93,13 @@ const ScrapbookView = ({ onClose }) => {
 
         try {
             const id = Date.now();
-            await savePhoto(id, file); // Shared storage
+            const optimized = await compressImage(file);
+            await savePhoto(id, optimized); // Shared storage
 
+            const managedUrl = createManagedObjectURL(file, `scrapbook-${id}`);
             const newPhoto = {
                 id,
-                src: URL.createObjectURL(file),
+                src: managedUrl,
                 caption: "New Memory",
                 date: new Date().toLocaleDateString(),
                 isCustom: true
@@ -111,6 +123,7 @@ const ScrapbookView = ({ onClose }) => {
         // 2. Background DB Deletion for Custom Photos
         const isCustom = typeof id === 'number';
         if (isCustom) {
+            revokeObjectURL(`scrapbook-${id}`);
             try {
                 await deletePhoto(id);
             } catch (err) {

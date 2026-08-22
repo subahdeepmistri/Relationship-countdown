@@ -10,9 +10,13 @@ const ShareUpdateModal = ({ onClose }) => {
     // Filter out heavy or local-only data if needed
     // For now, we sync the core relationship and settings
     const generateLink = () => {
+        // SECURITY: never embed secrets in a shareable URL. The AI key is a
+        // billing credential — links get pasted into chat apps, synced to
+        // cloud photo galleries, and logged by servers in between.
+        const { aiKey: _stripped, ...safeSettings } = settings;
         const payload = {
             r: relationship,
-            s: settings,
+            s: safeSettings,
             t: Date.now()
         };
 
@@ -27,8 +31,7 @@ const ShareUpdateModal = ({ onClose }) => {
     };
 
     const copyToClipboard = () => {
-        navigator.clipboard.writeText(generatedLink);
-        setIsCopied(true);
+        navigator.clipboard.writeText(generatedLink);        setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { saveAudio, getAudio, deleteAudio } from '../utils/db';
 import { useVoiceDiary } from '../hooks/useDataHooks';
 import { ConfirmModal } from './shared';
+import { createManagedObjectURL, revokeObjectURL } from '../utils/objectUrlManager';
 
 const VoiceDiary = ({ onClose }) => {
     // Use centralized hook for voice entry metadata
@@ -63,8 +64,12 @@ const VoiceDiary = ({ onClose }) => {
                 audioRef.current.src = '';
                 audioRef.current.load(); // Force release of any audio resources
             }
+            // Revoke any active managed voice playback URL
+            if (playingId) {
+                revokeObjectURL(`voice-${playingId}`);
+            }
         };
-    }, []);
+    }, [playingId]);
 
     const startRecording = async () => {
         try {
@@ -166,7 +171,7 @@ const VoiceDiary = ({ onClose }) => {
         try {
             const blob = await getAudio(id);
             if (blob) {
-                const url = URL.createObjectURL(blob);
+                const url = createManagedObjectURL(blob, `voice-${id}`);
                 audioRef.current.src = url;
                 audioRef.current.play();
                 setPlayingId(id);
@@ -178,11 +183,23 @@ const VoiceDiary = ({ onClose }) => {
                     }
                 };
 
-                audioRef.current.onended = () => {
+                const cleanupPlayback = () => {
                     setPlayingId(null);
                     setPlaybackProgress(0);
                     setPlaybackTime(0);
-                    URL.revokeObjectURL(url);
+                    // Revoke via manager (safe even if already cleaned)
+                    revokeObjectURL(`voice-${id}`);
+                };
+
+                audioRef.current.onended = cleanupPlayback;
+
+                // Also revoke on pause / manual stop to cover all cases
+                const originalPause = audioRef.current.pause.bind(audioRef.current);
+                audioRef.current.pause = () => {
+                    originalPause();
+                    if (playingId === id) {
+                        cleanupPlayback();
+                    }
                 };
             } else {
                 alert("Audio file not found.");

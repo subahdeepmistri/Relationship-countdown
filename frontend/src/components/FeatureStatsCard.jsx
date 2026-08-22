@@ -351,6 +351,23 @@ const FeatureStatsCard = ({ onNavigate }) => {
                     <span>🗃️{Math.round(((storageInfo.totalUsed || storageInfo.used || 0) / 1024))}kB+{storageInfo.mediaMB || 0}MB</span>
                     {(settings.notifications || settings.aiEnabled || settings.longDistance?.enabled) && <span>⚙️{ [settings.notifications && 'alerts', settings.aiEnabled && 'ai', settings.longDistance?.enabled && 'ld'].filter(Boolean).join('+') }</span>}
                 </div>
+
+                {/* Basic quota / health warning for data safety (protects memories) */}
+                {(storageInfo.percentUsed > 75 || (storageInfo.mediaMB || 0) > 50) && (
+                    <div style={{
+                        marginTop: '6px',
+                        padding: '6px 10px',
+                        background: storageInfo.percentUsed > 85 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                        borderRadius: '8px',
+                        fontSize: '0.6rem',
+                        color: storageInfo.percentUsed > 85 ? '#b91c1c' : '#92400e',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                    }}>
+                        ⚠️ Storage getting full — consider deleting old memories or capsules to protect new ones.
+                    </div>
+                )}
             </div>
 
             {/* Stats Grid */}
